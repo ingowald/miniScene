@@ -1,0 +1,9 @@
+[submodule "submodules/pbrt-parser"]
+	path = submodules/pbrt-parser
+	url = https://github.com/ingowald/pbrt-parser
+[submodule "submodules/ptex"]
+	path = submodules/ptex
+	url = https://github.com/wdas/ptex.git
+[submodule "submodules/owl"]
+	path = submodules/owl
+	url = https://github.com/owl-project/owl

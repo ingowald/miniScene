@@ -1,92 +1,92 @@
 # miniScene
 
-A mini-app like scene graph with binary reader/writer. Has a simple material model, one level of instances, and objects with one or more triangle meshes. Comes with several importers/converters, but can be built with only minimal dependencies.
+A mini-app like scene graph with binary reader/writer. Has a simple
+material model, one level of instances, and objects with one or more
+triangle meshes. Comes with several importers/converters, but can be
+built with only minimal dependencies.
 
-## Getting started
+# Dependencies
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Currently this projects builds on top of OWL (for the convenience of
+the OWL vector/math library, and for a sample model viewer for
+miniScene models that this project contains). This means this project 
+currently does depend on:
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- OptiX (7.0 or newer)
+- CUDA (11.0 or newer)
 
-## Add your files
+This project also uses several other libraries that it pulls in via
+submodules.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+# Dealing with the Disney "island" (aka "Moana") Model and Baking Ptex Textures
+
+One of the reasons I developed this library was that I needed to be
+able to parse certain PBRT-formated files --- in particular, the PBRT
+`landscape` and Disney `island` (aka `Moana`) model --- into my own
+renderers. In particular for `island`, that also required deadling
+with the PTex textures that the model comes with, but which aren't
+easily supported on GPUs.  To handle those, this library contains a
+ptex 'baking' tool that bakes these textures into a texture (a texture
+atlas, to be exact) such that every patch in the input mesh gets NxN
+bilinearly interpolated texels assigned to it (with N being a cmdline
+argumnet).
+
+To do this conversion and baking step:
+
+- first, download moana, using the base and PBRT packages, as well as textures
+
+- second, convert island.pbrt to pbf using the `pbrt2pbf` tool that
+  comes with this library. This is a "binary" version of that model in
+  the `pbrtParser` format (but still contains many unparsed things
+  like ptx texture names as plain filenames)
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/ingowald/miniScene.git
-git branch -M main
-git push -uf origin main
+./pbrt2pbf ~/models/island/pbrt/mountains.pbrt -o /tmp/mountain.pbf
 ```
 
-## Integrate with your tools
+- third, convert the file to 'mini', with *embedding* (but not yet *baked* ptex). In this
+version of the model all the ptex binary data is directly embedded in the mini file, but
+still in ptex format
 
-- [ ] [Set up project integrations](https://gitlab.com/ingowald/miniScene/-/settings/integrations)
+```
+./pbf2mini /tmp/mountain.pbf -o /tmp/mountain-embedded.mini -t ~/models/island/textures/
+```
 
-## Collaborate with your team
+- finally, use the mini ptex baking tool to bake the ptex into regular NxN per patch textures. This assumes that the meshes with ptex on them actually use two triangles per quad - as is the case for the disney island model, but maybe not for all ptex based models. This baking step will bake the ptex into regular textures, and add appropriate texture coordinates to the triangle mesh(es) that use those textures. Note this will increase the size of the model since the vertices with baked texture atlas coordinates will no longer be sharable across neighboring triangles.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```
+./miniBakePtex /tmp/mountain-embedded.mini --res 16 -o mountain.mini
+```
+	 
+ This final `mountain.mini` file should be a model that contains only triangle meshes with 'plain' textures on them. E.g.:
+ 
+```
+ wald@vk:~/Projects/miniScene/bin$ ./miniInfo ./mountain.mini 
+loading mini file from ./mountain.mini
+#miniInfo: scene loaded.
+----
+num instances		:   1.14M	(1135547)
+num objects		:   36
+----
+num *unique* meshes	:   2.37K	(2368)
+num *unique* triangles	:   14.38M	(14380782)
+num *unique* vertices	:   28.76M	(28761564)
+----
+num *actual* meshes	:   2.36M	(2356231)
+num *actual* triangles	:   13.54G	(13537454354)
+num *actual* vertices	:   27.07G	(27074908708)
+----
+num textures		:   8
+ - num *ptex* textures	:   0
+ - num *image* textures	:   9
+total size of textures	:   110.10M	(110100480)
+ - #bytes in ptex	:   0
+ - #byte in texels	:   110.10M	(110100480)
+num materials		:   30
+num quad lights		:   0
+num dir lights		:   0
+has env-map light?	: no
 
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+```
+(note the main island model does have a env map, and is much larger; this is only the mountain
+geometry---I was running this on my laptop)
