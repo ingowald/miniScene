@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2018-2021 Ingo Wald                                            //
+// Copyright 2018-2022 Ingo Wald                                            //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,8 +19,6 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "samples/advanced/optix7course/tiny_obj_loader.h"
 
-// #define STB_IMAGE_WRITE_IMPLEMENTATION 1
-// #include "3rdParty/stb_image/stb/stb_image_write.h"
 #define STB_IMAGE_IMPLEMENTATION 1
 #include "3rdParty/stb_image//stb/stb_image.h"
 

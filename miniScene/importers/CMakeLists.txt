@@ -55,6 +55,17 @@ target_link_libraries(obj2mini
   miniScene
   )
 
+# ==================================================================
+# imports OBJ models via the happly parser (in submodules/)
+# ==================================================================
+add_executable(ply2mini
+  ply2mini.cpp
+  )
+target_link_libraries(ply2mini
+  miniScene
+  )
+target_include_directories(ply2mini PUBLIC ${PROJECT_SOURCE_DIR}/submodules/)
+
 
 # ==================================================================
 # scene tool to bake out moana pbrt+ptex into "baked ptex textures",
