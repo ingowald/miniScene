@@ -58,9 +58,15 @@ namespace mini {
                 << OWL_TERMINAL_DEFAULT << std::endl;
       Scene::SP scene = Scene::load(inFileName);
       for (auto inst : scene->instances)
-        out->instances.push_back(inst);
+        if (scene->instances.size() == 1 &&
+            scene->instances[0]->xfm == affine3f() &&
+            inst->xfm == affine3f()) {
+          for (auto mesh : inst->object->meshes)
+            scene->instances[0]->object->meshes.push_back(mesh);
+        } else
+          out->instances.push_back(inst);
     }
-
+    
     out->save(outFileName);
     std::cout << OWL_TERMINAL_LIGHT_GREEN
               << "#miniInfo: merged scene saved."
