@@ -104,10 +104,12 @@ namespace mini {
     inline Instance(Object::SP object = 0, const affine3f &xfm = affine3f())
       : object(object), xfm(xfm)
     {}
-    box3f getBounds() const;
-      inline static SP create(Object::SP object = 0, const affine3f &xfm = affine3f())
+
+    inline static SP create(Object::SP object = 0, const affine3f &xfm = affine3f())
     { return std::make_shared<Instance>(object,xfm); }
 
+    box3f getBounds() const;
+    
     affine3f   xfm;
     Object::SP object;
   };
@@ -160,7 +162,12 @@ namespace mini {
   struct Scene {
     typedef std::shared_ptr<Scene> SP;
 
-    inline static SP create() { return std::make_shared<Scene>(); }
+    Scene(const std::vector<Instance::SP> &instances={})
+      : instances(instances)
+    {}
+    
+    inline static SP create(const std::vector<Instance::SP> &instances={})
+    { return std::make_shared<Scene>(instances); }
     
     box3f getBounds() const;
     
@@ -171,10 +178,6 @@ namespace mini {
     std::vector<DirLight>   dirLights;
     EnvMapLight::SP         envMapLight;
     
-    /*! list of all instances. if this is a partial scene this array
-      will *still* contain the same number of entries as the scene
-      it was extracted from, just some of its elements might be
-      empty */
     std::vector<Instance::SP> instances;
   };
 

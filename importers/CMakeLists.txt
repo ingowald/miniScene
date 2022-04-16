@@ -56,7 +56,7 @@ target_link_libraries(obj2mini
   )
 
 # ==================================================================
-# imports OBJ models via the happly parser (in submodules/)
+# imports PLY models via the happly parser (in submodules/)
 # ==================================================================
 add_executable(ply2mini
   ply2mini.cpp
@@ -65,6 +65,18 @@ target_link_libraries(ply2mini
   miniScene
   )
 target_include_directories(ply2mini PUBLIC ${PROJECT_SOURCE_DIR}/submodules/)
+
+# ==================================================================
+# imports (my own) "binmesh" models of the form "size_t numVtx; vec3f
+# vtx[numVtx]; size_t numIdx; vec3i idx[numIdx]".
+# ==================================================================
+add_executable(binmesh2mini
+  binmesh2mini.cpp
+  )
+target_link_libraries(binmesh2mini
+  miniScene
+  )
+target_include_directories(binmesh2mini PUBLIC ${PROJECT_SOURCE_DIR}/submodules/)
 
 
 # ==================================================================
