@@ -64,7 +64,8 @@ int main(int ac, char **av)
   in.read((char*)&count,sizeof(count));
   mesh->indices.resize(count);
   in.read((char*)mesh->indices.data(),count*sizeof(vec3f));
-
+  mesh->material = Material::create();
+  
   Object::SP object = Object::create({mesh});
   Scene::SP scene = Scene::create({Instance::create(object)});
   std::cout << OWL_TERMINAL_DEFAULT

@@ -35,7 +35,7 @@ namespace mini {
     vec3f emission     { 0.f,0.f,0.f };
     /* default base color is what every object _without_ a proper base
        color in the input will get to lok like */
-    vec3f baseColor    { .7f,.7f,.7f };
+    vec3f baseColor    { .5f,.5f,.5f };
     float metallic     { 0.f };
     float roughness    { 0.f };
     float transmission { 0.f };
