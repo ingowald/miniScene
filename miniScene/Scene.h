@@ -81,8 +81,13 @@ namespace mini {
   struct Object {
     typedef std::shared_ptr<Object> SP;
     
-    inline static SP create() { return std::make_shared<Object>(); }
-      
+    inline static SP create(const std::vector<Mesh::SP> &meshes={})
+    { return std::make_shared<Object>(meshes); }
+
+    Object(const std::vector<Mesh::SP> &meshes={})
+      : meshes(meshes)
+    {}
+    
     box3f getBounds() const;
     
     /*! list of all geometries in this object. if this object is in
