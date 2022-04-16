@@ -47,9 +47,25 @@ add_subdirectory(submodules/pbrt-parser EXCLUDE_FROM_ALL)
 add_subdirectory(submodules/ptex EXCLUDE_FROM_ALL)
 
 # ------------------------------------------------------------------
-# cuda tools for pbrt scene
+# the miniScene library itself
 # ------------------------------------------------------------------
 add_subdirectory(miniScene)
-add_dependencies(miniScene pbrt2pbf)
+
+# ------------------------------------------------------------------
+# various importers from other file formats
+# ------------------------------------------------------------------
+add_subdirectory(importers)
+# add this as a dependecy, to force its building even though the
+# pbrtparser is includedvia EXCLUDE_FROM_ALL
+add_dependencies(pbf2mini pbrt2pbf)
+
+# ------------------------------------------------------------------
+# various small mini-apps to inscpect/mofidy miniScene's
+# ------------------------------------------------------------------
+add_subdirectory(apps)
+
+
+
+
 
 

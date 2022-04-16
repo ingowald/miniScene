@@ -103,7 +103,8 @@ namespace miniViewer {
         for (auto mesh : object->meshes)
           geoms.push_back(createMesh(mesh));
         
-        group = owlTrianglesGeomGroupCreate(owl,geoms.size(),geoms.data());
+        group = owlTrianglesGeomGroupCreate(owl,geoms.size(),geoms.data(),
+                                            OPTIX_BUILD_FLAG_ALLOW_RANDOM_VERTEX_ACCESS);
         owlGroupBuildAccel(group);
         createdObjects[object] = group;
       }
