@@ -87,7 +87,7 @@ namespace miniViewer {
         : owlDeviceBufferCreate(owl,OWL_FLOAT2,
                                 mesh->texcoords.size(),
                                 mesh->texcoords.data());
-      
+
       owlTrianglesSetVertices(geom,vertexBuffer,
                               mesh->vertices.size(),sizeof(vec3f),0);
       owlTrianglesSetIndices(geom,indexBuffer,
@@ -97,15 +97,16 @@ namespace miniViewer {
 
     OWLGroup createObject(Object::SP object)
     {
-      OWLGroup group = createdObjects[object];
+      OWLGroup group = createdObjects[object];        
       if (!group) {
         std::vector<OWLGeom> geoms;
         for (auto mesh : object->meshes)
           geoms.push_back(createMesh(mesh));
         
         group = owlTrianglesGeomGroupCreate
-          (owl,geoms.size(),geoms.data(),
-           OPTIX_BUILD_FLAG_ALLOW_RANDOM_VERTEX_ACCESS | OPTIX_BUILD_FLAG_ALLOW_COMPACTION);
+          (owl,geoms.size(),geoms.data()
+           ,OPTIX_BUILD_FLAG_ALLOW_RANDOM_VERTEX_ACCESS | OPTIX_BUILD_FLAG_ALLOW_COMPACTION
+           );
         owlGroupBuildAccel(group);
         createdObjects[object] = group;
       }

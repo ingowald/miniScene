@@ -32,6 +32,8 @@ namespace mini {
   {
     std::vector<std::string> inFileNames;
     std::string outFileName = "";
+    bool mergeStatic = true;
+            
     if (ac == 1) usage();
     for (int i=1;i<ac;i++) {
       std::string arg = av[i];
@@ -39,6 +41,8 @@ namespace mini {
         inFileNames.push_back(arg);
       else if (arg == "-o")
         outFileName = av[++i];
+      else if (arg == "--no-merge-static")
+        mergeStatic = false;
       else if (arg == "-h" || arg == "--help")
         usage();
       else
@@ -57,14 +61,22 @@ namespace mini {
                 << "loading mini file from " << inFileName 
                 << OWL_TERMINAL_DEFAULT << std::endl;
       Scene::SP scene = Scene::load(inFileName);
-      for (auto inst : scene->instances)
-        if (scene->instances.size() == 1 &&
-            scene->instances[0]->xfm == affine3f() &&
-            inst->xfm == affine3f()) {
-          for (auto mesh : inst->object->meshes)
-            scene->instances[0]->object->meshes.push_back(mesh);
-        } else
-          out->instances.push_back(inst);
+      for (auto inst : scene->instances) {
+        if (mergeStatic && inst->xfm == affine3f()) {
+          if (out->instances.empty()) {
+            out->instances.push_back(inst);
+            continue;
+          }
+          
+          if (out->instances.size() == 1 && out->instances[0]->xfm == affine3f()) {
+            for (auto mesh : inst->object->meshes)
+              out->instances[0]->object->meshes.push_back(mesh);
+            continue;
+          }
+        }
+        // fall-through: either merging is disabled, or could not merge:
+        out->instances.push_back(inst);
+      }
     }
     
     out->save(outFileName);
