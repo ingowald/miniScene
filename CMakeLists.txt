@@ -25,6 +25,13 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
   cmake_policy(SET CMP0104 NEW)
 endif()
 
+if (NOT (${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR}))
+  set(MINI_IS_SUBPROJECT ON)
+else()
+  set(MINI_IS_SUBPROJECT OFF)
+endif()
+
+
 # ------------------------------------------------------------------
 # general cmake project configs
 # ------------------------------------------------------------------

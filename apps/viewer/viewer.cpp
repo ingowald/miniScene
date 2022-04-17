@@ -105,7 +105,7 @@ namespace miniViewer {
         
         group = owlTrianglesGeomGroupCreate
           (owl,geoms.size(),geoms.data(),
-           OPTIX_BUILD_FLAG_ALLOW_RANDOM_VERTEX_ACCESS);
+           OPTIX_BUILD_FLAG_ALLOW_RANDOM_VERTEX_ACCESS | OPTIX_BUILD_FLAG_ALLOW_COMPACTION);
         owlGroupBuildAccel(group);
         createdObjects[object] = group;
       }
