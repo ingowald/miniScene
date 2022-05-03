@@ -89,7 +89,9 @@ target_link_libraries(miniReplicate
 # importers from pbrt, obj, and whatever else gets added later
 # ------------------------------------------------------------------
 
+if (MINI_BUILD_IMPORTERS)
 add_subdirectory(importers)
+endif()
 
 # ------------------------------------------------------------------
 # a viewer, to sanity test ...

@@ -41,17 +41,17 @@ namespace mini {
         } else if (arg == "--not-flat") {
           flat = false;
         } else if (arg == "-n") {
-          numReplications = std::atof(av[++i]);
+          numReplications = std::atoi(av[++i]);
         } else if (arg == "-s") {
           scale = std::atof(av[++i]);
         } else if (arg == "-vx") {
-          vx.x = std::atof(av[++i]);
-          vx.y = std::atof(av[++i]);
-          vx.z = std::atof(av[++i]);
+          vx.x = (float)std::atof(av[++i]);
+          vx.y = (float)std::atof(av[++i]);
+          vx.z = (float)std::atof(av[++i]);
         } else if (arg == "-vy") {
-          vy.x = std::atof(av[++i]);
-          vy.y = std::atof(av[++i]);
-          vy.z = std::atof(av[++i]);
+          vy.x = (float)std::atof(av[++i]);
+          vy.y = (float)std::atof(av[++i]);
+          vy.z = (float)std::atof(av[++i]);
         } else if (arg[0] != '-')
           inFileName = arg;
         else
