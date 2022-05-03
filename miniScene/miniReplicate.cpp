@@ -19,6 +19,8 @@
 #include "miniScene/Scene.h"
 #include "miniScene/Serialized.h"
 #include <fstream>
+#include <random>
+#include <cmath>
 
 namespace mini {
   namespace scene {
@@ -43,7 +45,7 @@ namespace mini {
         } else if (arg == "-n") {
           numReplications = std::atoi(av[++i]);
         } else if (arg == "-s") {
-          scale = std::atof(av[++i]);
+          scale = (float)std::atof(av[++i]);
         } else if (arg == "-vx") {
           vx.x = (float)std::atof(av[++i]);
           vx.y = (float)std::atof(av[++i]);
@@ -69,16 +71,22 @@ namespace mini {
                 << OWL_TERMINAL_DEFAULT << std::endl;
 
       Scene::SP out = std::make_shared<Scene>();
-      srand48(128);
+      //srand48(128);
+
       vec3f center = in->getBounds().center();
+      std::random_device rd;  // Will be used to obtain a seed for the random number engine
+      std::mt19937 re(rd());
+      std::uniform_real_distribution<float> rng(0.f, 1.f);
+
+
       for (int i=0;i<numReplications;i++) {
-        float u = drand48();
-        float v = drand48();
-        float r = drand48();
+        float u = rng(re);
+        float v = rng(re);
+        float r = rng(re);
         vec3f N = normalize(cross(vx,vy));
         affine3f xfm;
         xfm = xfm * affine3f::translate(center + u*vx + v*vy);
-        xfm = xfm * affine3f::rotate(N,r*2*M_PI);
+        xfm = xfm * affine3f::rotate(N,float(r*2*M_PI));
         xfm = xfm * affine3f::scale(scale);
         xfm = xfm * affine3f::translate(-center);
 
