@@ -15,7 +15,7 @@
 # ======================================================================== #
 
 cmake_policy(SET CMP0048 NEW)
-project(MiniScene VERSION 0.0.1 LANGUAGES C CXX CUDA)
+project(MiniScene VERSION 0.0.1 LANGUAGES C CXX)
 
 cmake_minimum_required(VERSION 3.16)
 set(CMAKE_CXX_STANDARD 11)
@@ -31,6 +31,23 @@ else()
   set(MINI_IS_SUBPROJECT OFF)
 endif()
 
+# ------------------------------------------------------------------
+# check if we have CUDA
+# ------------------------------------------------------------------
+option(MINI_DISABLE_CUDA "Disable CUDA" OFF)
+
+include(CheckLanguage)
+if (MINI_DISABLE_CUDA)
+  set(MINI_HAVE_CUDA OFF)
+else()
+  check_language(CUDA)
+  if (CMAKE_CUDA_COMPILER)
+    set(MINI_HAVE_CUDA ON)
+    enable_language(CUDA)
+  else()
+    set(MINI_HAVE_CUDA OFF)
+  endif()
+endif()
 
 # ------------------------------------------------------------------
 # general cmake project configs
@@ -41,7 +58,15 @@ include(cmake/FindOpenEXR.cmake)
 # ------------------------------------------------------------------
 # owl:
 # ------------------------------------------------------------------
-add_subdirectory(submodules/owl EXCLUDE_FROM_ALL)
+if (MINI_HAVE_CUDA)
+  add_target(mini_owl_common)
+  target_include_directories(mini_owl_common
+    PUBLIC
+    submodules/owl/owl/include/owl/common
+    )
+else()
+  add_subdirectory(submodules/owl EXCLUDE_FROM_ALL)
+endif()
 
 # ------------------------------------------------------------------
 # pbrtParser
@@ -67,7 +92,7 @@ add_subdirectory(importers)
 add_dependencies(pbf2mini pbrt2pbf)
 
 # ------------------------------------------------------------------
-# various small mini-apps to inscpect/mofidy miniScene's
+# various small mini-apps to inscpect/modify miniScenes
 # ------------------------------------------------------------------
 add_subdirectory(apps)
 
