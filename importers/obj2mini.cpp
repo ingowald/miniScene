@@ -17,10 +17,10 @@
 #include "miniScene/Scene.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
-#include "samples/advanced/optix7course/tiny_obj_loader.h"
+#include "tiny_obj_loader.h"
 
 #define STB_IMAGE_IMPLEMENTATION 1
-#include "3rdParty/stb_image//stb/stb_image.h"
+#include "stb/stb_image.h"
 
 //std
 #include <set>

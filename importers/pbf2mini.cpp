@@ -23,7 +23,7 @@
 #include <map>
 #include <fstream>
 #define STB_IMAGE_IMPLEMENTATION 1
-#include "3rdParty/stb_image//stb/stb_image.h"
+#include "stb/stb_image.h"
 #if HAVE_OPENEXR
 #include <OpenEXR/ImfNamespace.h>
 # include "OpenEXR/ImfArray.h"

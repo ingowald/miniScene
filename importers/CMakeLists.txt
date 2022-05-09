@@ -95,7 +95,6 @@ target_link_libraries(miniBakePtex
   miniScene
   pbrtParser
   Ptex_static
-  owl::owl
   )
 
 

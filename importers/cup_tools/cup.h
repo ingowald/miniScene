@@ -21,8 +21,6 @@
 #include "owl/common/parallel/parallel_for.h"
 // the pbrt parser scene graph we're operating on
 #include "pbrtParser/Scene.h"
-// and cuda ...
-#include <cuda_runtime_api.h>
 #include "owl/common/math/box.h"
 
 namespace cup {

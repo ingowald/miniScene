@@ -22,6 +22,7 @@
 #include <deque>
 #include <queue>
 #include "Ptexture.h"
+#include <unistd.h>
 
 namespace mini {
 

@@ -74,8 +74,9 @@ else()
     )
   target_include_directories(mini_owl_common
     INTERFACE
-    submodules/owl/owl/include/owl/common
+    submodules/owl/owl/include/
     )
+  add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
 endif()
 
 # ------------------------------------------------------------------
