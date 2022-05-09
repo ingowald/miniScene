@@ -259,18 +259,18 @@ extern "C" int main(int argc, char **argv)
         inFileName = arg;
       } 
       else if (arg == "-fovy") {
-        cmdline.camera.fovy = std::atof(argv[++i]);
+        cmdline.camera.fovy = (float)std::atof(argv[++i]);
       }
       else if (arg == "--camera") {
-        cmdline.camera.vp.x = std::atof(argv[++i]);
-        cmdline.camera.vp.y = std::atof(argv[++i]);
-        cmdline.camera.vp.z = std::atof(argv[++i]);
-        cmdline.camera.vi.x = std::atof(argv[++i]);
-        cmdline.camera.vi.y = std::atof(argv[++i]);
-        cmdline.camera.vi.z = std::atof(argv[++i]);
-        cmdline.camera.vu.x = std::atof(argv[++i]);
-        cmdline.camera.vu.y = std::atof(argv[++i]);
-        cmdline.camera.vu.z = std::atof(argv[++i]);
+        cmdline.camera.vp.x = (float)std::atof(argv[++i]);
+        cmdline.camera.vp.y = (float)std::atof(argv[++i]);
+        cmdline.camera.vp.z = (float)std::atof(argv[++i]);
+        cmdline.camera.vi.x = (float)std::atof(argv[++i]);
+        cmdline.camera.vi.y = (float)std::atof(argv[++i]);
+        cmdline.camera.vi.z = (float)std::atof(argv[++i]);
+        cmdline.camera.vu.x = (float)std::atof(argv[++i]);
+        cmdline.camera.vu.y = (float)std::atof(argv[++i]);
+        cmdline.camera.vu.z = (float)std::atof(argv[++i]);
       }
       else if (arg == "-win" || arg == "--size") {
         cmdline.windowSize.x = std::atoi(argv[++i]);

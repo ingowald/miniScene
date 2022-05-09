@@ -80,7 +80,7 @@ target_link_libraries(miniReplicate
 # a trivially simple owl-based viewer, to sanity test ... don't expct
 # much, this only shows flat triangles
 # -----------------------------------------------------------------------------
-if (MINI_BUILD_VIEWER)
+if (MINI_HAVE_CUDA)
   add_subdirectory(viewer)
 endif()
 

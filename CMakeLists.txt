@@ -21,6 +21,7 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(MINI_BUILD_IMPORTERS "Build Importers? (needs more dependencies)" ON)
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
   cmake_policy(SET CMP0104 NEW)
 endif()
@@ -38,6 +39,7 @@ option(MINI_DISABLE_CUDA "Disable CUDA" OFF)
 
 include(CheckLanguage)
 if (MINI_DISABLE_CUDA)
+  message(STATUS "#mini: Disabling CUDA support upon user request")
   set(MINI_HAVE_CUDA OFF)
 else()
   check_language(CUDA)
@@ -53,30 +55,42 @@ endif()
 # general cmake project configs
 # ------------------------------------------------------------------
 include(cmake/configure_build_type.cmake)
+if (MINI_BUILD_IMPORTERS)
 include(cmake/FindOpenEXR.cmake)
+endif()
 
 # ------------------------------------------------------------------
 # owl:
 # ------------------------------------------------------------------
 if (MINI_HAVE_CUDA)
-  add_target(mini_owl_common)
+  add_subdirectory(submodules/owl EXCLUDE_FROM_ALL)
+  add_library(mini_owl_common
+    INTERFACE
+    )
+  target_link_libraries(mini_owl_common INTERFACE owl::owl)
+else()
+  add_library(mini_owl_common
+    INTERFACE
+    )
   target_include_directories(mini_owl_common
-    PUBLIC
+    INTERFACE
     submodules/owl/owl/include/owl/common
     )
-else()
-  add_subdirectory(submodules/owl EXCLUDE_FROM_ALL)
 endif()
 
 # ------------------------------------------------------------------
 # pbrtParser
 # ------------------------------------------------------------------
 add_subdirectory(submodules/pbrt-parser EXCLUDE_FROM_ALL)
+message(STATUS "pbrtParser configured")
 
 # ------------------------------------------------------------------
 # disney ptex for importer
 # ------------------------------------------------------------------
+if (MINI_BUILD_IMPORTERS)
 add_subdirectory(submodules/ptex EXCLUDE_FROM_ALL)
+message(STATUS "PTex configured")
+endif()
 
 # ------------------------------------------------------------------
 # the miniScene library itself
