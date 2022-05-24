@@ -21,8 +21,6 @@
 # has.
 # ------------------------------------------------------------------
 add_library(miniScene STATIC
-  LocalScene.cpp
-  SplitSpecs.cpp
   Scene.cpp
   Serialized.cpp
   )
