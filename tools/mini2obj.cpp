@@ -68,7 +68,7 @@ namespace mini {
           obj << "v " << v.x << " " << v.y << " " << v.z << std::endl;
         }
 
-        int v0 = mesh->vertices.size();
+        int v0 = (int)mesh->vertices.size();
         for (int i=0;i<mesh->indices.size();i++) {
           vec3i v = mesh->indices[i];
           obj << "f " << (v.x-v0) << " " << (v.y-v0) << " " << (v.z-v0) << std::endl;

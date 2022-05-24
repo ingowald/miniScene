@@ -257,10 +257,10 @@ namespace mini {
     size_t numObjects = io::readElement<size_t>(in);
     std::vector<Object::SP> objects;
     for (int objID=0;objID<numObjects;objID++) {
-      int numMeshes = io::readElement<size_t>(in);
+      size_t numMeshes = io::readElement<size_t>(in);
       Object::SP object = std::make_shared<Object>();
 
-      for (int meshID=0;meshID<numMeshes;meshID++) {
+      for (int meshID=0;meshID<(int)numMeshes;meshID++) {
         int isValid = io::readElement<int>(in);
         if (!isValid) {
           continue;
