@@ -40,19 +40,6 @@ namespace mini {
     return bounds;
   }
     
-  box3f  Mesh::getPrimBounds(size_t primID,
-                             const AffineSpace3f &xfm) const
-  {
-    const vec3i idx = indices[primID];
-    const vec3f A = xfmPoint(xfm,vertices[idx.x]);
-    const vec3f B = xfmPoint(xfm,vertices[idx.y]);
-    const vec3f C = xfmPoint(xfm,vertices[idx.z]);
-    return box3f()
-      .including(A)
-      .including(B)
-      .including(C);
-  }
-
   box3f Object::getBounds() const
   {
     box3f bounds;
