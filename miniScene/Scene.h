@@ -51,11 +51,20 @@ namespace mini {
   struct Material {
     typedef std::shared_ptr<Material> SP;
 
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
     Material() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
     Material(const Material &) = default;
 
+    /*! constructs a new Material and returns a Material::SP to that
+        created material */
     inline static SP create() { return std::make_shared<Material>(); }
     
+    /*! constructs a new Material that is a identical clone of the
+        current material */
     SP clone() const { return std::make_shared<Material>(*this); }
     
     bool isEmissive() const { return reduce_max(emission) != 0.f; }
@@ -68,8 +77,21 @@ namespace mini {
     float roughness    { 0.f };
     float transmission { 0.f };
     float ior          { 1.45f };
-    
+
+    /*! color texture to be applied to the surface(s) that this
+        material is being applied to; may be empty. If specified, this
+        is supposed to replace the `baseColor` value */
     std::shared_ptr<Texture> colorTexture;
+    
+    /*! alpha texture to be applied to the surface(s) that this
+        material is being applied to; may be empty. If specified, the
+        'w' coordinate of the tex2D<float4> sample from this texture
+        is supposed to replace the `transmission` value. Note that for
+        some models this texture _can_ absoltely be the same texture
+        as the colorTexture, in which case this will be a float4
+        texturew with the xyz value going in as color value, and the
+        'w' value as alpha value; other models may use a float3
+        texture for color, and a separate float1 texture for alpha. */
     std::shared_ptr<Texture> alphaTexture;
   };
 
@@ -198,7 +220,11 @@ namespace mini {
     std::string name;
   };
 #endif
-  
+
+  /*! A "environment light" texture that in many models represents
+      some kind of scanned sky dome. Is often of HDR float4 type, and
+      _may_ contain a transform to properly align the scanned texture
+      to the model */
   struct EnvMapLight {
     typedef std::shared_ptr<EnvMapLight> SP;
 
