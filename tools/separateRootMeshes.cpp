@@ -73,22 +73,22 @@ namespace mini {
     if (outFileName.empty())
       throw std::runtime_error("no output file specified (-o)");
 
-    std::cout << MINI_TERMINAL_LIGHT_BLUE
+    std::cout << MINI_COLOR_LIGHT_BLUE
               << "loading mini file from " << inFileName 
-              << MINI_TERMINAL_DEFAULT << std::endl;
+              << MINI_COLOR_DEFAULT << std::endl;
     Scene::SP scene = Scene::load(inFileName);
-    std::cout << MINI_TERMINAL_LIGHT_GREEN
+    std::cout << MINI_COLOR_LIGHT_GREEN
               << "#miniSeparateRootMeshes: scene loaded."
-              << MINI_TERMINAL_DEFAULT << std::endl;
+              << MINI_COLOR_DEFAULT << std::endl;
 
     Scene::SP separated = separateRootMeshes(scene);
-    std::cout << MINI_TERMINAL_LIGHT_BLUE
+    std::cout << MINI_COLOR_LIGHT_BLUE
               << "done separating; saving to " << outFileName 
-              << MINI_TERMINAL_DEFAULT << std::endl;
+              << MINI_COLOR_DEFAULT << std::endl;
     separated->save(outFileName);
-    std::cout << MINI_TERMINAL_LIGHT_GREEN
+    std::cout << MINI_COLOR_LIGHT_GREEN
               << "#miniSeparateRootMeshes: scene saved."
-              << MINI_TERMINAL_DEFAULT << std::endl;
+              << MINI_COLOR_DEFAULT << std::endl;
   }
   
 } // ::mini
