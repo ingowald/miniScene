@@ -85,9 +85,9 @@ else()
     )
   if (MINI_BUILD_IMPORTERS)
     add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
-    target_link_libraries(miniScene
+    target_link_libraries(
       mini_owl_common
-      PUBLIC
+      INTERFACE
       stb_image
   )
   endif()

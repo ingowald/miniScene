@@ -15,20 +15,69 @@
 // ======================================================================== //
 
 #include "miniScene/Scene.h"
+
+//std
+#include <set>
 #include <fstream>
 
-using namespace mini;
+namespace mini {
+    
+    Scene::SP loadSTL(const std::string &fileName)
+    {
+      std::ifstream in(fileName,std::ios::binary);
+      if (!in) throw std::runtime_error("could not open '"+fileName+"'");
+      char header[80];
+      in.read(header,sizeof(header));
+      if (!in) throw std::runtime_error("could not read STL header!?");
+
+      header[79] = 0;
+      if (strstr(header,"solid"))
+        throw std::runtime_error("this STL file looks like a *ASCII* STL file; "
+                                 "yet this parser only supports binary STL for now");
+      
+      
+      int numTris = -1;
+      in.read((char*)&numTris,sizeof(numTris));
+      if (!in) throw std::runtime_error("could not read STL tri count!?");
+
+      Mesh::SP mesh = Mesh::create();
+      for (int triID=0;triID<numTris;triID++) {
+        struct { vec3f n, v[3]; } tri;
+        in.read((char*)&tri,sizeof(tri));
+        if (!in) throw std::runtime_error("could not read triangle from STL file");
+
+        char unused[2];
+        in.read(unused,sizeof(unused));
+
+        vec3i indices;
+        std::map<vec3f,int> knownVertices;
+        for (int i=0;i<3;i++) {
+          auto thisVtx = tri.v[i];
+          if (knownVertices.find(thisVtx) == knownVertices.end()) {
+            knownVertices[thisVtx] = mesh->vertices.size();
+            mesh->vertices.push_back(thisVtx);
+          }
+          indices[i] = knownVertices[thisVtx];
+        }
+        mesh->indices.push_back(indices);
+      }
+      // fclose(out);
+      Object::SP object = Object::create({mesh});
+      Instance::SP inst = Instance::create(object);
+      Scene::SP scene = Scene::create({inst});
+
+      return scene;
+    }
+
+} // ::mini
+
 
 void usage(const std::string &msg)
 {
   if (!msg.empty()) std::cerr << std::endl << "***Error***: " << msg << std::endl << std::endl;
-  std::cout << "Usage: ./binmesh2mini in.binmesh -o out.mini" << std::endl;
-  std::cout << "Imports a 'binmesh' formatted mesh into a mini scene.\n";
-  std::cout << "Each binmesh is a binary file with the following structure:\n";
-  std::cout << "  size_t numVertices\n";
-  std::cout << "  vec3f  vertices[numVertices]\n";
-  std::cout << "  size_t numIndices\n";
-  std::cout << "  vec3i  indices[numIndices]\n";
+  std::cout << "Usage: ./obj2brix inFile.pbf -o outfile.brx" << std::endl;
+  std::cout << "Imports a STL+MTL file into brix's scene format.\n";
+  std::cout << "(from where it can then be partitioned and/or rendered)\n";
   exit(msg != "");
 }
 
@@ -49,25 +98,13 @@ int main(int ac, char **av)
     
   if (inFileName.empty()) usage("no input file name specified");
   if (outFileName.empty()) usage("no output file name base specified");
-  
+
   std::cout << MINI_COLOR_BLUE
-            << "loading binmesh file from " << inFileName
+            << "loading STL model from " << inFileName
             << MINI_COLOR_DEFAULT << std::endl;
-  
-  Mesh::SP mesh = Mesh::create();
-  
-  std::ifstream in(inFileName,std::ios::binary);
-  size_t count;
-  in.read((char*)&count,sizeof(count));
-  mesh->vertices.resize(count);
-  in.read((char*)mesh->vertices.data(),count*sizeof(vec3f));
-  in.read((char*)&count,sizeof(count));
-  mesh->indices.resize(count);
-  in.read((char*)mesh->indices.data(),count*sizeof(vec3f));
-  mesh->material = Material::create();
-  
-  Object::SP object = Object::create({mesh});
-  Scene::SP scene = Scene::create({Instance::create(object)});
+
+  mini::Scene::SP scene = mini::loadSTL(inFileName);
+    
   std::cout << MINI_COLOR_DEFAULT
             << "done importing; saving to " << outFileName
             << MINI_COLOR_DEFAULT << std::endl;

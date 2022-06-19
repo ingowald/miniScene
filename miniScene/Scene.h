@@ -99,7 +99,9 @@ namespace mini {
   struct Mesh {
     typedef std::shared_ptr<Mesh> SP;
     
-    Mesh(Material::SP material = {}) : material(material) {}
+    Mesh(Material::SP material = {})
+      : material(material ? material : Material::create())
+    {}
 
     inline static SP create(Material::SP material = {}) { return std::make_shared<Mesh>(material); }
     

@@ -56,6 +56,16 @@ target_link_libraries(obj2mini
   )
 
 # ==================================================================
+# imports STL files
+# ==================================================================
+add_executable(stl2mini
+  stl2mini.cpp
+  )
+target_link_libraries(stl2mini
+  miniScene
+  )
+
+# ==================================================================
 # imports PLY models via the happly parser (in submodules/)
 # ==================================================================
 add_executable(ply2mini
