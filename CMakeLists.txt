@@ -89,8 +89,8 @@ message(STATUS "pbrtParser configured")
 # disney ptex for importer
 # ------------------------------------------------------------------
 if (MINI_BUILD_IMPORTERS)
-add_subdirectory(submodules/ptex EXCLUDE_FROM_ALL)
-message(STATUS "PTex configured")
+  add_subdirectory(submodules/ptex EXCLUDE_FROM_ALL)
+  message(STATUS "PTex configured")
 endif()
 
 # ------------------------------------------------------------------
