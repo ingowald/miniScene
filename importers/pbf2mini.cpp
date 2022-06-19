@@ -538,7 +538,7 @@ Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape, const std::string &key)
 
     Instance::SP ourInst = std::make_shared<Instance>();
     ourInst->object = object;
-    ourInst->xfm   = (const owl::affine3f &)inst->xfm;
+    ourInst->xfm   = (const affine3f &)inst->xfm;
     scene->instances.push_back(ourInst);
   }
 
