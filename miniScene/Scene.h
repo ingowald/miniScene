@@ -16,18 +16,55 @@
 
 #pragma once
 
-#include "Material.h"
+#include "miniScene/common.h"
 
 namespace mini {
     
+  /*! a object for storing texture data; allowing to store both image
+      textures and raw data for 'embedded' ptex texture (where
+      'embedded' means that this stores the same data as the .ptex
+      file, but without any claim to being able to do something with
+      it) */
+  struct Texture {
+    typedef std::shared_ptr<Texture> SP;
+
+    static SP create() { return std::make_shared<Texture>(); }
+      
+    typedef enum {
+                  UNDEFINED=0, EMBEDDED_PTEX, FLOAT4, FLOAT1, RGBA_UINT8, BYTE4=RGBA_UINT8, 
+    } Format;
+      
+    /* for embedded ptex, size is always {0,0}, since data vector
+       containst the raw ptex fiel content; for all others it is the
+       number of pixels in x and y */
+    vec2i  size    { 0, 0 };
+    Format format  { UNDEFINED };
+    std::vector<uint8_t> data;
+  };
+
+  /* a Disney-style material that can represent both metallic,
+     plastic, and dielectric materials. Not nearly as powerful as some
+     of the more advanced material models out there, but can actually
+     represent quite a bit of different content reasonably well - and
+     is much easier to use than 20 different mroe specialized
+     models */
   struct Material {
     typedef std::shared_ptr<Material> SP;
 
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
     Material() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
     Material(const Material &) = default;
 
+    /*! constructs a new Material and returns a Material::SP to that
+        created material */
     inline static SP create() { return std::make_shared<Material>(); }
     
+    /*! constructs a new Material that is a identical clone of the
+        current material */
     SP clone() const { return std::make_shared<Material>(*this); }
     
     bool isEmissive() const { return reduce_max(emission) != 0.f; }
@@ -40,8 +77,21 @@ namespace mini {
     float roughness    { 0.f };
     float transmission { 0.f };
     float ior          { 1.45f };
-    
+
+    /*! color texture to be applied to the surface(s) that this
+        material is being applied to; may be empty. If specified, this
+        is supposed to replace the `baseColor` value */
     std::shared_ptr<Texture> colorTexture;
+    
+    /*! alpha texture to be applied to the surface(s) that this
+        material is being applied to; may be empty. If specified, the
+        'w' coordinate of the tex2D<float4> sample from this texture
+        is supposed to replace the `transmission` value. Note that for
+        some models this texture _can_ absoltely be the same texture
+        as the colorTexture, in which case this will be a float4
+        texturew with the xyz value going in as color value, and the
+        'w' value as alpha value; other models may use a float3
+        texture for color, and a separate float1 texture for alpha. */
     std::shared_ptr<Texture> alphaTexture;
   };
 
@@ -53,18 +103,25 @@ namespace mini {
 
     inline static SP create(Material::SP material = {}) { return std::make_shared<Mesh>(material); }
     
-    virtual bool   isEmissive() const { return material->isEmissive(); }
-    virtual size_t getNumPrims() const { return indices.size(); }
-    virtual box3f  getPrimBounds(size_t primID,
-                                 const AffineSpace3f &xfm = affine3f()) const;
-    
+    bool   isEmissive() const { return material->isEmissive(); }
+    size_t getNumPrims() const { return indices.size(); }
+
+    /*! computes a bounding box over all the triangles in this mesh */
     box3f getBounds() const;
-    
+
+    /*! array of vertices */
     std::vector<vec3f> vertices;
+
+    /*! one vertex normal per vertex; or empty */
     std::vector<vec3f> normals;
+    
+    /*! one texture coordinate per vertex; or empty */
     std::vector<vec2f> texcoords;
+    
+    /*! the vector containing the triangles' vertex indices */
     std::vector<vec3i> indices;
 
+    /*! the material to be applied to this mesh */
     Material::SP       material;
   };
 
@@ -80,14 +137,21 @@ namespace mini {
     that mesh "#1" was hit. */
   struct Object {
     typedef std::shared_ptr<Object> SP;
-    
+
+    /*! creates a new Object for given set of meshes, and returns a
+        Object::SP for that object */
     inline static SP create(const std::vector<Mesh::SP> &meshes={})
     { return std::make_shared<Object>(meshes); }
 
+    /*! constructs a new Object for given set of meshes - note you
+        _probably_ want to use Object::create() instead */
     Object(const std::vector<Mesh::SP> &meshes={})
       : meshes(meshes)
     {}
     
+    /*! computes and returns the bounding box of this object, which is
+        the bounding box over all the mshes that this object
+        contains */
     box3f getBounds() const;
     
     /*! list of all geometries in this object. if this object is in
@@ -98,6 +162,7 @@ namespace mini {
     std::vector<Mesh::SP> meshes;
   };
 
+  /*! represents instances of objects, with an affine transformation matrix */
   struct Instance {
     typedef std::shared_ptr<Instance> SP;
 
@@ -108,17 +173,19 @@ namespace mini {
     inline static SP create(Object::SP object = 0, const affine3f &xfm = affine3f())
     { return std::make_shared<Instance>(object,xfm); }
 
+    /*! computes and returns the world-space bounding box of this instance */
     box3f getBounds() const;
     
     affine3f   xfm;
     Object::SP object;
   };
 
-  struct
-// #ifdef __CUDACC__
-//   __align__(16)
-// #endif
-    QuadLight {
+  /*! a quadrilateral area light that emits light into the direction
+      pointed to by the normal. The light shape is given by an
+      "anchor" point describing one of the corners of the light
+      soruces, and two edges spanning the quadrilateral from that
+      point */
+  struct QuadLight {
     vec3f corner, edge0, edge1, emission;
     /*! normal of this lights source; this could obviously be derived
         from cross(edge0,edge1), but is handle to have in a
@@ -130,26 +197,34 @@ namespace mini {
     float area;
   };
 
-  /*! directional light at infinity, shining *into* given direction,
-      with given radiance */
+  /*! a directional light at infinity, shining *into* given direction,
+      with a given radiance */
   struct DirLight {
     std::string toString();
     vec3f direction;
     vec3f radiance;
   };
 
+#if 0
+  /*! not currently supported in this version */
   struct Film {
     typedef std::shared_ptr<Film> SP;
     vec2i resolution;
   };
       
+  /*! not currently supported in this version */
   struct Camera {
     typedef std::shared_ptr<Camera> SP;
     affine3f    frame;
     float       fov;
     std::string name;
   };
+#endif
 
+  /*! A "environment light" texture that in many models represents
+      some kind of scanned sky dome. Is often of HDR float4 type, and
+      _may_ contain a transform to properly align the scanned texture
+      to the model */
   struct EnvMapLight {
     typedef std::shared_ptr<EnvMapLight> SP;
 
@@ -159,19 +234,33 @@ namespace mini {
     affine3f    transform;
   };
 
+  /*! a complete scene, consisting of a list of instances (may be a
+      single one if the scene doesn't use instantiation), and some
+      light sources */
   struct Scene {
     typedef std::shared_ptr<Scene> SP;
 
+    /*! constructor that creates a new scene object from the given
+        vector of instances - note you _probably_ want to use Scene::create()
+        instead */
     Scene(const std::vector<Instance::SP> &instances={})
       : instances(instances)
     {}
-    
+
+    /*! creates a new scene object from the given vector of instances */
     inline static SP create(const std::vector<Instance::SP> &instances={})
     { return std::make_shared<Scene>(instances); }
-    
+  
+    /*! computes and returns the world space bounding box of this
+        scene. Note that for scene with many instances that can take a
+        while */
     box3f getBounds() const;
-    
+
+    /*! loads a ".mini" file from the given file */
     static Scene::SP load(const std::string &fileName);
+
+    /*! saves the model in file with given name, using a binary file
+        format that can be loaded with Scene::load() */
     void save(const std::string &fileName);
       
     std::vector<QuadLight>  quadLights;
@@ -181,6 +270,11 @@ namespace mini {
     std::vector<Instance::SP> instances;
   };
 
+  /*! helper function for computing the bounding box of an affinely
+      transformed box3f; usually used to compute the world-space
+      bounding box of an instance (given that instance's affine
+      transform matrix and the object-space bounding box of the object
+      being instantiated) */
   inline box3f xfmBox(const affine3f &xfm, const box3f &box)
   {
     box3f result;

@@ -124,9 +124,13 @@ namespace mini {
 void usage(const std::string &msg)
 {
   if (!msg.empty()) std::cerr << std::endl << "***Error***: " << msg << std::endl << std::endl;
-  std::cout << "Usage: ./ply2brix inFile.pbf -o outfile.brx" << std::endl;
+  std::cout << "Usage: ./ply2brix inFile.pbf -o outfile.mini [--stanford-stitch <N>]" << std::endl;
   std::cout << "Imports a PLY file into brix's scene format.\n";
   std::cout << "(from where it can then be partitioned and/or rendered)\n";
+  std::cout << std::endl;
+  std::cout << "Note: For scanned models from the stanford model repo, " << std::endl
+            << "(ie, david, david v3, stmatthew, atlas, etc)" << std::endl
+            << "use --stanford-stitch N, where N is num part files" << std::endl;
   exit(msg != "");
 }
 

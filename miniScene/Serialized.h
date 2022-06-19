@@ -45,7 +45,7 @@ namespace mini {
         if (registry.find(t) != registry.end())
           return true;
 
-        registry[t] = list.size();
+        registry[t] = (int)list.size();
         list.push_back(t);
         return false;
       }

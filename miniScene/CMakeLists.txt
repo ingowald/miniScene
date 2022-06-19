@@ -21,15 +21,13 @@
 # has.
 # ------------------------------------------------------------------
 add_library(miniScene STATIC
-  LocalScene.cpp
-  SplitSpecs.cpp
   Scene.cpp
   Serialized.cpp
   )
 target_link_libraries(miniScene
   PUBLIC
   mini_owl_common
-  stb_image
+#  stb_image
   )
 target_include_directories(miniScene
   PUBLIC

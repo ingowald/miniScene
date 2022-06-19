@@ -21,7 +21,9 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(MINI_BUILD_IMPORTERS "Build Importers? (needs more dependencies)" ON)
+option(MINI_BUILD_IMPORTERS "Build Importers? (needs more dependencies)" OFF)
+option(MINI_IMPORT_OWL "Import OWL from submodules? (needs more dependencies)" OFF)
+
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
   cmake_policy(SET CMP0104 NEW)
 endif()
@@ -35,7 +37,11 @@ endif()
 # ------------------------------------------------------------------
 # check if we have CUDA
 # ------------------------------------------------------------------
-option(MINI_DISABLE_CUDA "Disable CUDA" OFF)
+if (MINI_IMPORT_OWL)
+  option(MINI_DISABLE_CUDA "Disable CUDA" OFF)
+else()
+  set(MINI_DISABLE_CUDA ON)
+endif()
 
 include(CheckLanguage)
 if (MINI_DISABLE_CUDA)
@@ -62,12 +68,13 @@ endif()
 # ------------------------------------------------------------------
 # owl:
 # ------------------------------------------------------------------
-if (MINI_HAVE_CUDA)
+if (MINI_HAVE_CUDA AND MINI_IMPORT_OWL)
   add_subdirectory(submodules/owl EXCLUDE_FROM_ALL)
   add_library(mini_owl_common
     INTERFACE
     )
   target_link_libraries(mini_owl_common INTERFACE owl::owl)
+  target_compile_definitions(mini_owl_common INTERFACE -DMINI_HAVE_OWL_COMMON=1)
 else()
   add_library(mini_owl_common
     INTERFACE
@@ -76,14 +83,23 @@ else()
     INTERFACE
     submodules/owl/owl/include/
     )
-  add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
+  if (MINI_BUILD_IMPORTERS)
+    add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
+    target_link_libraries(miniScene
+      mini_owl_common
+      PUBLIC
+      stb_image
+  )
+  endif()
 endif()
 
 # ------------------------------------------------------------------
 # pbrtParser
 # ------------------------------------------------------------------
-add_subdirectory(submodules/pbrt-parser EXCLUDE_FROM_ALL)
-message(STATUS "pbrtParser configured")
+if (MINI_BUILD_IMPORTERS)
+  add_subdirectory(submodules/pbrt-parser EXCLUDE_FROM_ALL)
+  message(STATUS "pbrtParser configured")
+endif()
 
 # ------------------------------------------------------------------
 # disney ptex for importer
@@ -98,18 +114,20 @@ endif()
 # ------------------------------------------------------------------
 add_subdirectory(miniScene)
 
-# ------------------------------------------------------------------
-# various importers from other file formats
-# ------------------------------------------------------------------
-add_subdirectory(importers)
-# add this as a dependecy, to force its building even though the
-# pbrtparser is includedvia EXCLUDE_FROM_ALL
-add_dependencies(pbf2mini pbrt2pbf)
+if (MINI_BUILD_IMPORTERS)
+  # ------------------------------------------------------------------
+  # various importers from other file formats
+  # ------------------------------------------------------------------
+  add_subdirectory(importers)
+  # add this as a dependecy, to force its building even though the
+  # pbrtparser is includedvia EXCLUDE_FROM_ALL
+  add_dependencies(pbf2mini pbrt2pbf)
+endif()
 
 # ------------------------------------------------------------------
 # various small mini-apps to inscpect/modify miniScenes
 # ------------------------------------------------------------------
-add_subdirectory(apps)
+add_subdirectory(tools)
 
 
 

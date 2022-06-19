@@ -40,19 +40,6 @@ namespace mini {
     return bounds;
   }
     
-  box3f  Mesh::getPrimBounds(size_t primID,
-                             const AffineSpace3f &xfm) const
-  {
-    const vec3i idx = indices[primID];
-    const vec3f A = xfmPoint(xfm,vertices[idx.x]);
-    const vec3f B = xfmPoint(xfm,vertices[idx.y]);
-    const vec3f C = xfmPoint(xfm,vertices[idx.z]);
-    return box3f()
-      .including(A)
-      .including(B)
-      .including(C);
-  }
-
   box3f Object::getBounds() const
   {
     box3f bounds;
@@ -270,10 +257,10 @@ namespace mini {
     size_t numObjects = io::readElement<size_t>(in);
     std::vector<Object::SP> objects;
     for (int objID=0;objID<numObjects;objID++) {
-      int numMeshes = io::readElement<size_t>(in);
+      size_t numMeshes = io::readElement<size_t>(in);
       Object::SP object = std::make_shared<Object>();
 
-      for (int meshID=0;meshID<numMeshes;meshID++) {
+      for (int meshID=0;meshID<(int)numMeshes;meshID++) {
         int isValid = io::readElement<int>(in);
         if (!isValid) {
           continue;

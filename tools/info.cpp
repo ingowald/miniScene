@@ -116,13 +116,13 @@ namespace mini {
     if (inFileName.empty())
       throw std::runtime_error("no input file specified");
 
-    std::cout << OWL_TERMINAL_LIGHT_BLUE
+    std::cout << MINI_COLOR_LIGHT_BLUE
               << "loading mini file from " << inFileName 
-              << OWL_TERMINAL_DEFAULT << std::endl;
+              << MINI_COLOR_DEFAULT << std::endl;
     Scene::SP scene = Scene::load(inFileName);
-    std::cout << OWL_TERMINAL_LIGHT_GREEN
+    std::cout << MINI_COLOR_LIGHT_GREEN
               << "#miniInfo: scene loaded."
-              << OWL_TERMINAL_DEFAULT << std::endl;
+              << MINI_COLOR_DEFAULT << std::endl;
 
     printInfo(scene);
   }

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2018-2020 Ingo Wald                                            //
+// Copyright 2018-2022 Ingo Wald                                            //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,18 +16,27 @@
 
 #pragma once
 
-#include "miniScene/Texture.h"
-
 namespace mini {
-  // namespace scene {
+  namespace common {
 
-    // struct Material : public MaterialData {
+    /*! perform 'rotation' of float a by amount b. Both a and b must be
+      in 0,1 range, the result will be (a+1) clamped to that same
+      range (ie, it is the value a shifted by the amount b to the
+      right, and re-entering the [0,1) range on the left if it
+      "rotates" out on the right */
+    inline __both__ float rotate(const float a, const float b)
+    {
+      float sum = a+b;
+      return ((sum-1.f)<0.f)?(sum):(sum-1.f);
+    }
 
-    //   // std::shared_ptr<Texture> colorTexture;
-    //   // int   colorTexture { -1 };
-    //   // int   alphaTexture { -1 };
-    //   // int   bumpTexture  { -1 };
-    // };
-
-  // }
-}
+    /*! perform 'rotation' of float a by amount b. Both a and b must be
+      in 0,1 range, the result will be (a+1) clamped to that same
+      range (ie, it is the value a shifted by the amount b to the
+      right, and re-entering the [0,1) range on the left if it
+      "rotates" out on the right */
+    inline __both__ vec2f rotate(const vec2f a, const vec2f b) 
+    { return vec2f(rotate(a.x,b.x),rotate(a.y,b.y)); }
+  
+  } // ::owl::common
+} // ::owl
