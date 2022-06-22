@@ -119,8 +119,8 @@ if (MINI_BUILD_IMPORTERS)
   # various importers from other file formats
   # ------------------------------------------------------------------
   add_subdirectory(importers)
-  # add this as a dependecy, to force its building even though the
-  # pbrtparser is includedvia EXCLUDE_FROM_ALL
+  # add this as a dependency, to force its building even though the
+  # pbrtparser is included via EXCLUDE_FROM_ALL
   add_dependencies(pbf2mini pbrt2pbf)
 endif()
 
@@ -128,7 +128,6 @@ endif()
 # various small mini-apps to inscpect/modify miniScenes
 # ------------------------------------------------------------------
 add_subdirectory(tools)
-
 
 
 
