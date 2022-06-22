@@ -21,8 +21,14 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(MINI_BUILD_IMPORTERS "Build Importers? (needs more dependencies)" OFF)
 option(MINI_IMPORT_OWL "Import OWL from submodules? (needs more dependencies)" OFF)
+if (MINI_IMPORT_OWL)
+  option(MINI_BUILD_ADVANCED_IMPORTERS "Build Importers? (needs exr)" ON)
+  option(MINI_BUILD_SIMPLE_IMPORTERS "Build Importers? (needs submodules)" ON)
+else ()
+  SET(MINI_BUILD_IMPORTERS OFF)
+endif()
+
 
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
   cmake_policy(SET CMP0104 NEW)
@@ -61,8 +67,8 @@ endif()
 # general cmake project configs
 # ------------------------------------------------------------------
 include(cmake/configure_build_type.cmake)
-if (MINI_BUILD_IMPORTERS)
-include(cmake/FindOpenEXR.cmake)
+if (MINI_BUILD_ADVANCED_IMPORTERS)
+  include(cmake/FindOpenEXR.cmake)
 endif()
 
 # ------------------------------------------------------------------
@@ -96,7 +102,7 @@ endif()
 # ------------------------------------------------------------------
 # pbrtParser
 # ------------------------------------------------------------------
-if (MINI_BUILD_IMPORTERS)
+if (MINI_BUILD_ADVANCED_IMPORTERS)
   add_subdirectory(submodules/pbrt-parser EXCLUDE_FROM_ALL)
   message(STATUS "pbrtParser configured")
 endif()
@@ -104,7 +110,7 @@ endif()
 # ------------------------------------------------------------------
 # disney ptex for importer
 # ------------------------------------------------------------------
-if (MINI_BUILD_IMPORTERS)
+if (MINI_BUILD_ADVANCED_IMPORTERS)
   add_subdirectory(submodules/ptex EXCLUDE_FROM_ALL)
   message(STATUS "PTex configured")
 endif()
@@ -114,15 +120,10 @@ endif()
 # ------------------------------------------------------------------
 add_subdirectory(miniScene)
 
-if (MINI_BUILD_IMPORTERS)
   # ------------------------------------------------------------------
   # various importers from other file formats
   # ------------------------------------------------------------------
-  add_subdirectory(importers)
-  # add this as a dependency, to force its building even though the
-  # pbrtparser is included via EXCLUDE_FROM_ALL
-  add_dependencies(pbf2mini pbrt2pbf)
-endif()
+add_subdirectory(importers)
 
 # ------------------------------------------------------------------
 # various small mini-apps to inscpect/modify miniScenes

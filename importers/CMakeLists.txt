@@ -15,46 +15,18 @@
 # ======================================================================== #
 
 
-# TODO: make this importer/converter - and all the pbrt and cup stuff
-# that is only required for this tool - optional...
-add_executable(pbf2mini
-  pbf2mini.cpp
-  cup_tools/tessellateCurves.cpp
-  cup_tools/removeAllNonMeshShapes.cpp
-  )
-target_link_libraries(pbf2mini
-  PUBLIC
-  miniScene
-  pbrtParser
-  )
-if (OPENEXR_FOUND)
-  target_link_libraries(pbf2mini
-    PUBLIC #OpenEXR::OpenEXR
-    ${OPENEXR_LIBRARIES}
-    )
-  target_include_directories(pbf2mini
-    PUBLIC
-    ${OPENEXR_INCLUDES}
-    )
-  target_compile_definitions(pbf2mini
-    PUBLIC HAVE_OPENEXR=1
-    )
-endif()
-
-
-
 # ==================================================================
 # imports wavefront OBJ (w/ most material stuff) and textures; every
 # file becomes one single unit-instance with single object that
 # ocntains all meshes
 # ==================================================================
+if (MINI_BUILD_SIMPLE_IMPORTERS)
 add_executable(obj2mini
   obj2mini.cpp
   )
 target_link_libraries(obj2mini
   miniScene
   )
-
 # ==================================================================
 # imports STL files
 # ==================================================================
@@ -88,6 +60,45 @@ target_link_libraries(binmesh2mini
   )
 target_include_directories(binmesh2mini PUBLIC ${PROJECT_SOURCE_DIR}/submodules/)
 
+endif()
+
+
+
+
+
+
+if (MINI_BUILD_ADVANCED_IMPORTERS)
+# TODO: make this importer/converter - and all the pbrt and cup stuff
+# that is only required for this tool - optional...
+add_executable(pbf2mini
+  pbf2mini.cpp
+  cup_tools/tessellateCurves.cpp
+  cup_tools/removeAllNonMeshShapes.cpp
+  )
+target_link_libraries(pbf2mini
+  PUBLIC
+  miniScene
+  pbrtParser
+  )
+  # add this as a dependency, to force its building even though the
+  # pbrtparser is included via EXCLUDE_FROM_ALL
+  add_dependencies(pbf2mini pbrt2pbf)
+
+if (OPENEXR_FOUND)
+  target_link_libraries(pbf2mini
+    PUBLIC #OpenEXR::OpenEXR
+    ${OPENEXR_LIBRARIES}
+    )
+  target_include_directories(pbf2mini
+    PUBLIC
+    ${OPENEXR_INCLUDES}
+    )
+  target_compile_definitions(pbf2mini
+    PUBLIC HAVE_OPENEXR=1
+    )
+endif()
+
+
 
 # ==================================================================
 # scene tool to bake out moana pbrt+ptex into "baked ptex textures",
@@ -106,5 +117,6 @@ target_link_libraries(miniBakePtex
   pbrtParser
   Ptex_static
   )
+endif()
 
 
