@@ -89,7 +89,7 @@ else()
     INTERFACE
     submodules/owl/owl/include/
     )
-  if (MINI_BUILD_IMPORTERS)
+  if (MINI_BUILD_SIMPLE_IMPORTERS)
     add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
     target_link_libraries(
       mini_owl_common
