@@ -23,7 +23,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(MINI_IMPORT_OWL "Import OWL from submodules? (needs more dependencies)" OFF)
 if (MINI_IMPORT_OWL)
-  option(MINI_BUILD_ADVANCED_IMPORTERS "Build Importers? (needs exr)" ON)
+  option(MINI_BUILD_ADVANCED_IMPORTERS "Build Importers? (needs exr)" OFF)
   option(MINI_BUILD_SIMPLE_IMPORTERS "Build Importers? (needs submodules)" ON)
 else ()
   SET(MINI_BUILD_IMPORTERS OFF)
