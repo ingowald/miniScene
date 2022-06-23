@@ -56,8 +56,8 @@ int main(int ac, char **av)
             << MINI_COLOR_DEFAULT << std::endl;
 
   Scene::SP scene = Scene::load(inFileName);
-  std::cout << MINI_COLOR_LIGHT_GREEN
-            << "scene loaded; now flattening into a single mesh... " << outFileName
+  std::cout << MINI_COLOR_LIGHT_BLUE
+            << "scene loaded; now flattening into a single mesh... "
             << MINI_COLOR_DEFAULT << std::endl;
   std::vector<vec3f> vertices;
   std::vector<vec3i> indices;
