@@ -56,21 +56,21 @@ int main(int ac, char **av)
             << MINI_COLOR_DEFAULT << std::endl;
 
   Scene::SP scene = Scene::load(inFileName);
-  std::cout << MINI_COLOR_LIGHT_BLUE
+  std::cout << MINI_COLOR_GREEN
             << "scene loaded; now flattening into a single mesh... "
-            << MINI_COLOR_DEFAULT << std::endl;
+            << std::endl;
   std::vector<vec3f> vertices;
   std::vector<vec3i> indices;
   for (auto inst : scene->instances)
     for (auto mesh : inst->object->meshes) {
-      int idxOfs = indices.size();
+      int idxOfs = vertices.size();
       for (auto vtx : mesh->vertices)
         vertices.push_back(xfmPoint(inst->xfm,vtx));
       for (auto idx : mesh->indices)
         indices.push_back(idxOfs+idx);
     }
   
-  std::cout << MINI_COLOR_GREEN
+  std::cout << MINI_COLOR_BLUE
             << "done flattening into a single mesh; saving to " << outFileName
             << MINI_COLOR_DEFAULT << std::endl;
   std::ofstream out(outFileName,std::ios::binary);
@@ -83,7 +83,7 @@ int main(int ac, char **av)
   out.write((char*)indices.data(),count*sizeof(vec3i));
   
   std::cout << MINI_COLOR_LIGHT_GREEN
-            << "scene saved"
+            << "lattened scene saved in binmesh format; done."
             << MINI_COLOR_DEFAULT << std::endl;
   return 0;
 }
