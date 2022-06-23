@@ -56,10 +56,13 @@ int main(int ac, char **av)
             << MINI_COLOR_DEFAULT << std::endl;
 
   Scene::SP scene = Scene::load(inFileName);
+  std::cout << MINI_COLOR_LIGHT_GREEN
+            << "scene loaded; now flattening into a single mesh... " << outFileName
+            << MINI_COLOR_DEFAULT << std::endl;
   std::vector<vec3f> vertices;
   std::vector<vec3i> indices;
   for (auto inst : scene->instances)
-    for (auto mesh : inst->object) {
+    for (auto mesh : inst->object->meshes) {
       int idxOfs = indices.size();
       for (auto vtx : mesh->vertices)
         vertices.push_back(xfmPoint(inst->xfm,vtx));
@@ -67,21 +70,18 @@ int main(int ac, char **av)
         indices.push_back(idxOfs+idx);
     }
   
-  std::ifstream out(inFileName,std::ios::binary);
-  size_t count;
-  count = mesh->vertices.size();
-  out.write((char*)&count,sizeof(count));
-  out.write((char*)mesh->vertices.data(),count*sizeof(vec3f));
-  count = mesh->indices.size();
-  out.write((char*)&count,sizeof(count));
-  out.write((char*)mesh->indices.data(),count*sizeof(vec3i));
-  
-  Object::SP object = Object::create({mesh});
-  Scene::SP scene = Scene::create({Instance::create(object)});
-  std::cout << MINI_COLOR_DEFAULT
-            << "done importing; saving to " << outFileName
+  std::cout << MINI_COLOR_GREEN
+            << "done flattening into a single mesh; saving to " << outFileName
             << MINI_COLOR_DEFAULT << std::endl;
-  scene->save(outFileName);
+  std::ofstream out(outFileName,std::ios::binary);
+  size_t count;
+  count = vertices.size();
+  out.write((char*)&count,sizeof(count));
+  out.write((char*)vertices.data(),count*sizeof(vec3f));
+  count = indices.size();
+  out.write((char*)&count,sizeof(count));
+  out.write((char*)indices.data(),count*sizeof(vec3i));
+  
   std::cout << MINI_COLOR_LIGHT_GREEN
             << "scene saved"
             << MINI_COLOR_DEFAULT << std::endl;
