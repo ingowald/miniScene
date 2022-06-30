@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <map>
+#include <string>
 #include "miniScene/Scene.h"
 #include "miniScene/Serialized.h"
 
@@ -27,14 +29,21 @@ namespace mini {
     std::cout << "miniSubdivide a.mini b.mini ... -o subdivided.mini" << std::endl;
     exit(error.empty()?0:1);
   }
+
+  std::string midpointIndexToString(int32_t i1, int32_t i2)
+  {
+      if (i1 < i2)
+          return std::to_string(i1) + "," + std::to_string(i2);
+      else
+          return std::to_string(i2) + "," + std::to_string(i1);
+  }
+
   
   void miniSubdivide(int ac, char** av)
   {
       
       std::string outFileName = "";
       
-
-      //*putting in places info from command line
       if (ac == 1) usage();
       std::string inFileName = "";
       for (int i = 1; i < ac; i++) {
@@ -54,92 +63,133 @@ namespace mini {
 
       try {
 
-          std::cout << "Creating scene \n";
+          std::cout << "Creating scene" << std::endl;
 
-          Scene::SP out = Scene::create();
+         // Scene::SP out = Scene::create();
 
           std::cout << MINI_COLOR_LIGHT_BLUE
               << "loading mini file from " << inFileName
               << MINI_COLOR_DEFAULT << std::endl;
-           // code for new output scene 
-         
-          Scene::SP scene = Scene::load(inFileName);
-          std::cout << "saving scene \n";
 
-          out = scene;
-          out->save(outFileName);
+          Scene::SP scene = Scene::load(inFileName);
+
+
+          //subdivision
+
+          for (auto& inst : scene->instances)
+          {
+              for (auto& mesh : inst->object->meshes)
+              {
+                  // Create a new mesh
+                  std::map<std::string, int32_t> vertexMap;
+                  Mesh::SP newMesh = Mesh::create(mesh->material);
+                  std::vector<vec3f> vertices;
+                  std::vector<vec3i> indices;
+                  for (auto& index : mesh->indices)
+                  {
+                      int32_t i[3]; // indices for original vertices
+                      int32_t j[3]; // indices for midpoints
+                      vec3f v[3];   // original vertices
+                      vec3f u[3];   // midpoints
+                      // get original vertices
+                      for (int k = 0; k < 3; k++)
+                      {
+                          i[k] = index[k];
+                          v[k] = mesh->vertices[i[k]];
+                      }
+                      // calculate midpoints and add to 'vertices'
+                      for (int k = 0; k < 3; k++)
+                      {
+                          int i1 = k;
+                          int i2 = (k + 1) % 3;
+                          for (int l = 0; l < 3; l++)
+                              u[k][l] = (v[i1][l] + v[i2][l]) / 2.0f;
+                          std::string indexString = midpointIndexToString(i[i1], i[i2]);
+                          if (vertexMap.find(indexString) != vertexMap.end())
+                          {
+                              j[k] = vertexMap[indexString];
+                          }
+                          else
+                          {
+                              j[k] = vertices.size();
+                              vertexMap[indexString] = j[k];
+                              vertices.push_back(u[k]);
+                          }
+                      }
+                      // add vertices to 'vertices'
+                      for (int k = 0; k < 3; k++)
+                      {
+                          std::string indexString = std::to_string(i[k]);
+                          if (vertexMap.find(indexString) != vertexMap.end())
+                          {
+                              i[k] = vertexMap[indexString];
+                          }
+                          else
+                          {
+                              i[k] = vertices.size();
+                              vertexMap[indexString] = i[k];
+                              vertices.push_back(v[k]);
+                          }
+                      }
+                      // add 4 subtriangles to 'indices'
+                      for (int k = 0; k < 3; k++)
+                      {
+                          vec3i newIndex;
+                          newIndex[0] = i[k];
+                          newIndex[1] = j[k];
+                          newIndex[2] = j[(k + 2) % 3];
+                          indices.push_back(newIndex);
+                      }
+                      vec3i newIndex;
+                      newIndex[0] = j[0];
+                      newIndex[1] = j[1];
+                      newIndex[2] = j[2];
+                      indices.push_back(newIndex);
+                  }
+                  newMesh->vertices = vertices;
+                  newMesh->indices = indices;
+                  std::cout << "Original: vertices=" << mesh->vertices.size() << ", " <<
+                      "triangles=" << mesh->indices.size() << std::endl;
+                  std::cout << "New: vertices=" << newMesh->vertices.size() << ", " <<
+                      "triangles=" << newMesh->indices.size() << std::endl;
+
+                  // Create a new object
+                  std::vector<Mesh::SP> newMeshes;
+                  newMeshes.push_back(mesh);
+                  Object::SP newObject = Object::create(newMeshes);
+
+                  // Create a new instance
+                  Instance::SP newInstance = Instance::create(newObject);
+
+                  // Create a new scene
+                  std::vector<Instance::SP> newInstances;
+                  newInstances.push_back(newInstance);
+                  Scene::SP newScene = Scene::create(newInstances);
+
+                  std::cout << "saving scene \n";
+                  newScene->save(outFileName);
+
+                  break;
+              }
+              break;
+          }
+
+         
           std::cout << MINI_COLOR_LIGHT_GREEN
               << "#miniInfo: subdivided scene saved."
               << MINI_COLOR_DEFAULT << std::endl;
 
       }
 
-      catch (...) {
-          usage(" error occured");
+      catch (const std::exception & exc) {
+          std::cerr << exc.what();
       }
      
-          /*
-                 
-
-
-                  //STL file
-                  int numTris = -1;
-                  in.read((char*)&numTris, sizeof(numTris));
-                  if (!in) throw std::runtime_error("could not read STL tri count!?");
-
-                  Mesh::SP mesh = Mesh::create();
-                  std::map<vec3f, int> knownVertices;
-                  for (int triID = 0; triID < numTris; triID++) {
-                      struct { vec3f n, v[3]; } tri;
-                      in.read((char*)&tri, sizeof(tri));
-                      if (!in) throw std::runtime_error("could not read triangle from STL file");
-
-                      char unused[2];
-                      in.read(unused, sizeof(unused));
-
-                      vec3i indices;
-                     
-                      for (int i = 0; i < 3; i++) {
-                          auto thisVtx = tri.v[i];
-                          if (knownVertices.find(thisVtx) == knownVertices.end()) {
-                              knownVertices[thisVtx] = mesh->vertices.size();
-                              mesh->vertices.push_back(thisVtx);
-                          }
-                          indices[i] = knownVertices[thisVtx];
-                      }
-                      mesh->indices.push_back(indices);
-                  }
-
-                  for (auto& inst : scene->instances)
-                      for (auto& mesh : inst->object.meshes)
-                          for (auto& index: mesh->indices) {
-                              auto A = mesh->vertices[index.ab];
-                              auto B = mesh->vertices[index.bc];
-                              auto C = mesh->vertices[index.ca];
-                              auto AB = (A + B) / 2;
-                              auto BC = (B + C) / 2;
-                              auto CA = (A + C) / 2;
-                      }
-                  }
-              }
-
-                    }
-
-          
-                }
-              }
-              */
-
-        
       
   }
 } // ::mini
 
-int main(int ac, char **av) 
-{ mini::miniSubdivide(ac, av);
-    std::cout << "Hello World" << std :: endl;
-    return 0;
-
-
+int main(int ac, char** av)
+{
+    mini::miniSubdivide(ac, av); return 0;
 }
-
