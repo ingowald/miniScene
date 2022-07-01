@@ -63,7 +63,7 @@ int main(int ac, char **av)
   std::vector<vec3i> indices;
   for (auto inst : scene->instances)
     for (auto mesh : inst->object->meshes) {
-      int idxOfs = vertices.size();
+      int idxOfs = (int)vertices.size();
       for (auto vtx : mesh->vertices)
         vertices.push_back(xfmPoint(inst->xfm,vtx));
       for (auto idx : mesh->indices)
