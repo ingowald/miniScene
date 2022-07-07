@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <map>
 #include <string>
+#include <map>
 #include "miniScene/Scene.h"
 #include "miniScene/Serialized.h"
 
@@ -26,7 +26,7 @@ namespace mini {
         if (!error.empty())
             std::cerr << MINI_COLOR_RED << "Error: " << error
             << MINI_COLOR_DEFAULT << std::endl << std::endl;
-        std::cout << "miniSubdivide a.mini b.mini ... -o subdivided.mini" << std::endl;
+        std::cout << "miniSubdivide a.mini -o subdivided.mini" << std::endl;
         exit(error.empty() ? 0 : 1);
     }
 
@@ -42,10 +42,11 @@ namespace mini {
     {
         std::string outFileName = "";
 
-        //*putting in places info from command line
-        if (ac == 1) usage();
+        if (ac == 1)
+            usage();
         std::string inFileName = "";
-        for (int i = 1; i < ac; i++) {
+        for (int i = 1; i < ac; i++)
+        {
             std::string arg = av[i];
             if (arg[0] != '-')
                 inFileName = arg;
@@ -60,7 +61,8 @@ namespace mini {
         if (outFileName.empty())
             usage("no output file name specified");
 
-        try {
+        try
+        {
             std::cout << "Creating scene \n";
 
             std::cout << MINI_COLOR_LIGHT_BLUE
@@ -69,16 +71,49 @@ namespace mini {
 
             Scene::SP scene = Scene::load(inFileName);
 
+            // Save uniques instances, objects and meshes
+            std::map<Instance::SP, Instance::SP> instances;
+            std::map<Object::SP, Object::SP> objects;
+            std::map<Mesh::SP, Mesh::SP> meshes;
+
+            // List of new instances
             std::vector<Instance::SP> newInstances;
+
+            // Iterate each instance
             for (auto& inst : scene->instances)
             {
+                // Reuse instance if found
+                if (instances.find(inst) != instances.end())
+                {
+                    newInstances.push_back(instances[inst]);
+                    continue;
+                }
+                // Reuse object if found
+                if (objects.find(inst->object) != objects.end())
+                {
+                    newInstances.push_back(Instance::create(objects[inst->object]));
+                    continue;
+                }
+                // List of new meshes
                 std::vector<Mesh::SP> newMeshes;
+
+                // Iterate each mesh
                 for (auto& mesh : inst->object->meshes)
                 {
+                    // Reuse mesh if found
+                    if (meshes.find(mesh) != meshes.end())
+                    {
+                        newMeshes.push_back(meshes[mesh]);
+                        continue;
+                    }
+                    // Mapping between original vertices and midpoints vs new vertices
                     std::map<std::string, int32_t> vertexMap;
-                    Mesh::SP newMesh = Mesh::create(mesh->material);
+                    // Create a mesh with a dummy material
+                    Mesh::SP newMesh = Mesh::create(Material::create());
+                    // List of new vertices and indices
                     std::vector<vec3f> vertices;
                     std::vector<vec3i> indices;
+                    // Iterate each triangle
                     for (auto& index : mesh->indices)
                     {
                         int32_t i[3]; // indices for original vertices
@@ -96,8 +131,7 @@ namespace mini {
                         {
                             int i1 = k;
                             int i2 = (k + 1) % 3;
-                            for (int l = 0; l < 3; l++)
-                                u[k][l] = (v[i1][l] + v[i2][l]) / 2.0f;
+                            u[k] = (v[i1] + v[i2]) / 2.0f;
                             std::string indexString = midpointIndexToString(i[i1], i[i2]);
                             if (vertexMap.find(indexString) != vertexMap.end())
                             {
@@ -140,25 +174,39 @@ namespace mini {
                         newIndex[2] = j[2];
                         indices.push_back(newIndex);
                     }
+                    // Update new mesh
                     newMesh->vertices = vertices;
                     newMesh->indices = indices;
                     std::cout << "Original: vertices=" << mesh->vertices.size() << ", "
                         << "triangles=" << mesh->indices.size() << std::endl;
                     std::cout << "New: vertices=" << newMesh->vertices.size() << ", "
                         << "triangles=" << newMesh->indices.size() << std::endl;
+                    // Append to the list of new meshes
                     newMeshes.push_back(newMesh);
+                    // Update unique set of meshes for later use
+                    meshes[mesh] = newMesh;
                 }
-                newInstances.push_back(Instance::create(Object::create(newMeshes)));
+                // Create a new object with the new list of meshes
+                Object::SP newObject = Object::create(newMeshes);
+                // Create a new instance with the new object
+                Instance::SP newInstance = Instance::create(newObject);
+                // Append to the list of new instances
+                newInstances.push_back(newInstance);
+                // Update unique set of objects for later use
+                objects[inst->object] = newObject;
+                // Update unique set of instances for later use
+                instances[inst] = newInstance;
             }
+            // Create a new scene from the list of new instances
             Scene::SP newScene = Scene::create(newInstances);
 
+            // Save scene
             std::cout << "saving scene \n";
             newScene->save(outFileName);
 
             std::cout << MINI_COLOR_LIGHT_GREEN
                 << "#miniInfo: subdivided scene saved."
                 << MINI_COLOR_DEFAULT << std::endl;
-
         }
         catch (const std::exception& exc)
         {
@@ -171,4 +219,5 @@ int main(int ac, char** av)
 {
     mini::miniSubdivide(ac, av); return 0;
 }
+
 
