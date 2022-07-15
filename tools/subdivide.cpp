@@ -14,8 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <string>
 #include <map>
+#include <string>
+#include <utility>
+
 #include "miniScene/Scene.h"
 #include "miniScene/Serialized.h"
 
@@ -30,12 +32,20 @@ namespace mini {
         exit(error.empty() ? 0 : 1);
     }
 
-    std::string midpointIndexToString(int32_t i1, int32_t i2)
+    int addMidpoint(std::map<std::pair<int, int>, int>& alreadyAddedVertices, Mesh::SP oldMesh, int v0, int v1, Mesh::SP newMesh)
     {
-        if (i1 < i2)
-            return std::to_string(i1) + "," + std::to_string(i2);
-        else
-            return std::to_string(i2) + "," + std::to_string(i1);
+        vec3f midpoint = (oldMesh->vertices[v0] + oldMesh->vertices[v1]) / 2.0f; // midpoint
+        // Add midpoint to new vertices, if not added already
+        std::pair<int, int> pair = std::make_pair(v0, v1);
+        if (v0 > v1)
+            pair = std::make_pair(v1, v0);
+        if (alreadyAddedVertices.find(pair) == alreadyAddedVertices.end())
+        {
+            alreadyAddedVertices[pair] = newMesh->vertices.size();
+            newMesh->vertices.push_back(midpoint);
+        }
+        // Return the index of midpoint
+        return alreadyAddedVertices[pair];
     }
 
     void miniSubdivide(int ac, char** av)
@@ -82,109 +92,50 @@ namespace mini {
             // Iterate each instance
             for (auto& inst : scene->instances)
             {
-                // Reuse instance if found
-                if (instances.find(inst) != instances.end())
-                {
-                    newInstances.push_back(instances[inst]);
-                    continue;
-                }
-                // Reuse object if found
+                  // Reuse object if found
                 if (objects.find(inst->object) != objects.end())
                 {
-                    newInstances.push_back(Instance::create(objects[inst->object]));
+                    newInstances.push_back(Instance::create(objects[inst->object], inst->xfm));
                     continue;
                 }
                 // List of new meshes
                 std::vector<Mesh::SP> newMeshes;
 
                 // Iterate each mesh
-                for (auto& mesh : inst->object->meshes)
+                for (auto& oldMesh : inst->object->meshes)
                 {
                     // Reuse mesh if found
-                    if (meshes.find(mesh) != meshes.end())
+                    if (meshes.find(oldMesh) != meshes.end())
                     {
-                        newMeshes.push_back(meshes[mesh]);
+                        newMeshes.push_back(meshes[oldMesh]);
                         continue;
                     }
-                    // Mapping between original vertices and midpoints vs new vertices
-                    std::map<std::string, int32_t> vertexMap;
-                    // Create a mesh with a dummy material
+                    // Create an empty mesh with a dummy material
                     Mesh::SP newMesh = Mesh::create(Material::create());
-                    // List of new vertices and indices
-                    std::vector<vec3f> vertices;
-                    std::vector<vec3i> indices;
+                    // Put original vertices to new mesh
+                    newMesh->vertices = oldMesh->vertices;
+                    // Mapping between original vertices and midpoints vs new vertices
+                    std::map<std::pair<int, int>, int> alreadyAddedVertices;
                     // Iterate each triangle
-                    for (auto& index : mesh->indices)
+                    for (auto& index : oldMesh->indices)
                     {
-                        int32_t i[3]; // indices for original vertices
-                        int32_t j[3]; // indices for midpoints
-                        vec3f v[3];   // original vertices
-                        vec3f u[3];   // midpoints
-                        // get original vertices
-                        for (int k = 0; k < 3; k++)
-                        {
-                            i[k] = index[k];
-                            v[k] = mesh->vertices[i[k]];
-                        }
-                        // calculate midpoints and add to 'vertices'
-                        for (int k = 0; k < 3; k++)
-                        {
-                            int i1 = k;
-                            int i2 = (k + 1) % 3;
-                            u[k] = (v[i1] + v[i2]) / 2.0f;
-                            std::string indexString = midpointIndexToString(i[i1], i[i2]);
-                            if (vertexMap.find(indexString) != vertexMap.end())
-                            {
-                                j[k] = vertexMap[indexString];
-                            }
-                            else
-                            {
-                                j[k] = vertices.size();
-                                vertexMap[indexString] = j[k];
-                                vertices.push_back(u[k]);
-                            }
-                        }
-                        // add vertices to 'vertices'
-                        for (int k = 0; k < 3; k++)
-                        {
-                            std::string indexString = std::to_string(i[k]);
-                            if (vertexMap.find(indexString) != vertexMap.end())
-                            {
-                                i[k] = vertexMap[indexString];
-                            }
-                            else
-                            {
-                                i[k] = vertices.size();
-                                vertexMap[indexString] = i[k];
-                                vertices.push_back(v[k]);
-                            }
-                        }
-                        // add 4 subtriangles to 'indices'
-                        for (int k = 0; k < 3; k++)
-                        {
-                            vec3i newIndex;
-                            newIndex[0] = i[k];
-                            newIndex[1] = j[k];
-                            newIndex[2] = j[(k + 2) % 3];
-                            indices.push_back(newIndex);
-                        }
-                        vec3i newIndex;
-                        newIndex[0] = j[0];
-                        newIndex[1] = j[1];
-                        newIndex[2] = j[2];
-                        indices.push_back(newIndex);
+                        int A = index.x, B = index.y, C = index.z;
+                        int AB = addMidpoint(alreadyAddedVertices, oldMesh, A, B, newMesh);
+                        int BC = addMidpoint(alreadyAddedVertices, oldMesh, B, C, newMesh);
+                        int CA = addMidpoint(alreadyAddedVertices, oldMesh, C, A, newMesh);
+                        newMesh->indices.push_back({ A, AB, CA });
+                        newMesh->indices.push_back({ B, BC, AB });
+                        newMesh->indices.push_back({ C, CA, BC });
+                        newMesh->indices.push_back({ AB, BC, CA });
                     }
-                    // Update new mesh
-                    newMesh->vertices = vertices;
-                    newMesh->indices = indices;
-                    std::cout << "Original: vertices=" << mesh->vertices.size() << ", "
-                        << "triangles=" << mesh->indices.size() << std::endl;
+                    std::cout << "Old: vertices=" << oldMesh->vertices.size() << ", "
+                        << "triangles=" << oldMesh->indices.size() << std::endl;
                     std::cout << "New: vertices=" << newMesh->vertices.size() << ", "
                         << "triangles=" << newMesh->indices.size() << std::endl;
                     // Append to the list of new meshes
                     newMeshes.push_back(newMesh);
                     // Update unique set of meshes for later use
-                    meshes[mesh] = newMesh;
+                    meshes[oldMesh] = newMesh;
                 }
                 // Create a new object with the new list of meshes
                 Object::SP newObject = Object::create(newMeshes);
@@ -194,8 +145,8 @@ namespace mini {
                 newInstances.push_back(newInstance);
                 // Update unique set of objects for later use
                 objects[inst->object] = newObject;
-                // Update unique set of instances for later use
-                instances[inst] = newInstance;
+                //   // Update unique set of instances for later use
+                //   instances[inst] = newInstance;
             }
             // Create a new scene from the list of new instances
             Scene::SP newScene = Scene::create(newInstances);
@@ -219,5 +170,6 @@ int main(int ac, char** av)
 {
     mini::miniSubdivide(ac, av); return 0;
 }
+
 
 
