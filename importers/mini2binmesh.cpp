@@ -22,8 +22,9 @@ using namespace mini;
 void usage(const std::string &msg)
 {
   if (!msg.empty()) std::cerr << std::endl << "***Error***: " << msg << std::endl << std::endl;
-  std::cout << "Usage: ./binmesh2mini in.binmesh -o out.mini" << std::endl;
-  std::cout << "Imports a 'binmesh' formatted mesh into a mini scene.\n";
+  std::cout << "Usage: ./mini2binmesh2 inmini. -o out.binmesh" << std::endl;
+  std::cout << "loads a mini scene, flattens into flat list "
+            << "of triangles, and writes as binmesh format\n";
   std::cout << "Each binmesh is a binary file with the following structure:\n";
   std::cout << "  size_t numVertices\n";
   std::cout << "  vec3f  vertices[numVertices]\n";
@@ -53,27 +54,36 @@ int main(int ac, char **av)
   std::cout << MINI_COLOR_BLUE
             << "loading binmesh file from " << inFileName
             << MINI_COLOR_DEFAULT << std::endl;
+
+  Scene::SP scene = Scene::load(inFileName);
+  std::cout << MINI_COLOR_GREEN
+            << "scene loaded; now flattening into a single mesh... "
+            << std::endl;
+  std::vector<vec3f> vertices;
+  std::vector<vec3i> indices;
+  for (auto inst : scene->instances)
+    for (auto mesh : inst->object->meshes) {
+      int idxOfs = (int)vertices.size();
+      for (auto vtx : mesh->vertices)
+        vertices.push_back(xfmPoint(inst->xfm,vtx));
+      for (auto idx : mesh->indices)
+        indices.push_back(idxOfs+idx);
+    }
   
-  Mesh::SP mesh = Mesh::create();
-  
-  std::ifstream in(inFileName,std::ios::binary);
-  size_t count;
-  in.read((char*)&count,sizeof(count));
-  mesh->vertices.resize(count);
-  in.read((char*)mesh->vertices.data(),count*sizeof(vec3f));
-  in.read((char*)&count,sizeof(count));
-  mesh->indices.resize(count);
-  in.read((char*)mesh->indices.data(),count*sizeof(vec3i));
-  mesh->material = Material::create();
-  
-  Object::SP object = Object::create({mesh});
-  Scene::SP scene = Scene::create({Instance::create(object)});
-  std::cout << MINI_COLOR_DEFAULT
-            << "done importing; saving to " << outFileName
+  std::cout << MINI_COLOR_BLUE
+            << "done flattening into a single mesh; saving to " << outFileName
             << MINI_COLOR_DEFAULT << std::endl;
-  scene->save(outFileName);
+  std::ofstream out(outFileName,std::ios::binary);
+  size_t count;
+  count = vertices.size();
+  out.write((char*)&count,sizeof(count));
+  out.write((char*)vertices.data(),count*sizeof(vec3f));
+  count = indices.size();
+  out.write((char*)&count,sizeof(count));
+  out.write((char*)indices.data(),count*sizeof(vec3i));
+  
   std::cout << MINI_COLOR_LIGHT_GREEN
-            << "scene saved"
+            << "lattened scene saved in binmesh format; done."
             << MINI_COLOR_DEFAULT << std::endl;
   return 0;
 }

@@ -53,14 +53,15 @@ include(CheckLanguage)
 if (MINI_DISABLE_CUDA)
   message(STATUS "#mini: Disabling CUDA support upon user request")
   set(MINI_HAVE_CUDA OFF)
-else()
-  check_language(CUDA)
-  if (CMAKE_CUDA_COMPILER)
-    set(MINI_HAVE_CUDA ON)
-    enable_language(CUDA)
-  else()
-    set(MINI_HAVE_CUDA OFF)
-  endif()
+else()  
+  enable_language(CUDA)
+#  check_language(CUDA)
+#  if (CMAKE_CUDA_COMPILER)
+   set(MINI_HAVE_CUDA ON)
+#    enable_language(CUDA)
+#  else()
+#    set(MINI_HAVE_CUDA OFF)
+#  endif()
 endif()
 
 # ------------------------------------------------------------------
@@ -74,14 +75,15 @@ endif()
 # ------------------------------------------------------------------
 # owl:
 # ------------------------------------------------------------------
-if (MINI_HAVE_CUDA AND MINI_IMPORT_OWL)
+if (MINI_IMPORT_OWL)
   add_subdirectory(submodules/owl EXCLUDE_FROM_ALL)
   add_library(mini_owl_common
     INTERFACE
     )
-  target_link_libraries(mini_owl_common INTERFACE owl::owl)
+  target_link_libraries(mini_owl_common INTERFACE owl::owl stb_image)
   target_compile_definitions(mini_owl_common INTERFACE -DMINI_HAVE_OWL_COMMON=1)
 else()
+  add_subdirectory(miniScene/common/stb_image EXCLUDE_FROM_ALL)
   add_library(mini_owl_common
     INTERFACE
     )
@@ -89,14 +91,6 @@ else()
     INTERFACE
     submodules/owl/owl/include/
     )
-  if (MINI_BUILD_SIMPLE_IMPORTERS)
-    add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
-    target_link_libraries(
-      mini_owl_common
-      INTERFACE
-      stb_image
-  )
-  endif()
 endif()
 
 # ------------------------------------------------------------------
