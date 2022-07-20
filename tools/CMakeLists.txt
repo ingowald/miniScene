@@ -65,6 +65,17 @@ target_link_libraries(miniMerge
   )
 
 # -----------------------------------------------------------------------------
+# subdivide
+# -----------------------------------------------------------------------------
+add_executable(miniSubdivide
+  subdivide.cpp
+  )
+target_link_libraries(miniSubdivide
+  PUBLIC
+  miniScene
+  )
+
+# -----------------------------------------------------------------------------
 # tool to take a scene, and replicate all its instances a given number
 # of times
 # -----------------------------------------------------------------------------
