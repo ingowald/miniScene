@@ -69,9 +69,9 @@ else()
   add_library(mini_owl_common
     INTERFACE
     )
-  target_link_libraries(mini_owl_common INTERFACE owl::owl)
+#  target_link_libraries(mini_owl_common INTERFACE owl::owl)
   target_include_directories(mini_owl_common INTERFACE ${CMAKE_PROJECT_ROOT}/miniScene)
-  target_compile_definitions(mini_owl_common INTERFACE -DMINI_HAVE_OWL_COMMON=1)
+#  target_compile_definitions(mini_owl_common INTERFACE -DMINI_HAVE_OWL_COMMON=1)
 endif()
 
 if (MINI_BUILD_IMPORTERS)
