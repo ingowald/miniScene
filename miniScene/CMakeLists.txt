@@ -34,3 +34,6 @@ target_include_directories(miniScene
   ${PROJECT_SOURCE_DIR}
   )
 
+set_target_properties(miniScene PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+

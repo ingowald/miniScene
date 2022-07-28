@@ -22,39 +22,15 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(MINI_BUILD_IMPORTERS "Build Importers? (needs more dependencies)" OFF)
-option(MINI_IMPORT_OWL "Import OWL from submodules? (needs more dependencies)" OFF)
 
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
   cmake_policy(SET CMP0104 NEW)
 endif()
 
 if (NOT (${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR}))
-  set(MINI_IS_SUBPROJECT ON)
+  set(MINI_IS_SUBMODULE ON)
 else()
-  set(MINI_IS_SUBPROJECT OFF)
-endif()
-
-# ------------------------------------------------------------------
-# check if we have CUDA
-# ------------------------------------------------------------------
-if (MINI_IMPORT_OWL)
-  option(MINI_DISABLE_CUDA "Disable CUDA" OFF)
-else()
-  set(MINI_DISABLE_CUDA ON)
-endif()
-
-include(CheckLanguage)
-if (MINI_DISABLE_CUDA)
-  message(STATUS "#mini: Disabling CUDA support upon user request")
-  set(MINI_HAVE_CUDA OFF)
-else()
-  check_language(CUDA)
-  if (CMAKE_CUDA_COMPILER)
-    set(MINI_HAVE_CUDA ON)
-    enable_language(CUDA)
-  else()
-    set(MINI_HAVE_CUDA OFF)
-  endif()
+  set(MINI_IS_SUBMODULE OFF)
 endif()
 
 # ------------------------------------------------------------------
@@ -66,10 +42,24 @@ include(cmake/FindOpenEXR.cmake)
 endif()
 
 # ------------------------------------------------------------------
-# owl:
+# owl: there are two ways of using OWL: either as a submodule (if
+# building miniScene stand-alone), or, if miniScene itself is a
+# submodule, simply include owl _before_ including miniScene, then it
+# will pick up the target
 # ------------------------------------------------------------------
-if (MINI_HAVE_CUDA AND MINI_IMPORT_OWL)
+if(EXISTS "${ROOT}/submodules/owl/CMakeLists.txt")
+  message(STATUS "miniScene: found owl as submodule - using it")
   add_subdirectory(submodules/owl EXCLUDE_FROM_ALL)
+  set(MINI_HAVE_OWL ON)
+elseif(MINI_IS_SUBMODULE AND (TARGET owl::owl))
+  message(STATUS "miniScene: owl target exists from another sibling submodule; using it")
+  set(MINI_HAVE_OWL ON)
+else ()
+  message(STATUS "miniScene: owl not available; building host-only version")
+  set(MINI_HAVE_OWL OFF)
+endif()
+
+if (MINI_HAVE_OWL)
   add_library(mini_owl_common
     INTERFACE
     )
@@ -79,19 +69,20 @@ else()
   add_library(mini_owl_common
     INTERFACE
     )
-  target_include_directories(mini_owl_common
-    INTERFACE
-    submodules/owl/owl/include/
-    )
-  if (MINI_BUILD_IMPORTERS)
-    add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
-    target_link_libraries(
-      mini_owl_common
-      INTERFACE
-      stb_image
-  )
-  endif()
+  target_link_libraries(mini_owl_common INTERFACE owl::owl)
+  target_include_directories(mini_owl_common INTERFACE ${CMAKE_PROJECT_ROOT}/miniScene)
+  target_compile_definitions(mini_owl_common INTERFACE -DMINI_HAVE_OWL_COMMON=1)
 endif()
+
+if (MINI_BUILD_IMPORTERS)
+  add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
+  target_link_libraries(
+    mini_owl_common
+    INTERFACE
+    stb_image
+    )
+endif()
+  
 
 # ------------------------------------------------------------------
 # pbrtParser
