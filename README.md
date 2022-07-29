@@ -5,18 +5,65 @@ material model, one level of instances, and objects with one or more
 triangle meshes. Comes with several importers/converters, but can be
 built with only minimal dependencies.
 
-# Dependencies
+# Building and Using MiniScene
 
-Currently this projects builds on top of OWL (for the convenience of
-the OWL vector/math library, and for a sample model viewer for
-miniScene models that this project contains). This means this project 
-currently does depend on:
+MiniScene is primarily a library for easly loading `.mini`-formatted
+models into renderers; but it also comes with various tools and
+importers. The main 'scene' library and `.mini`-reader intentionally
+come with very few dependencies, and can also be built stand-alone
+without any additional dependencies, without a CUDA install,
+etc. However, miniScene also comes with a set of cmdline-tools to
+import from other formats, in which case miniScene requires to be
+cloned and built with various submodules. The following describes some
+of the key usage scenarios:
 
-- OptiX (7.0 or newer)
-- CUDA (11.0 or newer)
+## I only want to load .mini models, and am not using OWL, do not have CUDA, etc.
 
-This project also uses several other libraries that it pulls in via
-submodules.
+Use miniScene as a submodule (say, add it to `<projectRoot>/submodules/miniScene`),
+then use in your CMake scripts as
+
+    add_subdirectory(submodules/miniScene EXCLUDE_FROM_ALL)
+	
+... then link your library or executables to `miniScene`. In your C++
+files simply do `mini::Scene::SP scene = mini::Scene::load(...)`, and
+done. You do not need CUDA, nor OWL, nor do you need to recursively
+clone any of the miniScene submodules.
+
+## I want to load .mini models into my renderer, which *also* uses OWL
+
+If your renderer also uses OWL, then miniScene can simple "re-use" the
+OWL module that your renderer already uses. To do this: Make sure your
+renderer uses *both* OWL *and* miniScene as submodules, then in your
+cmake scripts include the OWL submodules *first*, and the miniScene
+submodule *after* the OWL one:
+
+    # include OWL *first*:
+	add_subdirectory(submodules/OWL EXCLUDE_FROM_ALL) 
+	# include miniScene *after* OWL so it can pick up the target
+    add_subdirectory(submodules/miniScene EXCLUDE_FROM_ALL) 
+
+Now if you build your renderer the `miniScene::Scene`'s you load will
+automatically use the same `owl::vec3f` classes as OWL will.
+
+## I want to build all of miniScene, including the simple OWL debug viewer
+
+To run the viewer you need to build miniScene with OWL support. You need
+to clone miniScene with submodules (`git clone --recursive https://...`).
+Then build the project, done. 
+
+This uses OWL, so you need to have CUDA and OptiX installed on your
+machine (as described in the README.md that comes with OWL).
+
+## I want to build all of miniScene including advanced importers
+
+To build the importers that can read the Moana PBRT model with PTex
+textures etc, you need to clone with submodules (see previous
+subsection); then in the cmake dialog enable the
+`MINI_BUILD_ADVANCED_IMPORTERS` flag (or configure with `mkdir build;
+cd build; cmake .. -DMINI_BUILD_ADVANCED_IMPORTERS=ON`)
+
+
+
 
 
 # Importing Scenes - Examples
