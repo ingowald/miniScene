@@ -17,20 +17,21 @@
 #pragma once
 
 // owl stuff that we use throughout this library
-#include <owl/common/math/AffineSpace.h>
-#include "owl/common/parallel/parallel_for.h"
+#include "miniScene/common.h"
+// #include <owl/common/math/AffineSpace.h>
+// #include "owl/common/parallel/parallel_for.h"
 // the pbrt parser scene graph we're operating on
 #include "pbrtParser/Scene.h"
-#include "owl/common/math/box.h"
+// #include "owl/common/math/box.h"
 
 namespace cup {
 
-  using namespace owl;
-  using namespace owl::common;
+  using namespace mini;
+  using namespace mini::common;
 
-#ifndef __CUDACC__
-  typedef owl::vec2f float2;
-  typedef owl::vec3f float3;
-  typedef owl::vec4f float4;
-#endif
+// #ifndef __CUDACC__
+//   typedef owl::vec2f float2;
+//   typedef owl::vec3f float3;
+//   typedef owl::vec4f float4;
+// #endif
 }

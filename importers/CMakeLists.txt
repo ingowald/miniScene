@@ -85,6 +85,7 @@ if (MINI_BUILD_ADVANCED_IMPORTERS)
     )
   target_link_libraries(pbf2mini
     PUBLIC
+    mini_owl_common
     miniScene
     pbrtParser
     )

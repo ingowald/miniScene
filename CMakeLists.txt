@@ -34,11 +34,11 @@ endif()
 
 if (MINI_IS_SUBMODULE)
   SET(MINI_BUILD_ADVANCED_IMPORTERS OFF)
-  SET(MINI_BUILD_SIMPLE_IMPORTERS ON) # can still disable by EXCLUDE_FROM_ALL
 else()
-  option(MINI_BUILD_ADVANCED_IMPORTERS "Build Importers? (needs exr)" OFF)
-  option(MINI_BUILD_SIMPLE_IMPORTERS "Build Importers? (needs submodules)" ON)
+  option(MINI_BUILD_ADVANCED_IMPORTERS "Build Advanced Importers? (needs exr)" OFF)
+#  option(MINI_BUILD_SIMPLE_IMPORTERS "Build Importers? (needs submodules)" ON)
 endif()
+SET(MINI_BUILD_SIMPLE_IMPORTERS ON) # can still disable by EXCLUDE_FROM_ALL
 
 # ------------------------------------------------------------------
 # general cmake project configs
@@ -54,16 +54,20 @@ endif()
 # submodule, simply include owl _before_ including miniScene, then it
 # will pick up the target
 # ------------------------------------------------------------------
-if(EXISTS "${ROOT}/submodules/owl/CMakeLists.txt")
+if(EXISTS "${PROJECT_SOURCE_DIR}/submodules/owl/CMakeLists.txt")
   message(STATUS "miniScene: found owl as submodule - using it")
+  enable_language(CUDA)
   add_subdirectory(submodules/owl EXCLUDE_FROM_ALL)
   set(MINI_HAVE_OWL ON)
+  set(MINI_HAVE_STB ON)
 elseif(MINI_IS_SUBMODULE AND (TARGET owl::owl))
   message(STATUS "miniScene: owl target exists from another sibling submodule; using it")
   set(MINI_HAVE_OWL ON)
+  set(MINI_HAVE_STB ON)
 else ()
   message(STATUS "miniScene: owl not available; building host-only version")
   set(MINI_HAVE_OWL OFF)
+  set(MINI_HAVE_STB OFF)
 endif()
 
 if (MINI_HAVE_OWL)
@@ -73,6 +77,8 @@ if (MINI_HAVE_OWL)
 #  target_link_libraries(mini_owl_common INTERFACE owl::owl stb_image)
   target_link_libraries(mini_owl_common INTERFACE owl::owl)
   target_compile_definitions(mini_owl_common INTERFACE -DMINI_HAVE_OWL_COMMON=1)
+
+#  add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
 else()
 #  add_subdirectory(miniScene/common/stb_image EXCLUDE_FROM_ALL)
   add_library(mini_owl_common
@@ -83,15 +89,16 @@ else()
 #  target_compile_definitions(mini_owl_common INTERFACE -DMINI_HAVE_OWL_COMMON=1)
 endif()
 
-if (MINI_BUILD_IMPORTERS)
-  add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
-  target_link_libraries(
-    mini_owl_common
-    INTERFACE
-    stb_image
-    )
+if (MINI_HAVE_STB)
+  # already have STB from owl
+else()
+  add_subdirectory(miniScene/common/stb_image EXCLUDE_FROM_ALL)
 endif()
-  
+target_link_libraries(
+  mini_owl_common
+  INTERFACE
+  stb_image
+  )
 
 # ------------------------------------------------------------------
 # pbrtParser
