@@ -17,7 +17,7 @@
 #include "miniScene/Scene.h"
 //std
 #include <set>
-#include "happly/happly.h"
+#include "happly.h"
 
 namespace mini {
     

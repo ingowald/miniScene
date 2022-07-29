@@ -48,6 +48,10 @@ if (MINI_BUILD_ADVANCED_IMPORTERS)
   include(cmake/FindOpenEXR.cmake)
 endif()
 
+if(MINI_BUILD_ADVANCED_IMPORTERS AND (NOT EXISTS "${PROJECT_SOURCE_DIR}/submodules/owl/CMakeLists.txt"))
+  message(FATAL_ERROR "miniScene - Cannot build advanced importers if cloned without submodules. Make sure to clone with '--recursive', or do 'git submodule init; git submodule update' to fetch submodules")
+endif()
+
 # ------------------------------------------------------------------
 # owl: there are two ways of using OWL: either as a submodule (if
 # building miniScene stand-alone), or, if miniScene itself is a
