@@ -206,12 +206,12 @@ namespace mini {
     vec3f direction;
     vec3f radiance;
     
-    /*! cone angle (in radian) in which the light has full radiance */
-    float angleInner = 0.f;
+    // /*! cone angle (in radian) in which the light has full radiance */
+    // float angleInner = 0.f;
     
-    /*! cone angle (in radian) up to which light linearly falls off to
-        zero (must be >= angleInner) */
-    float angleOuter = 0.f;
+    // /*! cone angle (in radian) up to which light linearly falls off to
+    //     zero (must be >= angleInner) */
+    // float angleOuter = 0.f;
   };
 
 #if 0
