@@ -313,7 +313,10 @@ namespace mini {
       ours->metallic     = disney->metallic;
       ours->roughness    = disney->roughness;
       ours->transmission = disney->specTrans;
-      ours->ior          = disney->eta;
+      ours->ior
+        = (ours->transmission != 0.f)
+        ? disney->eta
+        : 1.f;
       return ours;
     }
 
