@@ -313,7 +313,10 @@ namespace mini {
       ours->metallic     = disney->metallic;
       ours->roughness    = disney->roughness;
       ours->transmission = disney->specTrans;
-      ours->ior          = disney->eta;
+      ours->ior
+        = (ours->transmission != 0.f)
+        ? disney->eta
+        : 1.f;
       return ours;
     }
 
@@ -538,7 +541,7 @@ Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape, const std::string &key)
 
     Instance::SP ourInst = std::make_shared<Instance>();
     ourInst->object = object;
-    ourInst->xfm   = (const owl::affine3f &)inst->xfm;
+    ourInst->xfm   = (const affine3f &)inst->xfm;
     scene->instances.push_back(ourInst);
   }
 

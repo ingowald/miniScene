@@ -99,7 +99,9 @@ namespace mini {
   struct Mesh {
     typedef std::shared_ptr<Mesh> SP;
     
-    Mesh(Material::SP material = {}) : material(material) {}
+    Mesh(Material::SP material = {})
+      : material(material ? material : Material::create())
+    {}
 
     inline static SP create(Material::SP material = {}) { return std::make_shared<Mesh>(material); }
     
@@ -203,6 +205,13 @@ namespace mini {
     std::string toString();
     vec3f direction;
     vec3f radiance;
+    
+    // /*! cone angle (in radian) in which the light has full radiance */
+    // float angleInner = 0.f;
+    
+    // /*! cone angle (in radian) up to which light linearly falls off to
+    //     zero (must be >= angleInner) */
+    // float angleOuter = 0.f;
   };
 
 #if 0

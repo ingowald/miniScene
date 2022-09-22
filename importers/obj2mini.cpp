@@ -119,9 +119,9 @@ namespace mini {
       
         STBI_FREE(image);
       } else {
-        std::cout << OWL_TERMINAL_RED
+        std::cout << MINI_COLOR_RED
                   << "Could not load texture from " << fileName << "!"
-                  << OWL_TERMINAL_DEFAULT << std::endl;
+                  << MINI_COLOR_DEFAULT << std::endl;
       }
     
       knownTextures[inFileName] = texture;
@@ -157,7 +157,7 @@ namespace mini {
 
       if (materials.empty())
         // throw std::runtime_error("could not parse materials ...");
-        std::cout << TERM_COLOR_RED << "WARNING: NO MATERIALS (could not find/parse mtl file!?)" << TERM_COLOR_DEFAULT << std::endl;
+        std::cout << MINI_COLOR_RED << "WARNING: NO MATERIALS (could not find/parse mtl file!?)" << MINI_COLOR_DEFAULT << std::endl;
       
       std::vector<Material::SP> baseMaterials;
       for (auto &objMat : materials) {
@@ -278,18 +278,18 @@ int main(int ac, char **av)
   if (inFileName.empty()) usage("no input file name specified");
   if (outFileName.empty()) usage("no output file name base specified");
 
-  std::cout << OWL_TERMINAL_BLUE
+  std::cout << MINI_COLOR_BLUE
             << "loading OBJ model from " << inFileName
-            << OWL_TERMINAL_DEFAULT << std::endl;
+            << MINI_COLOR_DEFAULT << std::endl;
 
   mini::Scene::SP scene = mini::loadOBJ(inFileName);
     
-  std::cout << OWL_TERMINAL_DEFAULT
+  std::cout << MINI_COLOR_DEFAULT
             << "done importing; saving to " << outFileName
-            << OWL_TERMINAL_DEFAULT << std::endl;
+            << MINI_COLOR_DEFAULT << std::endl;
   scene->save(outFileName);
-  std::cout << OWL_TERMINAL_LIGHT_GREEN
+  std::cout << MINI_COLOR_LIGHT_GREEN
             << "scene saved"
-            << OWL_TERMINAL_DEFAULT << std::endl;
+            << MINI_COLOR_DEFAULT << std::endl;
   return 0;
 }

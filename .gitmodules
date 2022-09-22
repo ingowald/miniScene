@@ -7,6 +7,3 @@
 [submodule "submodules/owl"]
 	path = submodules/owl
 	url = https://github.com/owl-project/owl
-[submodule "submodules/happly"]
-	path = submodules/happly
-	url = https://github.com/nmwsharp/happly

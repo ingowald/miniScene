@@ -65,6 +65,17 @@ target_link_libraries(miniMerge
   )
 
 # -----------------------------------------------------------------------------
+# subdivide
+# -----------------------------------------------------------------------------
+add_executable(miniSubdivide
+  subdivide.cpp
+  )
+target_link_libraries(miniSubdivide
+  PUBLIC
+  miniScene
+  )
+
+# -----------------------------------------------------------------------------
 # tool to take a scene, and replicate all its instances a given number
 # of times
 # -----------------------------------------------------------------------------
@@ -80,7 +91,7 @@ target_link_libraries(miniReplicate
 # a trivially simple owl-based viewer, to sanity test ... don't expct
 # much, this only shows flat triangles
 # -----------------------------------------------------------------------------
-if (MINI_HAVE_CUDA)
+if (TARGET owl::owl)
   add_subdirectory(viewer)
 endif()
 

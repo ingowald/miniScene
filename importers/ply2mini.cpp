@@ -17,7 +17,7 @@
 #include "miniScene/Scene.h"
 //std
 #include <set>
-#include "happly/happly.h"
+#include "happly.h"
 
 namespace mini {
     
@@ -156,21 +156,21 @@ int main(int ac, char **av)
   if (inFileName.empty()) usage("no input file name specified");
   if (outFileName.empty()) usage("no output file name base specified");
   
-  std::cout << OWL_TERMINAL_BLUE
+  std::cout << MINI_COLOR_BLUE
             << "loading PLY model from " << inFileName
-            << OWL_TERMINAL_DEFAULT << std::endl;
+            << MINI_COLOR_DEFAULT << std::endl;
   
   mini::Scene::SP scene
     = standordStitchParts
     ? mini::stitchStanford(inFileName,standordStitchParts)
     : mini::loadPLY(inFileName);
   
-  std::cout << OWL_TERMINAL_DEFAULT
+  std::cout << MINI_COLOR_DEFAULT
             << "done importing; saving to " << outFileName
-            << OWL_TERMINAL_DEFAULT << std::endl;
+            << MINI_COLOR_DEFAULT << std::endl;
   scene->save(outFileName);
-  std::cout << OWL_TERMINAL_LIGHT_GREEN
+  std::cout << MINI_COLOR_LIGHT_GREEN
             << "scene saved"
-            << OWL_TERMINAL_DEFAULT << std::endl;
+            << MINI_COLOR_DEFAULT << std::endl;
   return 0;
 }
