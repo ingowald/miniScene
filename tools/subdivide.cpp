@@ -37,14 +37,25 @@ namespace mini {
                   int v0, int v1,
                   Mesh::SP newMesh)
   {
-    vec3f midpoint = (oldMesh->vertices[v0] + oldMesh->vertices[v1]) / 2.0f; // midpoint
     // Add midpoint to new vertices, if not added already
     std::pair<int, int> pair = std::make_pair(v0, v1);
     if (v0 > v1)
       pair = std::make_pair(v1, v0);
     if (alreadyAddedVertices.find(pair) == alreadyAddedVertices.end()) {
       alreadyAddedVertices[pair] = newMesh->vertices.size();
+      
+      vec3f midpoint = .5f* (oldMesh->vertices[v0] + oldMesh->vertices[v1]);
       newMesh->vertices.push_back(midpoint);
+
+      if (!oldMesh->normals.empty()) {
+        vec3f midpoint = .5f* (oldMesh->normals[v0] + oldMesh->normals[v1]);
+        newMesh->normals.push_back(midpoint);
+      }
+
+      if (!oldMesh->texcoords.empty()) {
+        vec2f midpoint = .5f* (oldMesh->texcoords[v0] + oldMesh->texcoords[v1]);
+        newMesh->texcoords.push_back(midpoint);
+      }
     }
     // Return the index of midpoint
     return alreadyAddedVertices[pair];
@@ -76,7 +87,7 @@ namespace mini {
               << "Loading mini file from " << inFileName
               << MINI_COLOR_DEFAULT << std::endl;
 
-    Scene::SP scene = Scene::load(inFileName);
+    Scene::SP oldScene = Scene::load(inFileName);
 
     // Save uniques instances, objects and meshes
     std::map<Instance::SP, Instance::SP> instances;
@@ -87,7 +98,7 @@ namespace mini {
     std::vector<Instance::SP> newInstances;
 
     // Iterate each instance
-    for (auto &inst : scene->instances) {
+    for (auto &inst : oldScene->instances) {
       // Reuse object if found
       if (objects.find(inst->object) != objects.end()) {
         newInstances.push_back(Instance::create(objects[inst->object], inst->xfm));
@@ -105,8 +116,11 @@ namespace mini {
         }
         // Create an empty mesh with a dummy material
         Mesh::SP newMesh = Mesh::create(Material::create());
+        newMesh->material = oldMesh->material;
         // Put original vertices to new mesh
-        newMesh->vertices = oldMesh->vertices;
+        newMesh->vertices  = oldMesh->vertices;
+        newMesh->normals   = oldMesh->normals;
+        newMesh->texcoords = oldMesh->texcoords;
         // Mapping between original vertices and midpoints vs new vertices
         std::map<std::pair<int, int>, int> alreadyAddedVertices;
         // Iterate each triangle
@@ -137,7 +151,9 @@ namespace mini {
     }
     // Create a new scene from the list of new instances
     Scene::SP newScene = Scene::create(newInstances);
-
+    newScene->envMapLight = oldScene->envMapLight;
+    newScene->dirLights   = oldScene->dirLights;
+    newScene->quadLights  = oldScene->quadLights;
     // Save scene
     std::cout << "saving scene \n";
     newScene->save(outFileName);
