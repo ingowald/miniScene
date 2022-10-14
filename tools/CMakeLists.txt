@@ -39,6 +39,23 @@ target_link_libraries(miniSeparateRootMeshes
   )
 
 # -----------------------------------------------------------------------------
+# tool that takes a given scene, and creates a new scene that contains
+# exactly the same triangles, but in a way that each object in the
+# scene has only a certain maximum number of triangles. If a object
+# has more triangles than desired we first try to split that object
+# based on the possibly mulitple meshes it has; if splitting based on
+# meshes is not enoguh we will also split large meshes into multiple
+# smaller ones until the desired threshold is reached.
+# -----------------------------------------------------------------------------
+add_executable(miniBreakLargeMeshes
+  breakLargeMeshes.cpp
+  )
+target_link_libraries(miniBreakLargeMeshes
+  PUBLIC
+  miniScene
+  )
+
+# -----------------------------------------------------------------------------
 # tool primarily for debugging: given a mini scene, write out *flat*
 # scene in OBJ file format (no materials or textures). Warning: files
 # tend to get *very* large if mini scene contained instances.
