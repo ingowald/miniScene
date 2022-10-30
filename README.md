@@ -1,11 +1,88 @@
 # miniScene
 
-A mini-app like scene graph with binary reader/writer. Has a simple
+`miniScene` is a mini-app like scene graph with binary reader/writer,
+which was mainly developed as an easy way of reading various
+highly instanced models (like Disney's Moana, or the PBRT landscape)
+for doing some ray tracing research on. 
+
+## QuickStart (for the most likely use case)
+
+MiniScene has a simple
 material model, one level of instances, and objects with one or more
 triangle meshes. Comes with several importers/converters, but can be
-built with only minimal dependencies.
+built with only minimal dependencies. Though the miniScene project
+also comes with various different tools for importing or manipulating
+model files, the *typical* way you *probably* want to use it is as follows:
 
-# Building and Using MiniScene
+a) as a cmake submodule to your own project (this will build a libmini.a, 
+   and a `miniScene` target that you can then link to.
+   In particular, in this importer-only mode it will have *very* little dependencies.
+
+    add_subdirectory(submodules/miniScene EXCLUDE_FROM_ALL)
+
+b) in your app's CUDA or C++ code, as a binary reader (or writer) for binary `.mini`-files (e.g., 
+   using a mini-verison of Moana from here.
+
+    #include <miniScene/Scene.h>
+    
+    ...
+    
+    mini::Scene scene = Scene::load(fileName);
+    for (auto inst : scene->instances)
+        doSomeThingWith(inst->xfm, inst->object);
+    ...
+
+Two models you probably *want* to play with are here:
+
+- the Disney Moana Island model (in mini format): https://drive.google.com/file/d/1dbx9iKCYmpJjf_h7EYpl1KH-kAxOWwyd/view?usp=share_link
+
+- the "PBRT Landscape" model (in mini format): https://drive.google.com/file/d/1dvmJMUgbTgPIBmK1JW5gweGJh7hYH770/view?usp=share_link
+
+## Overview of a `mini::Scene` Hierarchy 
+
+Each mini-scene has its geometry content organized in three "layers": at the 
+innermost layer are triangle meshes (`mini::Mesh`), that have
+the usual entities like vertices (as a `std::vector<vec3f>`), vertex
+normals, and texture coordinates; each mesh also has a `mini::Material`
+that uses a simple material model and supports both color and alpha textures
+
+Meshes get grouped into logical `mini::Object`s, with each object being a `std::vector` of one or more meshes.
+Objects can then get *instantiated* using `mini::Instance`s, with each instance consisting
+of a reference to an object, plus an affine transform.
+
+Finally, a `mini::Scene` consists of a list of such instances, plus some "global"
+stuff like list of point or quad light sources, env map, etc.
+
+All entities in miniScene are references through `std::shared_pointer`s, commonly using
+the shortcut of `Somthing::SP` for the longer-form `std::shared_ptr<Something>` (e.g., 
+a `Scene::SP` is a shared-pointer pointing to a `mini::Scene` object). All data
+in miniScene (except for "bulk" data like texels in a texture, or vertex arrays in meshes) are
+referenced through such shared-pointers, typicaly organized in `std::vector`s, which makes
+it very easy to eventually process such a `mini::Scene` using STL mechanisms.
+
+E.g., printing a list of all instances:
+
+    for (auto inst : scene->instances)
+        std::cout << "instance w/ transform " << inst->transform 
+	          << " and " << inst->object->meshes.size() << " meshes" 
+		  << std::endl;
+
+Or, creating a list of all "unique" objects and materials used in the model:
+
+    std::set<Object::SP> allObjects;
+    for (auto inst : scene->instances)
+       allObjects.insert(inst->object);
+    std::set<Material::SP> allMaterials;
+    for (auto obj : allObjects)
+       for (auto mesh : obj->meshes)
+          allMeshes.insert(mesh->material);
+
+A good way of getting an idea of how to use miniScene - to load, iterate over, 
+or modify `mini::Scene` objects - is to look at the various cmdline tools in the `apps/`
+folder; probably starting with the `miniInfo` tool that collects and prints some basic
+info on a mini scene file.
+
+# Various miniScene use Cases 
 
 MiniScene is primarily a library for easly loading `.mini`-formatted
 models into renderers; but it also comes with various tools and
@@ -61,9 +138,6 @@ textures etc, you need to clone with submodules (see previous
 subsection); then in the cmake dialog enable the
 `MINI_BUILD_ADVANCED_IMPORTERS` flag (or configure with `mkdir build;
 cd build; cmake .. -DMINI_BUILD_ADVANCED_IMPORTERS=ON`)
-
-
-
 
 
 # Importing Scenes - Examples
