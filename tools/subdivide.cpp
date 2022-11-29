@@ -38,29 +38,53 @@ namespace mini {
                   Mesh::SP newMesh)
   {
     // Add midpoint to new vertices, if not added already
-    std::pair<int, int> pair = std::make_pair(v0, v1);
-    if (v0 > v1)
-      pair = std::make_pair(v1, v0);
-    if (alreadyAddedVertices.find(pair) == alreadyAddedVertices.end()) {
-      alreadyAddedVertices[pair] = newMesh->vertices.size();
-      
-      vec3f midpoint = .5f* (oldMesh->vertices[v0] + oldMesh->vertices[v1]);
-      newMesh->vertices.push_back(midpoint);
-
-      if (!oldMesh->normals.empty()) {
-        vec3f midpoint = .5f* (oldMesh->normals[v0] + oldMesh->normals[v1]);
-        newMesh->normals.push_back(midpoint);
-      }
-
-      if (!oldMesh->texcoords.empty()) {
-        vec2f midpoint = .5f* (oldMesh->texcoords[v0] + oldMesh->texcoords[v1]);
-        newMesh->texcoords.push_back(midpoint);
-      }
+    std::pair<int, int> pair = std::make_pair(std::min(v0, v1),std::max(v0, v1));
+    if (alreadyAddedVertices.find(pair) != alreadyAddedVertices.end())
+      return alreadyAddedVertices[pair];
+    
+    alreadyAddedVertices[pair] = newMesh->vertices.size();
+    
+    vec3f midpoint = .5f* (oldMesh->vertices[v0] + oldMesh->vertices[v1]);
+    newMesh->vertices.push_back(midpoint);
+    
+    if (!oldMesh->normals.empty()) {
+      vec3f midpoint = .5f* (oldMesh->normals[v0] + oldMesh->normals[v1]);
+      newMesh->normals.push_back(midpoint);
+    }
+    
+    if (!oldMesh->texcoords.empty()) {
+      vec2f midpoint = .5f* (oldMesh->texcoords[v0] + oldMesh->texcoords[v1]);
+      newMesh->texcoords.push_back(midpoint);
     }
     // Return the index of midpoint
     return alreadyAddedVertices[pair];
   }
 
+  Mesh::SP subdivide(Mesh::SP in)
+  {
+    Mesh::SP out = Mesh::create(in->material);
+
+    // Put original vertices to new mesh
+    out->vertices  = in->vertices;
+    out->normals   = in->normals;
+    out->texcoords = in->texcoords;
+    // Mapping between original vertices and midpoints vs new vertices
+    std::map<std::pair<int, int>, int> alreadyAddedVertices;
+    // Iterate each triangle
+    for (auto index : in->indices) {
+      int A = index.x, B = index.y, C = index.z;
+      int AB = addMidpoint(alreadyAddedVertices, in, A, B, out);
+      int BC = addMidpoint(alreadyAddedVertices, in, B, C, out);
+      int CA = addMidpoint(alreadyAddedVertices, in, C, A, out);
+      out->indices.push_back({ A, AB, CA });
+      out->indices.push_back({ B, BC, AB });
+      out->indices.push_back({ C, CA, BC });
+      out->indices.push_back({ AB, BC, CA });
+    }
+    
+    return out;
+  }
+  
   void miniSubdivide(int ac, char** av)
   {
     std::string outFileName = "";
@@ -84,80 +108,33 @@ namespace mini {
       usage("no output file name specified");
 
     std::cout << MINI_COLOR_LIGHT_BLUE
-              << "Loading mini file from " << inFileName
+              << "loading mini file from " << inFileName
               << MINI_COLOR_DEFAULT << std::endl;
 
-    Scene::SP oldScene = Scene::load(inFileName);
+    Scene::SP scene = Scene::load(inFileName);
+    std::set<Object::SP> objects;
+    std::map<Mesh::SP, Mesh::SP> meshSubstitutions;
+    // create list of all input objects
+    for (auto inst : scene->instances) objects.insert(inst->object);
+    // create list of all input meshes that we need to create 4x substitutions for.
+    for (auto obj : objects)
+      for (auto mesh : obj->meshes)
+        meshSubstitutions[mesh] = {};
+    
+    // now, compute 'replacement' for each input mesh, by subdividing it.
+    for (auto meshesIt : meshSubstitutions)
+      meshSubstitutions[meshesIt.first] = subdivide(meshesIt.first);
+    
+    // now go over all objects, and do the substitution
+    for (auto obj : objects)
+      for (auto &mesh : obj->meshes)
+        mesh = meshSubstitutions[mesh];
 
-    // Save uniques instances, objects and meshes
-    std::map<Instance::SP, Instance::SP> instances;
-    std::map<Object::SP, Object::SP> objects;
-    std::map<Mesh::SP, Mesh::SP> meshes;
-
-    // List of new instances
-    std::vector<Instance::SP> newInstances;
-
-    // Iterate each instance
-    for (auto &inst : oldScene->instances) {
-      // Reuse object if found
-      if (objects.find(inst->object) != objects.end()) {
-        newInstances.push_back(Instance::create(objects[inst->object], inst->xfm));
-        continue;
-      }
-      // List of new meshes
-      std::vector<Mesh::SP> newMeshes;
-
-      // Iterate each mesh
-      for (auto& oldMesh : inst->object->meshes) {
-        // Reuse mesh if found
-        if (meshes.find(oldMesh) != meshes.end()) {
-          newMeshes.push_back(meshes[oldMesh]);
-          continue;
-        }
-        // Create an empty mesh with a dummy material
-        Mesh::SP newMesh = Mesh::create(Material::create());
-        newMesh->material = oldMesh->material;
-        // Put original vertices to new mesh
-        newMesh->vertices  = oldMesh->vertices;
-        newMesh->normals   = oldMesh->normals;
-        newMesh->texcoords = oldMesh->texcoords;
-        // Mapping between original vertices and midpoints vs new vertices
-        std::map<std::pair<int, int>, int> alreadyAddedVertices;
-        // Iterate each triangle
-        for (auto& index : oldMesh->indices) {
-          int A = index.x, B = index.y, C = index.z;
-          int AB = addMidpoint(alreadyAddedVertices, oldMesh, A, B, newMesh);
-          int BC = addMidpoint(alreadyAddedVertices, oldMesh, B, C, newMesh);
-          int CA = addMidpoint(alreadyAddedVertices, oldMesh, C, A, newMesh);
-          newMesh->indices.push_back({ A, AB, CA });
-          newMesh->indices.push_back({ B, BC, AB });
-          newMesh->indices.push_back({ C, CA, BC });
-          newMesh->indices.push_back({ AB, BC, CA });
-        }
-        // Append to the list of new meshes
-        newMeshes.push_back(newMesh);
-        // Update unique set of meshes for later use
-        meshes[oldMesh] = newMesh;
-      }
-      // Create a new object with the new list of meshes
-      Object::SP newObject = Object::create(newMeshes);
-      // Create a new instance with the new object
-      Instance::SP newInstance = Instance::create(newObject);
-      // Append to the list of new instances
-      newInstances.push_back(newInstance);
-      // Update unique set of objects for later use
-      objects[inst->object] = newObject;
-      // Update unique set of instances for later use
-    }
-    // Create a new scene from the list of new instances
-    Scene::SP newScene = Scene::create(newInstances);
-    newScene->envMapLight = oldScene->envMapLight;
-    newScene->dirLights   = oldScene->dirLights;
-    newScene->quadLights  = oldScene->quadLights;
-    // Save scene
-    std::cout << "saving scene \n";
-    newScene->save(outFileName);
-
+    // nothing to do for objects or instances; they've got their old
+    // content swapped out by now.
+    std::cout << "saving scene" << std::endl;
+    scene->save(outFileName);
+    
     std::cout << MINI_COLOR_LIGHT_GREEN
               << "#miniInfo: subdivided scene saved."
               << MINI_COLOR_DEFAULT << std::endl;
