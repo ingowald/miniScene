@@ -21,8 +21,13 @@
 # has.
 # ------------------------------------------------------------------
 add_library(miniScene STATIC
+  common.h
+  IO.h
+  Scene.h
   Scene.cpp
+  Serialized.h
   Serialized.cpp
+  CMakeLists.txt
   )
 target_link_libraries(miniScene
   PUBLIC

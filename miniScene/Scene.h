@@ -30,15 +30,38 @@ namespace mini {
 
     static SP create() { return std::make_shared<Texture>(); }
       
-    typedef enum {
-                  UNDEFINED=0, EMBEDDED_PTEX, FLOAT4, FLOAT1, RGBA_UINT8, BYTE4=RGBA_UINT8, 
-    } Format;
-      
+    typedef enum : uint16_t
+      {
+       UNDEFINED=0,
+       EMBEDDED_PTEX,
+       FLOAT4,
+       FLOAT1,
+       RGBA_UINT8, BYTE4=RGBA_UINT8, 
+      } Format;
+    typedef enum : uint16_t
+      {
+       /*! default filter mode - bilinear */
+       FILTER_BILINEAR=0,
+       /*! explicitly request nearest-filtering */
+       FILTER_NEAREST
+      } FilterMode;
+    
     /* for embedded ptex, size is always {0,0}, since data vector
        containst the raw ptex fiel content; for all others it is the
        number of pixels in x and y */
-    vec2i  size    { 0, 0 };
-    Format format  { UNDEFINED };
+    vec2i                size       { 0, 0 };
+
+    /*! format to be used - _must_ be set */
+    Format               format     { UNDEFINED };
+
+    /*! filter mode that _should_ be used; usually we would exptect
+      textures to use bilinear filtering, but in some cases it might
+      be required to use nearest filtering, so let the app express
+      that here */
+    FilterMode           filterMode { FILTER_BILINEAR };
+
+    /*! the actual raw texture data; what exactly that is depends on
+      the format value */
     std::vector<uint8_t> data;
   };
 

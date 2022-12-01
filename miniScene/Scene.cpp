@@ -89,6 +89,7 @@ namespace mini {
         io::writeElement(out,int(1));
         io::writeElement(out,tex->size);
         io::writeElement(out,tex->format);
+        io::writeElement(out,tex->filterMode);
         io::writeVector(out,tex->data);
       }
     }
@@ -105,6 +106,7 @@ namespace mini {
       assert(tex);
       io::writeElement(out,tex->size);
       io::writeElement(out,tex->format);
+      io::writeElement(out,tex->filterMode);
       io::writeVector(out,tex->data);
     } else
       io::writeElement(out,int(0));
@@ -202,6 +204,7 @@ namespace mini {
         Texture::SP tex = std::make_shared<Texture>();
         io::readElement(in,tex->size);
         io::readElement(in,tex->format);
+        io::readElement(in,tex->filterMode);
         io::readVector(in,tex->data);
         textures.push_back(tex);
       }
@@ -219,6 +222,7 @@ namespace mini {
       Texture::SP tex = scene->envMapLight->texture = std::make_shared<Texture>();
       io::readElement(in,tex->size);
       io::readElement(in,tex->format);
+      io::readElement(in,tex->filterMode);
       io::readVector(in,tex->data);
     }
     

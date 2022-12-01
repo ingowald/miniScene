@@ -19,56 +19,61 @@
 #include "miniScene/Scene.h"
 
 namespace mini {
-  // namespace scene {
-    
-    template<typename T>
-    struct Serialized {
-      inline size_t size() const { return list.size(); }
-      inline const T &operator[](int ID) const
-      { assert(ID>=0); assert(ID<list.size()); return list[ID]; }
-      
-      int getID(T t)
-      {
-        if (registry.find(t) == registry.end())
-          return -1;
 
-        return registry[t];
-      }
+  /*! helper class that creates a "serialized" registry of a certain
+      type of object; allowing to identify and look up objects using
+      numerical IDs */
+  template<typename T>
+  struct Serialized {
+    inline size_t size() const { return list.size(); }
+    inline const T &operator[](int ID) const
+    { assert(ID>=0); assert(ID<list.size()); return list[ID]; }
       
-      inline bool wasKnown(T t) const
-      {
-        return  (registry.find(t) != registry.end());
-      }
+    int getID(T t)
+    {
+      if (registry.find(t) == registry.end())
+        return -1;
 
-      bool addWasKnown(T t)
-      {
-        if (registry.find(t) != registry.end())
-          return true;
+      return registry[t];
+    }
+      
+    inline bool wasKnown(T t) const
+    {
+      return  (registry.find(t) != registry.end());
+    }
 
-        registry[t] = (int)list.size();
-        list.push_back(t);
-        return false;
-      }
-      
-      void add(T t) { addWasKnown(t); }
-      
-      std::map<T,int> registry;
-      std::vector<T>  list;
-    };
+    bool addWasKnown(T t)
+    {
+      if (registry.find(t) != registry.end())
+        return true;
 
-    struct SerializedScene {
-      SerializedScene() {}
-      SerializedScene(Scene *scene);
+      registry[t] = (int)list.size();
+      list.push_back(t);
+      return false;
+    }
       
-      int getID(Texture::SP t)  { return textures.getID(t); }
-      int getID(Material::SP m) { return materials.getID(m); }
-      int getID(Mesh::SP t)     { return meshes.getID(t); }
-      int getID(Object::SP t)   { return objects.getID(t); }
+    void add(T t) { addWasKnown(t); }
       
-      Serialized<Texture::SP>  textures;
-      Serialized<Material::SP> materials;
-      Serialized<Object::SP>   objects;
-      Serialized<Mesh::SP>     meshes;
-    };
+    std::map<T,int> registry;
+    std::vector<T>  list;
+  };
+
+  /*! helper class that provides a "serialized" version of the scene;
+      ie, one in which all objects, meshes, materials, etc can be
+      references through (and looked up by) serial integer IDs */
+  struct SerializedScene {
+    SerializedScene() {}
+    SerializedScene(Scene *scene);
+      
+    int getID(Texture::SP t)  { return textures.getID(t); }
+    int getID(Material::SP m) { return materials.getID(m); }
+    int getID(Mesh::SP t)     { return meshes.getID(t); }
+    int getID(Object::SP t)   { return objects.getID(t); }
+      
+    Serialized<Texture::SP>  textures;
+    Serialized<Material::SP> materials;
+    Serialized<Object::SP>   objects;
+    Serialized<Mesh::SP>     meshes;
+  };
 
 } // ::mini
