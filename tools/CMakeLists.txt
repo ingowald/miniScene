@@ -105,6 +105,17 @@ target_link_libraries(miniReplicate
   )
 
 # -----------------------------------------------------------------------------
+# tool that reads a scene, and then prints some basic information
+# -----------------------------------------------------------------------------
+add_executable(miniGenScaleTest
+  genScaleTest.cpp
+  )
+target_link_libraries(miniGenScaleTest
+  PUBLIC
+  miniScene
+  )
+
+# -----------------------------------------------------------------------------
 # a trivially simple owl-based viewer, to sanity test ... don't expct
 # much, this only shows flat triangles
 # -----------------------------------------------------------------------------

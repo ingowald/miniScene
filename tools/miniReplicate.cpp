@@ -60,13 +60,13 @@ namespace mini {
       if (inFileName.empty())
         throw std::runtime_error("no input file specified");
 
-      std::cout << MINI_COLOR_LIGHT_BLUE
+      std::cout << MINI_TERMINAL_LIGHT_BLUE
                 << "loading brx file from " << inFileName 
-                << MINI_COLOR_DEFAULT << std::endl;
+                << MINI_TERMINAL_DEFAULT << std::endl;
       Scene::SP in = Scene::load(inFileName);
-      std::cout << MINI_COLOR_LIGHT_GREEN
+      std::cout << MINI_TERMINAL_LIGHT_GREEN
                 << "#brx2obj: scene loaded."
-                << MINI_COLOR_DEFAULT << std::endl;
+                << MINI_TERMINAL_DEFAULT << std::endl;
 
       Scene::SP out = std::make_shared<Scene>();
       //srand48(128);
@@ -120,14 +120,14 @@ namespace mini {
       }
       std::cout << "created instantiated scene with " << out->instances.size() << " instances total" << std::endl;
         
-      std::cout << MINI_COLOR_LIGHT_BLUE
+      std::cout << MINI_TERMINAL_LIGHT_BLUE
                 << "saving to " << outFileName 
-                << MINI_COLOR_DEFAULT << std::endl;
+                << MINI_TERMINAL_DEFAULT << std::endl;
       // writeToOBJ(out,outFileName);
       out->save(outFileName);
-      std::cout << MINI_COLOR_LIGHT_GREEN
+      std::cout << MINI_TERMINAL_LIGHT_GREEN
                 << "#brixReplicate: replicated model written...."
-                << MINI_COLOR_DEFAULT << std::endl;
+                << MINI_TERMINAL_DEFAULT << std::endl;
     }
     
   }

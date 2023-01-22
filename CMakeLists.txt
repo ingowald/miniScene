@@ -58,7 +58,7 @@ endif()
 # submodule, simply include owl _before_ including miniScene, then it
 # will pick up the target
 # ------------------------------------------------------------------
-  if(MINI_IS_SUBMODULE AND (TARGET owl::owl))
+if(MINI_IS_SUBMODULE AND (TARGET owl::owl))
   message(STATUS "miniScene: owl target exists from another sibling submodule; using it")
   set(MINI_HAVE_OWL ON)
   set(MINI_HAVE_STB ON)
