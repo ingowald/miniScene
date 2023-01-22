@@ -164,37 +164,37 @@
 
 #define MINI_NOTIMPLEMENTED throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+" not implemented")
 
-#ifdef WIN32
-# define MINI_TERMINAL_RED ""
-# define MINI_TERMINAL_GREEN ""
-# define MINI_TERMINAL_LIGHT_GREEN ""
-# define MINI_TERMINAL_YELLOW ""
-# define MINI_TERMINAL_BLUE ""
-# define MINI_TERMINAL_LIGHT_BLUE ""
-# define MINI_TERMINAL_RESET ""
-# define MINI_TERMINAL_DEFAULT MINI_TERMINAL_RESET
-# define MINI_TERMINAL_BOLD ""
+// #ifdef WIN32
+// # define MINI_TERMINAL_RED ""
+// # define MINI_TERMINAL_GREEN ""
+// # define MINI_TERMINAL_LIGHT_GREEN ""
+// # define MINI_TERMINAL_YELLOW ""
+// # define MINI_TERMINAL_BLUE ""
+// # define MINI_TERMINAL_LIGHT_BLUE ""
+// # define MINI_TERMINAL_RESET ""
+// # define MINI_TERMINAL_DEFAULT MINI_TERMINAL_RESET
+// # define MINI_TERMINAL_BOLD ""
 
-# define MINI_TERMINAL_MAGENTA ""
-# define MINI_TERMINAL_LIGHT_MAGENTA ""
-# define MINI_TERMINAL_CYAN ""
-# define MINI_TERMINAL_LIGHT_RED ""
-#else
-# define MINI_TERMINAL_RED "\033[0;31m"
-# define MINI_TERMINAL_GREEN "\033[0;32m"
-# define MINI_TERMINAL_LIGHT_GREEN "\033[1;32m"
-# define MINI_TERMINAL_YELLOW "\033[1;33m"
-# define MINI_TERMINAL_BLUE "\033[0;34m"
-# define MINI_TERMINAL_LIGHT_BLUE "\033[1;34m"
-# define MINI_TERMINAL_RESET "\033[0m"
-# define MINI_TERMINAL_DEFAULT MINI_TERMINAL_RESET
-# define MINI_TERMINAL_BOLD "\033[1;1m"
+// # define MINI_TERMINAL_MAGENTA ""
+// # define MINI_TERMINAL_LIGHT_MAGENTA ""
+// # define MINI_TERMINAL_CYAN ""
+// # define MINI_TERMINAL_LIGHT_RED ""
+// #else
+// # define MINI_TERMINAL_RED "\033[0;31m"
+// # define MINI_TERMINAL_GREEN "\033[0;32m"
+// # define MINI_TERMINAL_LIGHT_GREEN "\033[1;32m"
+// # define MINI_TERMINAL_YELLOW "\033[1;33m"
+// # define MINI_TERMINAL_BLUE "\033[0;34m"
+// # define MINI_TERMINAL_LIGHT_BLUE "\033[1;34m"
+// # define MINI_TERMINAL_RESET "\033[0m"
+// # define MINI_TERMINAL_DEFAULT MINI_TERMINAL_RESET
+// # define MINI_TERMINAL_BOLD "\033[1;1m"
 
-# define MINI_TERMINAL_MAGENTA "\e[35m"
-# define MINI_TERMINAL_LIGHT_MAGENTA "\e[95m"
-# define MINI_TERMINAL_CYAN "\e[36m"
-# define MINI_TERMINAL_LIGHT_RED "\033[1;31m"
-#endif
+// # define MINI_TERMINAL_MAGENTA "\e[35m"
+// # define MINI_TERMINAL_LIGHT_MAGENTA "\e[95m"
+// # define MINI_TERMINAL_CYAN "\e[36m"
+// # define MINI_TERMINAL_LIGHT_RED "\033[1;31m"
+// #endif
 
 #ifdef _MSC_VER
 # define MINI_ALIGN(alignment) __declspec(align(alignment)) 

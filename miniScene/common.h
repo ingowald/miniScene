@@ -72,10 +72,11 @@ namespace mini {
   
 #if MINI_HAVE_OWL_COMMON
   using namespace owl;
-  using namespace owl::common;
-#else
-  using namespace mini::common;
+  namespace common {
+    using namespace owl::common;
+  }
 #endif
+  using namespace mini::common;
   
   namespace common {
     

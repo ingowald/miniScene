@@ -15,11 +15,11 @@
 // ======================================================================== //
 
 #include "miniScene/Scene.h"
-#include "miniScene/Serialized.h"
 
 namespace mini {
   int texRes = 8;
   bool funnies = true;
+  int sphereRes = 10;
   
   float rng()
   {
@@ -36,6 +36,7 @@ namespace mini {
     texture->format = Texture::FLOAT4;
     texture->size = { texRes,texRes };
     texture->data.resize(texRes*texRes*sizeof(vec4f));
+    texture->filterMode = Texture::FILTER_NEAREST;
     vec4f *texel   = (vec4f*)texture->data.data();
     vec4f onColor  = vec4f(1.f);
     vec4f offColor = vec4f(rng(),rng(),rng(),1.f);
@@ -48,16 +49,16 @@ namespace mini {
     return texture;
   }
     
-  Mesh::SP genSphere(vec3f center, float radius, int nSegs)
+  Mesh::SP genSphere(vec3f center, float radius)
   {
     Material::SP material  = Material::create();
     material->baseColor    = rng3f();
     material->colorTexture = makeTexture();
     Mesh::SP mesh = Mesh::create(material);
-    for (int i=0;i<=nSegs;i++)
-      for (int j=0;j<2*nSegs;j++) {
-        float fu = j/(2.f*nSegs);
-        float fv = i/float(nSegs); 
+    for (int i=0;i<=sphereRes;i++)
+      for (int j=0;j<2*sphereRes;j++) {
+        float fu = j/(2.f*sphereRes);
+        float fv = i/float(sphereRes); 
         float u = fu*2.f*M_PI;;
         float v = fv*M_PI;
         vec3f n;
@@ -68,15 +69,15 @@ namespace mini {
         mesh->texcoords.push_back({fu,fv});
         mesh->vertices.push_back(center + n*radius);
       }
-    for (int j=0;j<nSegs;j++)
-      for (int i=0;i<2*nSegs;i++) {
-        int i00 = j*(2*nSegs) + i;
+    for (int j=0;j<sphereRes;j++)
+      for (int i=0;i<2*sphereRes;i++) {
+        int i00 = j*(2*sphereRes) + i;
         int i01
           = funnies
-          ? j*(2*nSegs) + ((j+1)%(2*nSegs))
-          : j*(2*nSegs) + ((i+1)%(2*nSegs));
-        int i10 = i00 + 2*nSegs;
-        int i11 = i01 + 2*nSegs;
+          ? j*(2*sphereRes) + ((j+1)%(2*sphereRes))
+          : j*(2*sphereRes) + ((i+1)%(2*sphereRes));
+        int i10 = i00 + 2*sphereRes;
+        int i11 = i01 + 2*sphereRes;
         mesh->indices.push_back({i00,i01,i11});
         mesh->indices.push_back({i00,i11,i10});
       }
@@ -86,32 +87,95 @@ namespace mini {
   void genScaleTest(int ac, char **av)
   {
     std::string outFileName = "genScaleTest.mini";
+    int numInstances = 1;
+    int numInstantiableSpheres = 100;
+    int numBaseSpheres = 100;
     for (int i=1;i<ac;i++) {
       std::string arg = av[i];
       if (arg == "-o")
         outFileName = av[++i];
       else if (arg == "-nf")
         funnies = false;
-      else if (arg == "-tr")
+      else if (arg == "--sphere-res" || arg == "-sr")
+        sphereRes = std::stoi(av[++i]);
+      else if (arg == "--texture-res" || arg == "-tr")
         texRes = std::stoi(av[++i]);
+      else if (arg == "--num-instances" || arg == "-ni")
+        numInstances = std::stoi(av[++i]);
+      else if (arg == "--num-base-spheres" || arg == "-nbs")
+        numBaseSpheres = std::stoi(av[++i]);
+      else if (arg == "--num-instantiable-spheres" || arg == "-nis")
+        numInstantiableSpheres = std::stoi(av[++i]);
       else
         throw std::runtime_error("unknown cmdline argument '"+arg+"'");
     }
-    int numSpheres   = 100;
     vec3f domainSize = vec3f(1000,20,1000);
-    float avgRadius  = 500.f/sqrtf(numSpheres);
+    int numVisibleSpheres = numInstances + numBaseSpheres;
+    float avgRadius  = 500.f/sqrtf(numVisibleSpheres);
 
-    std::vector<Mesh::SP> meshes;
-    for (int i=0;i<numSpheres;i++) {
+    Scene::SP scene = Scene::create();
+
+    // ==================================================================
+    std::cout << MINI_TERMINAL_BLUE
+              << "generating 1 'not-instanced' base object with  " << numBaseSpheres
+              << " base spheres"
+              << MINI_TERMINAL_DEFAULT << std::endl;
+    std::vector<Mesh::SP> baseMeshes;
+    for (int i=0;i<numBaseSpheres;i++) {
       float rad = (.5f+rng())*avgRadius;
       vec3f center = rng3f()*domainSize;
-      meshes.push_back(genSphere(center,
-                                 rad,10));
+      baseMeshes.push_back(genSphere(center,rad));
     }
-    Object::SP object = Object::create(meshes);
-    Scene::SP scene = Scene::create();
-    scene->instances.push_back(Instance::create(object));
+    scene->instances.push_back(Instance::create(Object::create(baseMeshes)));
+    std::cout << MINI_TERMINAL_GREEN
+              << "done."
+              << MINI_TERMINAL_DEFAULT << std::endl;
 
+    // ==================================================================
+    std::vector<Object::SP> instantiableSpheres;
+    std::cout << MINI_TERMINAL_BLUE
+              << "creating total of " << numInstantiableSpheres
+              << " different (unit) spheres to pick from for instantiation"
+              << MINI_TERMINAL_DEFAULT << std::endl;
+    for (int i=0;i<numInstantiableSpheres;i++) {
+      Mesh::SP mesh = genSphere(vec3f(0.f),1.f);
+      instantiableSpheres.push_back(Object::create({mesh}));
+    }
+    std::cout << MINI_TERMINAL_GREEN
+              << "done."
+              << MINI_TERMINAL_DEFAULT << std::endl;
+
+    // ==================================================================
+    std::cout << MINI_TERMINAL_BLUE
+              << "creating total of " << numInstances
+              << " different instances of randomly selected spheres"
+              << MINI_TERMINAL_DEFAULT << std::endl;
+    for (int i=0;i<numInstances;i++) {
+      int whichSphere
+        = (i<(int)instantiableSpheres.size())
+        ? i
+        : (int)(rng()*instantiableSpheres.size());
+      whichSphere = std::min(whichSphere,int(instantiableSpheres.size()));
+      float rad = (.5f+rng())*avgRadius;
+      vec3f center = rng3f()*domainSize;
+      vec3f orientation;
+      while(1) {
+        orientation = vec3f(1.f)-2.f*rng3f();
+        float len = dot(orientation,orientation);
+        if (len > .01f && len <= 1.f) break;
+      } 
+      orientation = normalize(orientation);
+      affine3f xfm
+        = affine3f::scale(vec3f(rad))
+        * affine3f(frame(orientation))
+        * affine3f::translate(center);
+      scene->instances.push_back(Instance::create(instantiableSpheres[whichSphere],xfm));
+    }
+    std::cout << MINI_TERMINAL_GREEN
+              << "done."
+              << MINI_TERMINAL_DEFAULT << std::endl;
+
+    // ==================================================================
     std::cout << MINI_TERMINAL_BLUE << "saving to " << outFileName
               << MINI_TERMINAL_DEFAULT << std::endl;
     scene->save(outFileName);
