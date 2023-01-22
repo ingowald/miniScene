@@ -109,15 +109,15 @@ namespace mini {
       else
         throw std::runtime_error("unknown cmdline argument '"+arg+"'");
     }
-    vec3f domainSize = vec3f(1000,20,1000);
+    vec3f domainSize = vec3f(1000,100,1000);
     int numVisibleSpheres = numInstances + numBaseSpheres;
-    float avgRadius  = 500.f/sqrtf(numVisibleSpheres);
+    float avgRadius  = 200.f*powf(numVisibleSpheres,-1.f/3.f);
 
     Scene::SP scene = Scene::create();
 
     // ==================================================================
     std::cout << MINI_TERMINAL_BLUE
-              << "generating 1 'not-instanced' base object with  " << numBaseSpheres
+              << "generating 1 'not-instanced' base object with " << numBaseSpheres
               << " base spheres"
               << MINI_TERMINAL_DEFAULT << std::endl;
     std::vector<Mesh::SP> baseMeshes;
@@ -165,10 +165,14 @@ namespace mini {
         if (len > .01f && len <= 1.f) break;
       } 
       orientation = normalize(orientation);
+      // affine3f xfm
+      //   = affine3f::scale(vec3f(rad))
+      //   * affine3f(frame(orientation))
+      //   * affine3f::translate(center);
       affine3f xfm
-        = affine3f::scale(vec3f(rad))
+        = affine3f::translate(center)
         * affine3f(frame(orientation))
-        * affine3f::translate(center);
+        * affine3f::scale(vec3f(rad));
       scene->instances.push_back(Instance::create(instantiableSpheres[whichSphere],xfm));
     }
     std::cout << MINI_TERMINAL_GREEN
