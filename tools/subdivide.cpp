@@ -26,8 +26,8 @@ namespace mini {
   void usage(const std::string &error = "")
   {
     if (!error.empty())
-      std::cerr << MINI_COLOR_RED << "Error: " << error
-                << MINI_COLOR_DEFAULT << std::endl << std::endl;
+      std::cerr << MINI_TERMINAL_RED << "Error: " << error
+                << MINI_TERMINAL_DEFAULT << std::endl << std::endl;
     std::cout << "miniSubdivide inputScene.mini -o subdividedScene.mini" << std::endl;
     exit(error.empty() ? 0 : 1);
   }
@@ -107,9 +107,9 @@ namespace mini {
     if (outFileName.empty())
       usage("no output file name specified");
 
-    std::cout << MINI_COLOR_LIGHT_BLUE
+    std::cout << MINI_TERMINAL_LIGHT_BLUE
               << "loading mini file from " << inFileName
-              << MINI_COLOR_DEFAULT << std::endl;
+              << MINI_TERMINAL_DEFAULT << std::endl;
 
     Scene::SP scene = Scene::load(inFileName);
     std::set<Object::SP> objects;
@@ -135,9 +135,9 @@ namespace mini {
     std::cout << "saving scene" << std::endl;
     scene->save(outFileName);
     
-    std::cout << MINI_COLOR_LIGHT_GREEN
+    std::cout << MINI_TERMINAL_LIGHT_GREEN
               << "#miniInfo: subdivided scene saved."
-              << MINI_COLOR_DEFAULT << std::endl;
+              << MINI_TERMINAL_DEFAULT << std::endl;
   }
 } // ::mini
 

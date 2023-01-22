@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2018-2022 Ingo Wald                                            //
+// Copyright 2018-2023 Ingo Wald                                            //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -119,9 +119,9 @@ namespace mini {
       
         STBI_FREE(image);
       } else {
-        std::cout << MINI_COLOR_RED
+        std::cout << MINI_TERMINAL_RED
                   << "Could not load texture from " << fileName << "!"
-                  << MINI_COLOR_DEFAULT << std::endl;
+                  << MINI_TERMINAL_DEFAULT << std::endl;
       }
     
       knownTextures[inFileName] = texture;
@@ -157,7 +157,7 @@ namespace mini {
 
       if (materials.empty())
         // throw std::runtime_error("could not parse materials ...");
-        std::cout << MINI_COLOR_RED << "WARNING: NO MATERIALS (could not find/parse mtl file!?)" << MINI_COLOR_DEFAULT << std::endl;
+        std::cout << MINI_TERMINAL_RED << "WARNING: NO MATERIALS (could not find/parse mtl file!?)" << MINI_TERMINAL_DEFAULT << std::endl;
       
       std::vector<Material::SP> baseMaterials;
       for (auto &objMat : materials) {
@@ -278,18 +278,18 @@ int main(int ac, char **av)
   if (inFileName.empty()) usage("no input file name specified");
   if (outFileName.empty()) usage("no output file name base specified");
 
-  std::cout << MINI_COLOR_BLUE
+  std::cout << MINI_TERMINAL_BLUE
             << "loading OBJ model from " << inFileName
-            << MINI_COLOR_DEFAULT << std::endl;
+            << MINI_TERMINAL_DEFAULT << std::endl;
 
   mini::Scene::SP scene = mini::loadOBJ(inFileName);
     
-  std::cout << MINI_COLOR_DEFAULT
+  std::cout << MINI_TERMINAL_DEFAULT
             << "done importing; saving to " << outFileName
-            << MINI_COLOR_DEFAULT << std::endl;
+            << MINI_TERMINAL_DEFAULT << std::endl;
   scene->save(outFileName);
-  std::cout << MINI_COLOR_LIGHT_GREEN
+  std::cout << MINI_TERMINAL_LIGHT_GREEN
             << "scene saved"
-            << MINI_COLOR_DEFAULT << std::endl;
+            << MINI_TERMINAL_DEFAULT << std::endl;
   return 0;
 }

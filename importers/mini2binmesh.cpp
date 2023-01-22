@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2018-2022 Ingo Wald                                            //
+// Copyright 2018-2023 Ingo Wald                                            //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -51,12 +51,12 @@ int main(int ac, char **av)
   if (inFileName.empty()) usage("no input file name specified");
   if (outFileName.empty()) usage("no output file name base specified");
   
-  std::cout << MINI_COLOR_BLUE
+  std::cout << MINI_TERMINAL_BLUE
             << "loading binmesh file from " << inFileName
-            << MINI_COLOR_DEFAULT << std::endl;
+            << MINI_TERMINAL_DEFAULT << std::endl;
 
   Scene::SP scene = Scene::load(inFileName);
-  std::cout << MINI_COLOR_GREEN
+  std::cout << MINI_TERMINAL_GREEN
             << "scene loaded; now flattening into a single mesh... "
             << std::endl;
   std::vector<vec3f> vertices;
@@ -70,9 +70,9 @@ int main(int ac, char **av)
         indices.push_back(idxOfs+idx);
     }
   
-  std::cout << MINI_COLOR_BLUE
+  std::cout << MINI_TERMINAL_BLUE
             << "done flattening into a single mesh; saving to " << outFileName
-            << MINI_COLOR_DEFAULT << std::endl;
+            << MINI_TERMINAL_DEFAULT << std::endl;
   std::ofstream out(outFileName,std::ios::binary);
   size_t count;
   count = vertices.size();
@@ -82,8 +82,8 @@ int main(int ac, char **av)
   out.write((char*)&count,sizeof(count));
   out.write((char*)indices.data(),count*sizeof(vec3i));
   
-  std::cout << MINI_COLOR_LIGHT_GREEN
+  std::cout << MINI_TERMINAL_LIGHT_GREEN
             << "lattened scene saved in binmesh format; done."
-            << MINI_COLOR_DEFAULT << std::endl;
+            << MINI_TERMINAL_DEFAULT << std::endl;
   return 0;
 }

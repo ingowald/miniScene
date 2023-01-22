@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2018-2022 Ingo Wald                                            //
+// Copyright 2018-2023 Ingo Wald                                            //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -99,18 +99,18 @@ int main(int ac, char **av)
   if (inFileName.empty()) usage("no input file name specified");
   if (outFileName.empty()) usage("no output file name base specified");
 
-  std::cout << MINI_COLOR_BLUE
+  std::cout << MINI_TERMINAL_BLUE
             << "loading STL model from " << inFileName
-            << MINI_COLOR_DEFAULT << std::endl;
+            << MINI_TERMINAL_DEFAULT << std::endl;
 
   mini::Scene::SP scene = mini::loadSTL(inFileName);
     
-  std::cout << MINI_COLOR_DEFAULT
+  std::cout << MINI_TERMINAL_DEFAULT
             << "done importing; saving to " << outFileName
-            << MINI_COLOR_DEFAULT << std::endl;
+            << MINI_TERMINAL_DEFAULT << std::endl;
   scene->save(outFileName);
-  std::cout << MINI_COLOR_LIGHT_GREEN
+  std::cout << MINI_TERMINAL_LIGHT_GREEN
             << "scene saved"
-            << MINI_COLOR_DEFAULT << std::endl;
+            << MINI_TERMINAL_DEFAULT << std::endl;
   return 0;
 }
