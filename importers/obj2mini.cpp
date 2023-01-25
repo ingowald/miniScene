@@ -112,6 +112,7 @@ namespace mini {
         texture = std::make_shared<Texture>();
         texture->size = res;
         texture->data.resize(res.x*res.y*sizeof(int));
+        texture->format = Texture::RGBA_UINT8;
         memcpy(texture->data.data(),image,texture->data.size());
 
         /* iw - actually, it seems that stbi loads the pictures
@@ -156,10 +157,15 @@ namespace mini {
       }
 
       if (materials.empty())
-        // throw std::runtime_error("could not parse materials ...");
-        std::cout << MINI_TERMINAL_RED << "WARNING: NO MATERIALS (could not find/parse mtl file!?)" << MINI_TERMINAL_DEFAULT << std::endl;
-      
+        std::cout << MINI_TERMINAL_RED
+                  << "WARNING: NO MATERIALS (could not find/parse mtl file!?)"
+                  << MINI_TERMINAL_DEFAULT << std::endl;
+
+      Material::SP dummyMaterial = std::make_shared<Material>();
+      dummyMaterial->baseColor = randomColor(size_t(dummyMaterial.get()));
+
       std::vector<Material::SP> baseMaterials;
+      tinyobj::material_t *objDefaultMaterial = 0;
       for (auto &objMat : materials) {
         Material::SP baseMaterial = std::make_shared<Material>();
         baseMaterial->baseColor =
@@ -172,10 +178,15 @@ namespace mini {
             float(objMat.emission[2]) };
         baseMaterial->ior = objMat.ior;
         baseMaterials.push_back(baseMaterial);
-      }
 
-      Material::SP dummyMaterial = std::make_shared<Material>();
-      dummyMaterial->baseColor = randomColor(size_t(dummyMaterial.get()));
+        if (objMat.name == "default")  {
+          std::cout << "found material with name 'default' - will be using"
+                    << " that for any material that cannot be otherwise resolved..."
+                    << std::endl;
+          objDefaultMaterial = &objMat;
+          dummyMaterial = baseMaterial;
+        }
+      }
 
       std::map<std::pair<Material::SP,Texture::SP>,Material::SP>
         texturedMaterials;
@@ -216,18 +227,21 @@ namespace mini {
                       addVertex(mesh, attributes, idx2, knownVertices));
             mesh->indices.push_back(idx);
           }
-          Texture::SP diffuseTexture
-            = (materialID < materials.size())
-            ? loadTexture(knownTextures,
-                          materials[materialID].diffuse_texname,
-                          modelDir)
-            : 0;
-
-          Material::SP baseMaterial
-            = (materialID < materials.size())
-            ? baseMaterials[materialID]
-            : dummyMaterial;
-                
+          Texture::SP diffuseTexture = {};
+          Material::SP baseMaterial  = {};
+          if (materialID >= 0 && materialID < materials.size()) {
+            baseMaterial = baseMaterials[materialID];
+            diffuseTexture = loadTexture(knownTextures,
+                                         materials[materialID].diffuse_texname,
+                                         modelDir);
+          } else if (objDefaultMaterial) {
+            diffuseTexture = loadTexture(knownTextures,
+                                         objDefaultMaterial->diffuse_texname,
+                                         modelDir);
+            baseMaterial = dummyMaterial;
+          } else {
+            baseMaterial = dummyMaterial;
+          }
           std::pair<Material::SP,Texture::SP> tuple = { baseMaterial,diffuseTexture };
           if (texturedMaterials.find(tuple) == texturedMaterials.end()) {
             mesh->material = std::make_shared<Material>();
