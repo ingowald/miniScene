@@ -55,7 +55,8 @@ namespace mini {
     }
     std::cout
       << "#mini.ply: imported " << prettyNumber(fInd.size()) << " ply faces;"
-      << " created " << prettyNumber(mesh->indices.size()) << " vertices,"
+      << " created " << prettyNumber(mesh->indices.size()) << " triangles "
+      << "(w/ " << prettyNumber(mesh->vertices.size()) << " vertices);"
       << " and dropped " << prettyNumber(numDropped) << " triangles due to out-of-bound indices"
       << std::endl;
 
