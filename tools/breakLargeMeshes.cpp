@@ -44,15 +44,15 @@ namespace mini {
   }
 
   int findOrExtractVertex(Mesh::SP inMesh,
-                          Mesh::SP outMesh,
-                          int vtxID,
-                          std::map<int,int> &alreadyExtracted)
+                               Mesh::SP outMesh,
+                               int vtxID,
+                               std::map<int,int> &alreadyExtracted)
   {
     auto it = alreadyExtracted.find(vtxID);
-    if (it == alreadyExtracted.end())
+    if (it != alreadyExtracted.end())
       return it->second;
 
-    int newID = outMesh->vertices.size();
+    size_t newID = outMesh->vertices.size();
     outMesh->vertices.push_back(inMesh->vertices[vtxID]);
     if (!inMesh->normals.empty())
       outMesh->normals.push_back(inMesh->normals[vtxID]);
@@ -87,7 +87,9 @@ namespace mini {
   
   std::vector<Mesh::SP> splitAtCenter(Mesh::SP mesh, int maxSize)
   {
-    std::cout << "splitting mesh w/ " << prettyNumber(mesh->indices.size()) << " trianglges ..." << std::endl;
+    if (mesh->vertices.size() >= (1ull<<32))
+      throw std::runtime_error("invalid input - input mesh is ALREADY overflowing in vertex indices...");
+    std::cout << "splitting mesh w/ " << prettyNumber(mesh->indices.size()) << " triangles ..." << std::endl;
     box3f centBounds;
     for (auto idx : mesh->indices)
       centBounds.extend(getBounds(mesh,idx).center());
@@ -124,10 +126,11 @@ namespace mini {
     std::cout << " -> mesh w/ " << prettyNumber(mesh->indices.size()) << " triangles is larger than threshold of " << prettyNumber(maxSize) << " ... breaking it" << std::endl;
     std::vector<Mesh::SP> halves = splitAtCenter(mesh,maxSize);
     std::vector<Mesh::SP> result;
-    for (auto frag : breakMesh(halves[0],maxSize))
-      result.push_back(frag);
-    for (auto frag : breakMesh(halves[1],maxSize))
-      result.push_back(frag);
+    for (int h = 0; h < 2; h++) {
+      for (auto frag : breakMesh(halves[h],maxSize))
+        result.push_back(frag);
+      halves[h] = 0;
+    }
     return result;
   }
 

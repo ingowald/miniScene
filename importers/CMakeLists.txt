@@ -68,6 +68,7 @@ if (MINI_BUILD_SIMPLE_IMPORTERS)
   target_link_libraries(mini2binmesh
     miniScene
     )
+
 endif()
 
 

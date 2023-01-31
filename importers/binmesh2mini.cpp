@@ -36,11 +36,14 @@ int main(int ac, char **av)
 {
   std::string inFileName = "";
   std::string outFileName = "";
-    
+  bool bobj_format = false;
+  
   for (int i=1;i<ac;i++) {
     const std::string arg = av[i];
     if (arg == "-o") {
       outFileName = av[++i];
+    } else if (arg == "-bobj" || arg == "--bobj") {
+      bobj_format = true;
     } else if (arg[0] != '-')
       inFileName = arg;
     else
@@ -57,13 +60,19 @@ int main(int ac, char **av)
   Mesh::SP mesh = Mesh::create();
   
   std::ifstream in(inFileName,std::ios::binary);
-  size_t count;
-  in.read((char*)&count,sizeof(count));
-  mesh->vertices.resize(count);
-  in.read((char*)mesh->vertices.data(),count*sizeof(vec3f));
-  in.read((char*)&count,sizeof(count));
-  mesh->indices.resize(count);
-  in.read((char*)mesh->indices.data(),count*sizeof(vec3i));
+  size_t numVertices;
+  size_t numTriangles;
+
+  in.read((char*)&numVertices,sizeof(numVertices));
+  if (bobj_format)
+    in.read((char*)&numTriangles,sizeof(numTriangles));
+  mesh->vertices.resize(numVertices);
+  in.read((char*)mesh->vertices.data(),numVertices*sizeof(vec3f));
+
+  if (!bobj_format)
+    in.read((char*)&numTriangles,sizeof(numTriangles));
+  mesh->indices.resize(numTriangles);
+  in.read((char*)mesh->indices.data(),numTriangles*sizeof(vec3i));
   mesh->material = Material::create();
   
   Object::SP object = Object::create({mesh});
