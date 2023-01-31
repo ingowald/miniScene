@@ -43,6 +43,26 @@ SOFTWARE.
 // General namespace wrapping all Happly things.
 namespace happly {
 
+  bool useBigEndian = false;
+
+  template<typename T>
+  void fixEndian(T &t) {
+    if (!useBigEndian)
+      return;
+    unsigned char *ptr = (unsigned char *)&t;
+    for (int i=0;i<sizeof(T)/2;i++)
+      std::swap(ptr[i],ptr[sizeof(T)-1-i]);
+  }
+
+  template<typename T>
+  void fixEndian(T *ts, int numTs)
+  {
+    for (int i=0;i<numTs;i++)
+      fixEndian(ts[i]);
+  }
+  
+  
+  
 // Enum specifying binary or ASCII filetypes. Binary is always little-endian.
 enum class DataFormat { ASCII, Binary };
 
@@ -224,6 +244,7 @@ public:
   virtual void readNext(std::ifstream& stream) override {
     data.emplace_back();
     stream.read((char*)&data.back(), sizeof(T));
+    fixEndian(data.back());
   }
 
   /**
@@ -386,6 +407,7 @@ public:
     data.emplace_back();
     data.back().resize(count);
     stream.read((char*)&data.back().front(), count*sizeof(T));
+    fixEndian(&data.back().front(),count);
   }
 
   /**
@@ -1450,7 +1472,9 @@ private:
         inputDataFormat = DataFormat::Binary;
         if (verbose) cout << "  - Type: binary" << endl;
       } else if (typeStr == "binary_big_endian") {
-        throw std::runtime_error("PLY parser: encountered scary big endian file. Don't know how to parse that");
+        useBigEndian = true;
+        inputDataFormat = DataFormat::Binary;
+        // throw std::runtime_error("PLY parser: encountered scary big endian file. Don't know how to parse that");
       } else {
         throw std::runtime_error("PLY parser: bad format line");
       }
