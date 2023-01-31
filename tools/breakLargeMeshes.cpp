@@ -80,8 +80,7 @@ namespace mini {
   {
     std::stringstream ss;
     ss << "#tris = " << prettyNumber(mesh->indices.size())
-       << " #vtx = " << prettyNumber(mesh->vertices.size())
-       << std::endl;
+       << " #vtx = " << prettyNumber(mesh->vertices.size());
     return ss.str();
   }
   
@@ -114,7 +113,7 @@ namespace mini {
     Mesh::SP rMesh = extractMesh(mesh,rIndices);
     std::cout << " > got l = " << toString(lMesh) << std::endl;
     std::cout << " > got r = " << toString(rMesh) << std::endl;
-    return { lMesh,rMesh };
+    return std::vector<Mesh::SP>{ lMesh,rMesh };
   }
   
   std::vector<Mesh::SP> breakMesh(Mesh::SP mesh, int maxSize)
@@ -125,6 +124,7 @@ namespace mini {
 
     std::cout << " -> mesh w/ " << prettyNumber(mesh->indices.size()) << " triangles is larger than threshold of " << prettyNumber(maxSize) << " ... breaking it" << std::endl;
     std::vector<Mesh::SP> halves = splitAtCenter(mesh,maxSize);
+    mesh = {};
     std::vector<Mesh::SP> result;
     for (int h = 0; h < 2; h++) {
       for (auto frag : breakMesh(halves[h],maxSize))
@@ -191,7 +191,11 @@ namespace mini {
       std::string arg = av[i];
       if (arg == "-o")
         outFileName = av[++i];
-      else if (arg[0] != '-')
+      else if (arg == "--max-size") {
+        maxMeshSize = std::stoi(av[++i]);
+        if (maxMeshSize < 10000)
+          maxMeshSize *= 1000000;
+      } else if (arg[0] != '-')
         inFileName = arg;
       else
         throw std::runtime_error("unknown cmdline argument '"+arg+"'");
@@ -208,7 +212,7 @@ namespace mini {
     std::cout << MINI_TERMINAL_LIGHT_GREEN
               << "#miniSeparateRootMeshes: scene loaded."
               << MINI_TERMINAL_DEFAULT << std::endl;
-
+    
     Scene::SP separated = breakLargeMeshes(scene,maxMeshSize);
     std::cout << MINI_TERMINAL_LIGHT_BLUE
               << "done separating; saving to " << outFileName 
