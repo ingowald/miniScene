@@ -43,10 +43,10 @@ namespace mini {
     return bounds;
   }
 
-  int findOrExtractVertex(Mesh::SP inMesh,
+  uint32_t findOrExtractVertex(Mesh::SP inMesh,
                                Mesh::SP outMesh,
-                               int vtxID,
-                               std::map<int,int> &alreadyExtracted)
+                               uint32_t vtxID,
+                               std::map<uint32_t,uint32_t> &alreadyExtracted)
   {
     auto it = alreadyExtracted.find(vtxID);
     if (it != alreadyExtracted.end())
@@ -65,7 +65,7 @@ namespace mini {
   
   Mesh::SP extractMesh(Mesh::SP in, const std::vector<vec3i> &indices)
   {
-    std::map<int,int> alreadyExtracted;
+    std::map<uint32_t,uint32_t> alreadyExtracted;
     Mesh::SP out = Mesh::create(in->material);
     for (auto idx : indices) {
       idx.x = findOrExtractVertex(in,out,idx.x,alreadyExtracted);
@@ -86,13 +86,13 @@ namespace mini {
   
   std::vector<Mesh::SP> splitAtCenter(Mesh::SP mesh, int maxSize)
   {
-    if (mesh->vertices.size() >= (1ull<<32))
+    if (mesh->vertices.size() >= (1ull<<31))
       throw std::runtime_error("invalid input - input mesh is ALREADY overflowing in vertex indices...");
     std::cout << "splitting mesh w/ " << prettyNumber(mesh->indices.size()) << " triangles ..." << std::endl;
     box3f centBounds;
     for (auto idx : mesh->indices)
       centBounds.extend(getBounds(mesh,idx).center());
-
+    std::cout << " -> centbounds " << centBounds << std::endl;
     std::vector<vec3i> lIndices, rIndices;
     if (centBounds.lower == centBounds.upper) {
       for (auto idx : mesh->indices)
@@ -103,6 +103,7 @@ namespace mini {
     } else {
       int dim = arg_max(centBounds.size());
       float pos = centBounds.center()[dim];
+      std::cout << " -> splitting at " << ('x'+dim) << " = " << pos << std::endl;
       for (auto idx : mesh->indices)
         if (getBounds(mesh,idx).center()[dim] < pos)
           lIndices.push_back(idx);
@@ -113,7 +114,7 @@ namespace mini {
     Mesh::SP rMesh = extractMesh(mesh,rIndices);
     std::cout << " > got l = " << toString(lMesh) << std::endl;
     std::cout << " > got r = " << toString(rMesh) << std::endl;
-    return std::vector<Mesh::SP>{ lMesh,rMesh };
+    return std::vector<Mesh::SP>{ rMesh,lMesh };
   }
   
   std::vector<Mesh::SP> breakMesh(Mesh::SP mesh, int maxSize)

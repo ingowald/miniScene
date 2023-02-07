@@ -36,7 +36,7 @@ int main(int ac, char **av)
 {
   std::string inFileName = "";
   std::string outFileName = "";
-  
+    
   for (int i=1;i<ac;i++) {
     const std::string arg = av[i];
     if (arg == "-o") {
@@ -57,16 +57,25 @@ int main(int ac, char **av)
   Mesh::SP mesh = Mesh::create();
   
   std::ifstream in(inFileName,std::ios::binary);
-  size_t numVertices;
-  size_t numTriangles;
 
+  size_t numVertices;
   in.read((char*)&numVertices,sizeof(numVertices));
+  std::cout << "expecting num vertices = " << prettyNumber(numVertices) << std::endl;
+  size_t numTriangles;
+  in.read((char*)&numTriangles,sizeof(numTriangles));
+  std::cout << "expecting num triangles = " << prettyNumber(numTriangles) << std::endl;
+  
   mesh->vertices.resize(numVertices);
   in.read((char*)mesh->vertices.data(),numVertices*sizeof(vec3f));
 
-  in.read((char*)&numTriangles,sizeof(numTriangles));
-  mesh->indices.resize(numTriangles);
-  in.read((char*)mesh->indices.data(),numTriangles*sizeof(vec3i));
+  for (size_t i=0;i<numTriangles;i++) {
+    vec3ul idx;
+    in.read((char*)&idx,sizeof(idx));
+    if (reduce_max(idx) >= (1ull<<31))
+      throw std::runtime_error("can't fit vertex indices into the 32 bit indices used in mini....");
+    mesh->indices.push_back(vec3i(idx));
+  }
+    
   mesh->material = Material::create();
   
   Object::SP object = Object::create({mesh});

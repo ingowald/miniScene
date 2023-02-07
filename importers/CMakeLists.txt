@@ -69,6 +69,14 @@ if (MINI_BUILD_SIMPLE_IMPORTERS)
     miniScene
     )
 
+  # IMporter from bobj
+  add_executable(bobj2mini
+    bobj2mini.cpp
+    )
+  target_link_libraries(bobj2mini
+    miniScene
+    )
+
 endif()
 
 
