@@ -117,22 +117,52 @@ namespace mini {
         texture for color, and a separate float1 texture for alpha. */
     std::shared_ptr<Texture> alphaTexture;
   };
+  
+  struct Geometry : public std::enable_shared_from_this<Geometry>
+  {
+    typedef enum { Mesh=0, Spheres } Type;
+    
+    typedef std::shared_ptr<Geometry> SP;
 
-  /*! a typical triangle mesh that mesh embree and optix mesh requirements */
-  struct Mesh {
+    Geometry(Type type, Material::SP material)
+      : type(type), material(material)
+    {}
+
+    /*! attempts to (dynanic-)down-cast to the given geometry type;
+        and returns a shared-pointer to that type if possible; else
+        return nullptr. Use as "geometry->as<Mesh>()" */
+    template<typename T> std::shared_ptr<T> as() const
+    { return std::dynamic_pointer_cast<T>(shared_from_this()); }
+    
+    virtual size_t getNumPrims() const = 0;
+    
+    /*! computes a bounding box over all the triangles in this mesh */
+    virtual box3f getBounds() const = 0;
+
+    bool   isEmissive() const { return material->isEmissive(); }
+    
+    const Type type;
+
+    /*! the material to be applied to this mesh */
+    Material::SP       material;
+  };
+  
+  /*! a typical triangle mesh that fulfills embree and optix mesh
+      requirements */
+  struct Mesh : public Geometry {
     typedef std::shared_ptr<Mesh> SP;
     
     Mesh(Material::SP material = {})
-      : material(material ? material : Material::create())
+      : Geometry(Geometry::Mesh,material ? material : Material::create())
     {}
 
-    inline static SP create(Material::SP material = {}) { return std::make_shared<Mesh>(material); }
+    inline static SP create(Material::SP material = {})
+    { return std::make_shared<Mesh>(material); }
     
-    bool   isEmissive() const { return material->isEmissive(); }
-    size_t getNumPrims() const { return indices.size(); }
+    size_t getNumPrims() const override { return indices.size(); }
 
     /*! computes a bounding box over all the triangles in this mesh */
-    box3f getBounds() const;
+    box3f getBounds() const override;
 
     /*! array of vertices */
     std::vector<vec3f> vertices;
@@ -145,9 +175,6 @@ namespace mini {
     
     /*! the vector containing the triangles' vertex indices */
     std::vector<vec3i> indices;
-
-    /*! the material to be applied to this mesh */
-    Material::SP       material;
   };
 
   /*! an object is a collection of one or more meshes. note it is
@@ -300,6 +327,11 @@ namespace mini {
     EnvMapLight::SP         envMapLight;
     
     std::vector<Instance::SP> instances;
+    
+    /*! a vector of strings that can be used to add things like "where
+        did this scene come from", "what the heck is tihs", "what is
+        the license", etc */
+    std::vector<std::string>  info;
   };
 
   /*! helper function for computing the bounding box of an affinely
