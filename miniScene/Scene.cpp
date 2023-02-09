@@ -22,9 +22,28 @@
 namespace mini {
 
   enum { FORMAT_VERSION = 11 };
-    
+
+#define PARALLELILIZE_GETBOUNDS 1
+  
   const size_t expected_magic = 4321000000ULL+FORMAT_VERSION;
 
+  /*! computes the bounding box of a input box undergoing an affine
+      transform; e.g., if we have the (object-space) bounds of an
+      object we can use that to compute "a" world-space box (not
+      necessarily tight, but definitively a boundning box) */
+  inline box3f transformedBoxBounds(const affine3f &xfm,
+                                    const box3f &box)
+  {
+    box3f bounds;
+    for (int i=0;i<8;i++) {
+      vec3f corner((i&1?box.lower:box.upper).x,
+                   (i&1?box.lower:box.upper).y,
+                   (i&1?box.lower:box.upper).z);
+      bounds.extend(xfmPoint(xfm,corner));
+    }
+    return bounds;
+  }
+                                    
   std::string DirLight::toString()
   {
     std::stringstream ss;
@@ -35,36 +54,117 @@ namespace mini {
   box3f Mesh::getBounds() const
   {
     box3f bounds;
-    for (auto vtx : vertices)
-      bounds.extend(vtx);
+#if PARALLELILIZE_GETBOUNDS
+    if (vertices.size() > 16*1024) {
+      std::mutex boundsMutex;
+      parallel_for_blocked
+        ((size_t)0,vertices.size(),16*1024,
+         [&](size_t begin, size_t end) {
+           box3f blockBox;
+           for (size_t i=begin;i<end;i++)
+             blockBox.extend(vertices[i]);
+           std::lock_guard<std::mutex> lock(boundsMutex);
+           bounds.extend(blockBox);
+         });
+    } else
+#endif
+      for (auto vtx : vertices)
+        bounds.extend(vtx);
     return bounds;
   }
     
   box3f Object::getBounds() const
   {
     box3f bounds;
+#if PARALLELILIZE_GETBOUNDS
+    if (meshes.size() > 16*1024) {
+      std::mutex boundsMutex;
+      parallel_for_blocked
+        ((size_t)0,meshes.size(),16*1024,
+         [&](size_t begin, size_t end) {
+           box3f blockBox;
+           for (size_t i=begin;i<end;i++)
+             blockBox.extend(meshes[i]->getBounds());
+           std::lock_guard<std::mutex> lock(boundsMutex);
+           bounds.extend(blockBox);
+         });
+    } else
+#endif
     for (auto mesh : meshes)
       bounds.extend(mesh->getBounds());
     return bounds;
   }
+
     
   box3f Instance::getBounds() const
   {
-    box3f bounds;
-    box3f box = object->getBounds();
-    for (int i=0;i<8;i++) {
-      vec3f corner((i&1?box.lower:box.upper).x,
-                   (i&1?box.lower:box.upper).y,
-                   (i&1?box.lower:box.upper).z);
-      bounds.extend(xfmPoint(xfm,corner));
-    }
-    return bounds;
+    const box3f box = object->getBounds();
+    return transformedBoxBounds(xfm,box);
   }
+  
   box3f Scene::getBounds() const
   {
     box3f bounds;
+#if PARALLELILIZE_GETBOUNDS
+    std::map<Object::SP,box3f> objectBounds;
+    
+    // ------------------------------------------------------------------
+    // first, make a list of all the objects being used in the scene
+    // ------------------------------------------------------------------
+    std::mutex mutex;
+    parallel_for_blocked
+      ((size_t)0,instances.size(),1024,
+       [&](size_t begin, size_t end) {
+         std::set<Object::SP> blockObjects;
+         box3f blockBox;
+         for (size_t i=begin;i<end;i++)
+           blockObjects.insert(instances[i]->object);
+         std::lock_guard<std::mutex> lock(mutex);
+         for (auto obj : blockObjects)
+           objectBounds[obj] = box3f();
+       });
+    
+    // ------------------------------------------------------------------
+    // second, make a linear list of all objects, so we can do them in
+    // parallel
+    // ------------------------------------------------------------------
+    std::vector<Object::SP> uniqueObjects;
+    uniqueObjects.reserve(objectBounds.size());
+    for (auto it : objectBounds)
+      uniqueObjects.push_back(it.first);
+    
+    // ------------------------------------------------------------------
+    // third, compute all the object bounds
+    // ------------------------------------------------------------------
+    parallel_for
+      (uniqueObjects.size(),
+       [&](size_t objID) {
+         auto obj = uniqueObjects[objID];
+         // this parallel access is fine because no new node
+         // will ever get created in the map; they all
+         // already exist, we just find() them here.
+         objectBounds[obj] = obj->getBounds();
+       });
+    
+    // ------------------------------------------------------------------
+    // last, do all the instances in parallel
+    // ------------------------------------------------------------------
+    parallel_for_blocked
+      ((size_t)0,instances.size(),1024,
+       [&](size_t begin, size_t end) {
+         box3f blockBox;
+         for (size_t i=begin;i<end;i++) {
+           auto inst = instances[i];
+           box3f objBounds = objectBounds[inst->object];
+           blockBox.extend(transformedBoxBounds(inst->xfm,objBounds));
+         }
+         std::lock_guard<std::mutex> lock(mutex);
+         bounds.extend(blockBox);
+       });
+#else
     for (auto inst : instances)
       bounds.extend(inst->getBounds());
+#endif
     return bounds;
   }
     

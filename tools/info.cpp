@@ -101,6 +101,8 @@ namespace mini {
                 << " texels" << std::endl;
     else
       std::cout << "has env-map light?\t: no"  << std::endl;
+
+    std::cout << "bounding box\t: " << scene->getBounds() << std::endl;
   }
     
   void miniInfo(int ac, char **av)
