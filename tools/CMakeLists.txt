@@ -26,6 +26,17 @@ target_link_libraries(miniInfo
   )
 
 # -----------------------------------------------------------------------------
+# 'lint' like tool that runs some basic sanity tests such as checking indices
+# -----------------------------------------------------------------------------
+add_executable(miniLint
+  lint.cpp
+  )
+target_link_libraries(miniLint
+  PUBLIC
+  miniScene
+  )
+
+# -----------------------------------------------------------------------------
 # tool that reads a scene, find all single-owner 'root' objects, and
 # splits these objects into their constituent meshes; createing one
 # independent instance per such mesh in this object
