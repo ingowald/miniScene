@@ -37,10 +37,17 @@ int main(int ac, char **av)
   std::string inFileName = "";
   std::string outFileName = "";
     
+  size_t maxMeshSize = 1<<20;
+  size_t maxTriangles = 1ull<<60;
+  
   for (int i=1;i<ac;i++) {
     const std::string arg = av[i];
     if (arg == "-o") {
       outFileName = av[++i];
+    } else if (arg == "-mms" || arg == "--max-mesh-size") {
+      maxMeshSize = std::stol(av[++i]);
+    } else if (arg == "-mt" || arg == "--max-triangles") {
+      maxTriangles = std::stol(av[++i]);
     } else if (arg[0] != '-')
       inFileName = arg;
     else
@@ -54,7 +61,9 @@ int main(int ac, char **av)
             << "loading binmesh file from " << inFileName
             << MINI_TERMINAL_DEFAULT << std::endl;
   
+  Object::SP object = Object::create();
   Mesh::SP mesh = Mesh::create();
+  mesh->material = Material::create();
   
   std::ifstream in(inFileName,std::ios::binary);
 
@@ -64,21 +73,40 @@ int main(int ac, char **av)
   size_t numTriangles;
   in.read((char*)&numTriangles,sizeof(numTriangles));
   std::cout << "expecting num triangles = " << prettyNumber(numTriangles) << std::endl;
-  
-  mesh->vertices.resize(numVertices);
-  in.read((char*)mesh->vertices.data(),numVertices*sizeof(vec3f));
 
-  for (size_t i=0;i<numTriangles;i++) {
-    vec3ul idx;
-    in.read((char*)&idx,sizeof(idx));
-    if (reduce_max(idx) >= (1ull<<31))
-      throw std::runtime_error("can't fit vertex indices into the 32 bit indices used in mini....");
-    mesh->indices.push_back(vec3i(idx));
+  std::vector<vec3f> vertices(numVertices);
+  in.read((char*)vertices.data(),numVertices*sizeof(vec3f));
+
+  std::map<size_t,int> currentVertices;
+  for (size_t triID=0;triID<std::min(numTriangles,maxTriangles);triID++) {
+    vec3ul inputTri;
+    in.read((char*)&inputTri,sizeof(inputTri));
+    vec3i miniTri;
+    for (int i=0;i<3;i++) {
+      size_t idx = (&inputTri.x)[i];
+      auto it = currentVertices.find(idx);
+      if (it == currentVertices.end()) {
+        miniTri[i] = mesh->vertices.size();
+        mesh->vertices.push_back(vertices[idx]);
+        currentVertices[idx] = miniTri[i];
+      } else {
+        miniTri[i] = it->second;
+      }
+    }
+    mesh->indices.push_back(miniTri);
+    if (mesh->vertices.size() >= maxMeshSize) {
+      object->meshes.push_back(mesh);
+      mesh = mini::Mesh::create();
+      mesh->material = mini::Material::create();
+      currentVertices.clear();
+      std::cout << "[" << prettyNumber(triID+1) << "]" << std::flush;
+    }
   }
-    
-  mesh->material = Material::create();
+  std::cout << "[" << prettyNumber(numTriangles) << "]" << std::flush;
+  std::cout << std::endl;
+  if (!mesh->indices.empty())
+    object->meshes.push_back(mesh);
   
-  Object::SP object = Object::create({mesh});
   Scene::SP scene = Scene::create({Instance::create(object)});
   std::cout << MINI_TERMINAL_DEFAULT
             << "done importing; saving to " << outFileName

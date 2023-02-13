@@ -37,8 +37,8 @@ namespace mini {
     box3f bounds;
     for (int i=0;i<8;i++) {
       vec3f corner((i&1?box.lower:box.upper).x,
-                   (i&1?box.lower:box.upper).y,
-                   (i&1?box.lower:box.upper).z);
+                   (i&2?box.lower:box.upper).y,
+                   (i&4?box.lower:box.upper).z);
       bounds.extend(xfmPoint(xfm,corner));
     }
     return bounds;
