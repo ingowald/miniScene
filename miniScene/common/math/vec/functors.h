@@ -28,34 +28,34 @@ namespace mini {
     template<typename T, int N> inline __both__
     bool any_less_than(const vec_t<T,N> &a, const vec_t<T,N> &b)
     { //return common::any(lt(a,b)); 
-		for (int i = 0; i < N; i++) if (a[i] < b[i]) return true;
-		return false;
-	}
+      for (int i = 0; i < N; i++) if (a[i] < b[i]) return true;
+      return false;
+    }
   
     template<typename T, int N> inline __both__
     bool all_less_than(const vec_t<T,N> &a, const vec_t<T,N> &b)
     { //return common::all(lt(a,b)); 
-		for (int i = 0; i < N; i++) if (!(a[i] < b[i])) return false;
-		return true;
-	}
+      for (int i = 0; i < N; i++) if (!(a[i] < b[i])) return false;
+      return true;
+    }
   
     template<typename T, int N> inline __both__
     bool any_greater_than(const vec_t<T,N> &a, const vec_t<T,N> &b)
     { 
-		for (int i = 0; i < N; i++) if (a[i] > b[i]) return true;
-		return false;
-//		return common::any(gt(a,b)); 
-	}
+      for (int i = 0; i < N; i++) if (a[i] > b[i]) return true;
+      return false;
+      //		return common::any(gt(a,b)); 
+    }
 
     /*! particularly useful for doing some range testing as in "if
       (any_greater_or_equal(pixelID,frameBufferSize)" etc */
     template<typename T, int N> inline __both__
     bool any_greater_or_equal(const vec_t<T,N> &a, const vec_t<T,N> &b)
     { 
-		for (int i = 0; i < N; i++) if ((a[i] >= b[i])) return true;
-		return false;
-//		return common::any(ge(a,b)); 
-	}
+      for (int i = 0; i < N; i++) if ((a[i] >= b[i])) return true;
+      return false;
+      //		return common::any(ge(a,b)); 
+    }
 
     // -------------------------------------------------------
     // unary functors
@@ -71,10 +71,10 @@ namespace mini {
   
 #define _define_float_functor(func)                                     \
     template<typename T> inline __both__ vec_t<T,2> func(const vec_t<T,2> &v) \
-    { return vec_t<T,2>(mini::common::func(v.x),mini::common::func(v.y)); }                         \
+    { return vec_t<T,2>(mini::common::func(v.x),mini::common::func(v.y)); } \
                                                                         \
     template<typename T> inline __both__ vec_t<T,3> func(const vec_t<T,3> &v) \
-    { return vec_t<T,3>(mini::common::func(v.x),mini::common::func(v.y),mini::common::func(v.z)); }               \
+    { return vec_t<T,3>(mini::common::func(v.x),mini::common::func(v.y),mini::common::func(v.z)); } \
                                                                         \
     template<typename T> inline __both__ vec_t<T,4> func(const vec_t<T,4> &v) \
     { return vec_t<T,4>(mini::common::func(v.x),mini::common::func(v.y),mini::common::func(v.z),mini::common::func(v.w)); } \
@@ -208,6 +208,7 @@ namespace mini {
     
     _define_operator(*);
     _define_operator(/);
+    _define_operator(%);
     _define_operator(+);
     _define_operator(-);
   
@@ -395,9 +396,9 @@ namespace mini {
     }
 
     inline __both__ float sqrt(const float v) { return sqrtf(v); }
-inline __both__ vec2f sqrt(const vec2f v) { return vec2f(sqrtf(v.x),sqrtf(v.y)); }
-inline __both__ vec3f sqrt(const vec3f v) { return vec3f(sqrtf(v.x),sqrtf(v.y),sqrtf(v.z)); }
-inline __both__ vec4f sqrt(const vec4f v) { return vec4f(sqrtf(v.x),sqrtf(v.y),sqrtf(v.z),sqrtf(v.w)); }
+    inline __both__ vec2f sqrt(const vec2f v) { return vec2f(sqrtf(v.x),sqrtf(v.y)); }
+    inline __both__ vec3f sqrt(const vec3f v) { return vec3f(sqrtf(v.x),sqrtf(v.y),sqrtf(v.z)); }
+    inline __both__ vec4f sqrt(const vec4f v) { return vec4f(sqrtf(v.x),sqrtf(v.y),sqrtf(v.z),sqrtf(v.w)); }
 
   } // ::mini::common
 } // ::owl
