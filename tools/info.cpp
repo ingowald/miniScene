@@ -50,6 +50,8 @@ namespace mini {
     size_t numActualMeshes = 0;
     size_t numActualTriangles = 0;
     size_t numActualVertices = 0;
+    size_t numActualNormals = 0;
+    size_t numActualTexcoords = 0;
     
     for (auto inst : scene->instances)
       if (inst && inst->object)
@@ -57,12 +59,16 @@ namespace mini {
           numActualMeshes++;
           numActualTriangles += mesh->indices.size();
           numActualVertices  += mesh->vertices.size();
+          numActualNormals  += mesh->normals.size();
+          numActualTexcoords  += mesh->texcoords.size();
         }
     
     std::cout << "----" << std::endl;
     std::cout << "num *actual* meshes\t: "    << myPretty(numActualMeshes) << std::endl;
     std::cout << "num *actual* triangles\t: " << myPretty(numActualTriangles) << std::endl;
     std::cout << "num *actual* vertices\t: "  << myPretty(numActualVertices) << std::endl;
+    std::cout << "num *actual* normals\t: "  << myPretty(numActualNormals) << std::endl;
+    std::cout << "num *actual* texcoords\t: "  << myPretty(numActualTexcoords) << std::endl;
     
 
 
