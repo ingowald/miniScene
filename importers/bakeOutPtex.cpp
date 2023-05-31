@@ -134,9 +134,9 @@ namespace mini {
     unlink(tempFileName);
     filter->release();
     // ptex->release();
-    std::cout << MINI_COLOR_GREEN
+    std::cout << MINI_TERMINAL_GREEN
               << "successfully baked out ptex with " << ptex->numFaces() << " faces..."
-              << MINI_COLOR_DEFAULT << std::endl;
+              << MINI_TERMINAL_DEFAULT << std::endl;
     
     // ==================================================================
     // step 3: turn the linear list of RESxRES mini-textures into one
@@ -313,11 +313,11 @@ namespace mini {
     std::cout << "saving to " << outFileName << std::endl;
     scene->save(outFileName);
     
-    std::cout << MINI_COLOR_GREEN << std::endl;
+    std::cout << MINI_TERMINAL_GREEN << std::endl;
     std::cout << "==================================================================" << std::endl;
     std::cout << "done" << std::endl;
     std::cout << "==================================================================" << std::endl;
-    std::cout << MINI_COLOR_DEFAULT << std::endl;
+    std::cout << MINI_TERMINAL_DEFAULT << std::endl;
     
   }
 
