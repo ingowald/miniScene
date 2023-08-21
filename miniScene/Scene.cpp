@@ -21,10 +21,17 @@
 
 namespace mini {
 
-  enum { FORMAT_VERSION = 11 };
+  enum { FORMAT_VERSION = 12 };
 
-#define PARALLELILIZE_GETBOUNDS 1
-  
+#define PARALLELIZE_GETBOUNDS 1
+
+
+  enum {
+        GEOM_TYPE_MESH = 0,    
+        GEOM_TYPE_QUADMESH,
+        GEOM_TYPE_UNDEFINED
+  };
+    
   const size_t expected_magic = 4321000000ULL+FORMAT_VERSION;
 
   /*! computes the bounding box of a input box undergoing an affine
@@ -54,7 +61,29 @@ namespace mini {
   box3f Mesh::getBounds() const
   {
     box3f bounds;
-#if PARALLELILIZE_GETBOUNDS
+#if PARALLELIZE_GETBOUNDS
+    if (vertices.size() > 16*1024) {
+      std::mutex boundsMutex;
+      parallel_for_blocked
+        ((size_t)0,vertices.size(),16*1024,
+         [&](size_t begin, size_t end) {
+           box3f blockBox;
+           for (size_t i=begin;i<end;i++)
+             blockBox.extend(vertices[i]);
+           std::lock_guard<std::mutex> lock(boundsMutex);
+           bounds.extend(blockBox);
+         });
+    } else
+#endif
+      for (auto vtx : vertices)
+        bounds.extend(vtx);
+    return bounds;
+  }
+    
+  box3f QuadMesh::getBounds() const
+  {
+    box3f bounds;
+#if PARALLELIZE_GETBOUNDS
     if (vertices.size() > 16*1024) {
       std::mutex boundsMutex;
       parallel_for_blocked
@@ -76,7 +105,10 @@ namespace mini {
   box3f Object::getBounds() const
   {
     box3f bounds;
-#if PARALLELILIZE_GETBOUNDS
+    // ------------------------------------------------------------------
+    // all triangle meshes
+    // ------------------------------------------------------------------
+#if PARALLELIZE_GETBOUNDS
     if (meshes.size() > 16*1024) {
       std::mutex boundsMutex;
       parallel_for_blocked
@@ -84,14 +116,42 @@ namespace mini {
          [&](size_t begin, size_t end) {
            box3f blockBox;
            for (size_t i=begin;i<end;i++)
-             blockBox.extend(meshes[i]->getBounds());
+             if (meshes[i])
+               blockBox.extend(meshes[i]->getBounds());
            std::lock_guard<std::mutex> lock(boundsMutex);
            bounds.extend(blockBox);
          });
     } else
 #endif
-    for (auto mesh : meshes)
-      bounds.extend(mesh->getBounds());
+    for (auto mesh : quadMeshes)
+      if (mesh)
+        bounds.extend(mesh->getBounds());
+    
+    // ------------------------------------------------------------------
+    // all quad meshes
+    // ------------------------------------------------------------------
+#if PARALLELIZE_GETBOUNDS
+    if (quadMeshes.size() > 16*1024) {
+      std::mutex boundsMutex;
+      parallel_for_blocked
+        ((size_t)0,quadMeshes.size(),16*1024,
+         [&](size_t begin, size_t end) {
+           box3f blockBox;
+           for (size_t i=begin;i<end;i++)
+             if (quadMeshes[i])
+               blockBox.extend(quadMeshes[i]->getBounds());
+           std::lock_guard<std::mutex> lock(boundsMutex);
+           bounds.extend(blockBox);
+         });
+    } else
+#endif
+    for (auto mesh : quadMeshes)
+      if (mesh)
+        bounds.extend(mesh->getBounds());
+    
+    // ------------------------------------------------------------------
+    // ... and done...
+    // ------------------------------------------------------------------
     return bounds;
   }
 
@@ -105,7 +165,7 @@ namespace mini {
   box3f Scene::getBounds() const
   {
     box3f bounds;
-#if PARALLELILIZE_GETBOUNDS
+#if PARALLELIZE_GETBOUNDS
     std::map<Object::SP,box3f> objectBounds;
     
     // ------------------------------------------------------------------
@@ -224,9 +284,6 @@ namespace mini {
       io::writeElement(out,mat->roughness);
       io::writeElement(out,mat->transmission);
       io::writeElement(out,mat->ior);
-
-      io::writeElement(out,serialized.getID(mat->colorTexture));
-      io::writeElement(out,serialized.getID(mat->alphaTexture));
     }
       
     // ------------------------------------------------------------------
@@ -235,8 +292,11 @@ namespace mini {
     io::writeElement(out,serialized.objects.size());
     for (auto &obj : serialized.objects.list) {
 
-      io::writeElement(out,obj->meshes.size());
+      io::writeElement(out,size_t(-1));
+      io::writeElement(out,obj->meshes.size()+obj->quadMeshes.size());
+      
       for (auto mesh : obj->meshes) {
+        io::writeElement(out,int(GEOM_TYPE_MESH));
         if (!mesh) { io::writeElement(out,int(0)); continue; }
 
         io::writeElement(out,int(1));
@@ -247,6 +307,29 @@ namespace mini {
         int matID = serialized.getID(mesh->material);
         assert(matID >= 0);
         io::writeElement(out,matID);
+
+        io::writeElement(out,serialized.getID(mesh->colorTexture));
+        io::writeElement(out,serialized.getID(mesh->alphaTexture));
+        io::writeElement(out,serialized.getID(mesh->dispTexture));
+      }
+
+      io::writeElement(out,obj->meshes.size());
+      for (auto mesh : obj->quadMeshes) {
+        io::writeElement(out,int(GEOM_TYPE_QUADMESH));
+        if (!mesh) { io::writeElement(out,int(0)); continue; }
+
+        io::writeElement(out,int(1));
+        io::writeVector(out,mesh->indices);
+        io::writeVector(out,mesh->vertices);
+        io::writeVector(out,mesh->normals);
+        io::writeVector(out,mesh->texcoords);
+        int matID = serialized.getID(mesh->material);
+        assert(matID >= 0);
+        io::writeElement(out,matID);
+
+        io::writeElement(out,serialized.getID(mesh->colorTexture));
+        io::writeElement(out,serialized.getID(mesh->alphaTexture));
+        io::writeElement(out,serialized.getID(mesh->dispTexture));
       }
     }
 
@@ -340,18 +423,18 @@ namespace mini {
       io::readElement(in,mat->roughness);
       io::readElement(in,mat->transmission);
       io::readElement(in,mat->ior);
-      {
-        int texID = io::readElement<int>(in);
-        assert(texID >= 0);
-        assert(texID < textures.size());
-        mat->colorTexture = textures[texID];
-      }
-      {
-        int texID = io::readElement<int>(in);
-        assert(texID >= 0);
-        assert(texID < textures.size());
-        mat->alphaTexture = textures[texID];
-      }
+      // {
+      //   int texID = io::readElement<int>(in);
+      //   assert(texID >= 0);
+      //   assert(texID < textures.size());
+      //   mat->colorTexture = textures[texID];
+      // }
+      // {
+      //   int texID = io::readElement<int>(in);
+      //   assert(texID >= 0);
+      //   assert(texID < textures.size());
+      //   mat->alphaTexture = textures[texID];
+      // }
       materials.push_back(mat);
     }
 
@@ -361,25 +444,150 @@ namespace mini {
     size_t numObjects = io::readElement<size_t>(in);
     std::vector<Object::SP> objects;
     for (int objID=0;objID<numObjects;objID++) {
-      size_t numMeshes = io::readElement<size_t>(in);
       Object::SP object = std::make_shared<Object>();
-
-      for (int meshID=0;meshID<(int)numMeshes;meshID++) {
-        int isValid = io::readElement<int>(in);
-        if (!isValid) {
-          continue;
+      size_t oldNumMeshes = io::readElement<size_t>(in);
+      if (oldNumMeshes != size_t(-1)) {
+        size_t numMeshes = oldNumMeshes;
+        // pre-version 11 model - objects only have triangle meshes,
+        // and these are direclty 'inlines' here in the object.
+        for (int meshID=0;meshID<(int)numMeshes;meshID++) {
+          int isValid = io::readElement<int>(in);
+          if (!isValid) {
+            continue;
+          }
+          Mesh::SP mesh = std::make_shared<Mesh>();
+          io::readVector(in,mesh->indices);
+          io::readVector(in,mesh->vertices);
+          io::readVector(in,mesh->normals);
+          io::readVector(in,mesh->texcoords);
+          int matID = io::readElement<int>(in);
+          assert(matID >= 0);
+          assert(matID < materials.size());
+          mesh->material = materials[matID];
+          object->meshes.push_back(mesh);
         }
-        Mesh::SP mesh = std::make_shared<Mesh>();
-        io::readVector(in,mesh->indices);
-        io::readVector(in,mesh->vertices);
-        io::readVector(in,mesh->normals);
-        io::readVector(in,mesh->texcoords);
-        int matID = io::readElement<int>(in);
-        assert(matID >= 0);
-        assert(matID < materials.size());
-        mesh->material = materials[matID];
-        object->meshes.push_back(mesh);
+      } else {
+        // version >= 12 --> we have different kinds of geometries in each object.
+        size_t numGeoms = io::readElement<size_t>(in);
+        for (int geomID=0;geomID<numGeoms;geomID++) {
+          int geomType = io::readElement<int>(in);
+          if (geomType == GEOM_TYPE_MESH) {
+            int isValid = io::readElement<int>(in);
+            if (!isValid) {
+              continue;
+            }
+            Mesh::SP mesh = std::make_shared<Mesh>();
+            io::readVector(in,mesh->indices);
+            io::readVector(in,mesh->vertices);
+            io::readVector(in,mesh->normals);
+            io::readVector(in,mesh->texcoords);
+            int matID = io::readElement<int>(in);
+            assert(matID >= 0);
+            assert(matID < materials.size());
+            mesh->material = materials[matID];
+            {
+              int texID = io::readElement<int>(in);
+              assert(texID >= 0);
+              assert(texID < textures.size());
+              mesh->colorTexture = textures[texID];
+            }
+            {
+              int texID = io::readElement<int>(in);
+              assert(texID >= 0);
+              assert(texID < textures.size());
+              mesh->alphaTexture = textures[texID];
+            }
+            {
+              int texID = io::readElement<int>(in);
+              assert(texID >= 0);
+              assert(texID < textures.size());
+              mesh->dispTexture = textures[texID];
+            }
+            object->meshes.push_back(mesh);
+            continue;
+          }
+          if (geomType == GEOM_TYPE_QUADMESH) {
+            int isValid = io::readElement<int>(in);
+            if (!isValid) {
+              continue;
+            }
+            QuadMesh::SP mesh = std::make_shared<QuadMesh>();
+            io::readVector(in,mesh->indices);
+            io::readVector(in,mesh->vertices);
+            io::readVector(in,mesh->normals);
+            io::readVector(in,mesh->texcoords);
+            int matID = io::readElement<int>(in);
+            assert(matID >= 0);
+            assert(matID < materials.size());
+            mesh->material = materials[matID];
+            {
+              int texID = io::readElement<int>(in);
+              assert(texID >= 0);
+              assert(texID < textures.size());
+              mesh->colorTexture = textures[texID];
+            }
+            {
+              int texID = io::readElement<int>(in);
+              assert(texID >= 0);
+              assert(texID < textures.size());
+              mesh->alphaTexture = textures[texID];
+            }
+            {
+              int texID = io::readElement<int>(in);
+              assert(texID >= 0);
+              assert(texID < textures.size());
+              mesh->dispTexture = textures[texID];
+            }
+            object->quadMeshes.push_back(mesh);
+            continue;
+          }
+          throw std::runtime_error("un-expected geometry type tag ...");
+        }
       }
+      
+      // ------------------------------------------------------------------
+      { // TRIANGLE meshes
+        size_t numMeshes = io::readElement<size_t>(in);
+        for (int meshID=0;meshID<(int)numMeshes;meshID++) {
+          int isValid = io::readElement<int>(in);
+          if (!isValid) {
+            continue;
+          }
+          Mesh::SP mesh = std::make_shared<Mesh>();
+          io::readVector(in,mesh->indices);
+          io::readVector(in,mesh->vertices);
+          io::readVector(in,mesh->normals);
+          io::readVector(in,mesh->texcoords);
+          int matID = io::readElement<int>(in);
+          assert(matID >= 0);
+          assert(matID < materials.size());
+          mesh->material = materials[matID];
+          object->meshes.push_back(mesh);
+        }
+      }
+
+      // ------------------------------------------------------------------
+      { // QUAD meshes
+        size_t numMeshes = io::readElement<size_t>(in);
+
+        for (int meshID=0;meshID<(int)numMeshes;meshID++) {
+          int isValid = io::readElement<int>(in);
+          if (!isValid) {
+            continue;
+          }
+          QuadMesh::SP mesh = std::make_shared<QuadMesh>();
+          io::readVector(in,mesh->indices);
+          io::readVector(in,mesh->vertices);
+          io::readVector(in,mesh->normals);
+          io::readVector(in,mesh->texcoords);
+          int matID = io::readElement<int>(in);
+          assert(matID >= 0);
+          assert(matID < materials.size());
+          mesh->material = materials[matID];
+          object->quadMeshes.push_back(mesh);
+        }
+      }
+      
       objects.push_back(object);
     }
 

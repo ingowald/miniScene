@@ -31,13 +31,32 @@ namespace mini {
 
         for (auto mesh : obj->meshes) {
           if (!mesh || meshes.addWasKnown(mesh)) continue;
+
+          textures.add(mesh->colorTexture);
+          textures.add(mesh->alphaTexture);
+          textures.add(mesh->dispTexture);
           
           auto material = mesh->material;
           assert(material);
           if (materials.addWasKnown(material)) continue;
             
-          textures.add(material->colorTexture);
-          textures.add(material->alphaTexture);
+          // textures.add(material->colorTexture);
+          // textures.add(material->alphaTexture);
+        }
+        
+        for (auto mesh : obj->quadMeshes) {
+          if (!mesh || quadMeshes.addWasKnown(mesh)) continue;
+
+          textures.add(mesh->colorTexture);
+          textures.add(mesh->alphaTexture);
+          textures.add(mesh->dispTexture);
+          
+          auto material = mesh->material;
+          assert(material);
+          if (materials.addWasKnown(material)) continue;
+            
+          // textures.add(material->colorTexture);
+          // textures.add(material->alphaTexture);
         }
       }
     }

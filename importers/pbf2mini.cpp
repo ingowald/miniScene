@@ -209,35 +209,38 @@ namespace mini {
     return tex;
   }
   
-  void setImageMap(Material::SP material, pbrt::Texture::SP texture)
+  void setImageMap(Texture::SP &outTexture,
+                   Material::SP material,
+                   pbrt::Texture::SP inTexture)
   {
-    if (!texture) return;
+    if (!inTexture) return;
     pbrt::ImageTexture::SP image
-      = texture->as<pbrt::ImageTexture>();
+      = inTexture->as<pbrt::ImageTexture>();
     pbrt::ConstantTexture::SP constant
-      = texture->as<pbrt::ConstantTexture>();
+      = inTexture->as<pbrt::ConstantTexture>();
     pbrt::PtexFileTexture::SP ptex
-      = texture->as<pbrt::PtexFileTexture>();
+      = inTexture->as<pbrt::PtexFileTexture>();
     if (image) {
       // ours->baseColor = (const vec3f&)image->value;
       std::cout << " -> got image texture " << image->fileName << std::endl;
       assert(image);
-      material->colorTexture
+      outTexture
         = getOrLoadTexture(image->fileName);
     } else if (constant) {
       material->baseColor = (const vec3f&)constant->value;
       std::cout << " -> got constant texture " << material->baseColor << std::endl;
     } else if (ptex) {
-      material->colorTexture
+      outTexture
         = getOrLoadTexture(image->fileName);
       std::cout << " -> got (embedded) PTEX texture " << material->baseColor << std::endl;
     } else
       std::cout << OWL_TERMINAL_RED << " unsupported texture ... "
-                << texture->toString()
+                << inTexture->toString()
                 << OWL_TERMINAL_DEFAULT << std::endl;
   }
   
-  Material::SP parseAsUber(pbrt::Material::SP material)
+  Material::SP parseAsUber(Texture::SP &colorTexture,
+                           pbrt::Material::SP material)
   {
     pbrt::UberMaterial::SP uber = material->as<pbrt::UberMaterial>();
     if (!uber) return {};
@@ -249,13 +252,14 @@ namespace mini {
     ours->roughness    = uber->roughness;
     ours->transmission = 0.f;
     ours->ior          = 1.f;
-    setImageMap(ours,uber->map_kd);
+    setImageMap(colorTexture,ours,uber->map_kd);
     // if (uber->map_kd)
     //   std::cout << "UBER MATERIAL: IMAGE MAP: " << uber->map_kd->toString() << std::endl;
     return ours;
   }
 
-  Material::SP parseAsMix(pbrt::Material::SP material)
+  Material::SP parseAsMix(Texture::SP &colorTexture,
+                           pbrt::Material::SP material)
   {
     pbrt::MixMaterial::SP mix = material->as<pbrt::MixMaterial>();
     if (!mix) return {};
@@ -267,7 +271,7 @@ namespace mini {
        and translucent (for the translucent part), with nothing
        else */
     
-    Material::SP lsUber = parseAsUber(mix->material0);
+    Material::SP lsUber = parseAsUber(colorTexture,mix->material0);
     pbrt::TranslucentMaterial::SP
       translucent = mix->material1->as<pbrt::TranslucentMaterial>();
     if (!lsUber || !translucent) {
@@ -291,11 +295,14 @@ namespace mini {
     ours->emission = 0.f;
     ours->metallic = lsUber->metallic;
     ours->baseColor = lsUber->baseColor;
-    ours->colorTexture = lsUber->colorTexture;
+    // ours->colorTexture = lsUber->colorTexture;
     return ours;
   }
 
-  Material::SP importMaterial(pbrt::Material::SP material)
+  Material::SP importMaterial(Texture::SP &colorTexture,
+                              Texture::SP &alphaTexture,
+                              Texture::SP &dispTexture,
+                              pbrt::Material::SP material)
   {
     if (!material) {
       Material::SP dummyMat = std::make_shared<Material>();
@@ -355,16 +362,16 @@ namespace mini {
       ours->ior          = 1.f;
 
       // pbrt ecosys: matte materials have image textures
-      setImageMap(ours,matte->map_kd);
+      setImageMap(colorTexture,ours,matte->map_kd);
       return ours;
     }
 
-    if (Material::SP asUber = parseAsUber(material)) {
+    if (Material::SP asUber = parseAsUber(colorTexture,material)) {
       // asUber->alphaTexture = alphaTexture;
       return asUber;
     }
 
-    if (Material::SP asMix = parseAsMix(material)) {
+    if (Material::SP asMix = parseAsMix(colorTexture,material)) {
       // std::cout << "mix material w/ alpha tex " << alphaTexture << std::endl;
       // asMix->alphaTexture = alphaTexture;
       return asMix;
@@ -453,29 +460,46 @@ Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape, const std::string &key)
   /*! creates material for a given shape - but unlike for pbrt our
     materials do include textures and emission, so as input we need
     the entire shape, nor just the pbrt material */
-  Material::SP importMaterial(pbrt::Shape::SP pbrtShape)
+  Material::SP importMaterial(Texture::SP &colorTexture,
+                              Texture::SP &alphaTexture,
+                              Texture::SP &dispTexture,
+                              pbrt::Shape::SP pbrtShape)
   {
-    Material::SP material = importMaterial(pbrtShape->material);
-    Texture::SP alphaTexture
-      = material->alphaTexture
-      ? material->alphaTexture
-      : getShapeTexture(pbrtShape,"alpha");
-    Texture::SP colorTexture
-      = material->colorTexture
-      ? material->colorTexture
-      : getShapeTexture(pbrtShape,"color");
-    typedef std::tuple<pbrt::Material::SP,Texture::SP,Texture::SP> key_t;
-    static std::map<key_t,Material::SP>
-      texturedMaterial;
+    Material::SP material = importMaterial(colorTexture,
+                                           alphaTexture,
+                                           dispTexture,
+                                           pbrtShape->material);
+    Texture::SP colorFromShape = getShapeTexture(pbrtShape,"color");
+    Texture::SP alphaFromShape = getShapeTexture(pbrtShape,"alpha");
+    Texture::SP dispFromShape  = getShapeTexture(pbrtShape,"disp");
+    if (colorFromShape)
+      colorTexture = colorFromShape;
+    if (alphaFromShape)
+      alphaTexture = alphaFromShape;
+    if (dispFromShape)
+      dispTexture = dispFromShape;
 
-    key_t key = {pbrtShape->material,colorTexture,alphaTexture};
-    if (texturedMaterial.find(key) == texturedMaterial.end()) {
-      Material::SP texMat = std::make_shared<Material>(*material);
-      texMat->alphaTexture = alphaTexture;
-      texMat->colorTexture = colorTexture;
-      texturedMaterial[key] = texMat;
-    }
-    return texturedMaterial[key];
+    return material;
+    // Texture::SP alphaTexture
+    //   = material->alphaTexture
+    //   ? material->alphaTexture
+    //   : getShapeTexture(pbrtShape,"alpha");
+    // Texture::SP colorTexture
+    //   = material->colorTexture
+    //   ? material->colorTexture
+    //   : getShapeTexture(pbrtShape,"color");
+    // typedef std::tuple<pbrt::Material::SP,Texture::SP,Texture::SP> key_t;
+    // static std::map<key_t,Material::SP>
+    //   texturedMaterial;
+
+    // key_t key = {pbrtShape->material,colorTexture,alphaTexture};
+    // if (texturedMaterial.find(key) == texturedMaterial.end()) {
+    //   Material::SP texMat = std::make_shared<Material>(*material);
+    //   texMat->alphaTexture = alphaTexture;
+    //   texMat->colorTexture = colorTexture;
+    //   texturedMaterial[key] = texMat;
+    // }
+    // return texturedMaterial[key];
   }
 
   
@@ -484,32 +508,66 @@ Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape, const std::string &key)
   {
     if (!shape)
       return;
+
+    {
+      pbrt::TriangleMesh::SP pbrtMesh = shape->as<pbrt::TriangleMesh>();
+      if (pbrtMesh) {
+        if (pbrtMesh->index.empty()) return;
     
-    pbrt::TriangleMesh::SP pbrtMesh = shape->as<pbrt::TriangleMesh>();
-    if (!pbrtMesh) {
-      std::cout
-        << OWL_TERMINAL_RED
-        << "#pbr2brx(warning): there seems to be a non-triangle mesh shape here!?"
-        << OWL_TERMINAL_DEFAULT << std::endl;
-      return;
+        Mesh::SP miniMesh = std::make_shared<Mesh>();
+        miniMesh->material = importMaterial(miniMesh->colorTexture,
+                                            miniMesh->alphaTexture,
+                                            miniMesh->dispTexture,
+                                            pbrtMesh);
+    
+        for (auto idx : pbrtMesh->index)
+          miniMesh->indices.push_back((const vec3i &)idx);
+        for (auto vtx : pbrtMesh->vertex) 
+          miniMesh->vertices.push_back((const vec3f &)vtx);
+        for (auto nor : pbrtMesh->normal)
+          miniMesh->normals.push_back((const vec3f &)nor);
+
+        for (auto txt : pbrtMesh->texcoord) 
+          miniMesh->texcoords.push_back((const vec2f &)txt);
+
+        ourObject->meshes.push_back(miniMesh);
+        return;
+      }
     }
 
-    if (pbrtMesh->index.empty()) return;
-    
-    Mesh::SP miniMesh = std::make_shared<Mesh>();
-    miniMesh->material = importMaterial(pbrtMesh);
-    
-    for (auto idx : pbrtMesh->index)
-      miniMesh->indices.push_back((const vec3i &)idx);
-    for (auto vtx : pbrtMesh->vertex) 
-      miniMesh->vertices.push_back((const vec3f &)vtx);
-    for (auto nor : pbrtMesh->normal)
-      miniMesh->normals.push_back((const vec3f &)nor);
 
-    for (auto txt : pbrtMesh->texcoord) 
-      miniMesh->texcoords.push_back((const vec2f &)txt);
+    {
+      pbrt::QuadMesh::SP pbrtMesh = shape->as<pbrt::QuadMesh>();
+      if (pbrtMesh) {
+        if (pbrtMesh->index.empty()) return;
+    
+        QuadMesh::SP miniMesh = std::make_shared<QuadMesh>();
+        miniMesh->material = importMaterial(miniMesh->colorTexture,
+                                            miniMesh->alphaTexture,
+                                            miniMesh->dispTexture,
+                                            pbrtMesh);
+    
+        for (auto idx : pbrtMesh->index)
+          miniMesh->indices.push_back((const vec4i &)idx);
+        for (auto vtx : pbrtMesh->vertex) 
+          miniMesh->vertices.push_back((const vec3f &)vtx);
+        for (auto nor : pbrtMesh->normal)
+          miniMesh->normals.push_back((const vec3f &)nor);
 
-    ourObject->meshes.push_back(miniMesh);
+        // for (auto txt : pbrtMesh->texcoord) 
+        //   miniMesh->texcoords.push_back((const vec2f &)txt);
+
+        ourObject->quadMeshes.push_back(miniMesh);
+        return;
+      }
+    }
+
+    std::cout
+      << OWL_TERMINAL_RED
+      << "#pbr2brx(warning): there seems to be a type of shape here that"
+      << " miniScene cannot handle here!?"
+      << OWL_TERMINAL_DEFAULT << std::endl;
+    return;
   }
   
   Object::SP importObject(pbrt::Object::SP object,
@@ -580,15 +638,6 @@ Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape, const std::string &key)
                   << OWL_TERMINAL_DEFAULT << std::endl;
       return false;
     }
-    
-    // if (!mesh->material) {
-    //   if (warn)
-    //     std::cout << OWL_TERMINAL_YELLOW
-    //               << "WARNING: found a triangle mesh area light source that is NOT"
-    //               << " a virtual quad light source (no material)!?"
-    //               << OWL_TERMINAL_DEFAULT << std::endl;
-    //   return false;
-    // }
     
     if (mesh->alpha != 0.f) {
       if (warn)
@@ -748,9 +797,6 @@ Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape, const std::string &key)
     std::cout << "tessellating all other non-mesh shapes (if applicable)" << std::endl;
     cup::tools::removeAllNonMeshShapes(inScene);
 
-    // pbrt::Scene::SP masterScene = extractMasterScene();
-    // cup::tools::removeAreaLightShapes(g_inScene);
-    
     Scene::SP scene = std::make_shared<Scene>();
     scene->quadLights = removeAllVirtualQuadLights(inScene);
     std::cout << "#pbf2brx: found total of " << scene->quadLights.size() << " virtual quad lights"

@@ -53,8 +53,8 @@ namespace mini {
   {
     Material::SP material  = Material::create();
     material->baseColor    = rng3f();
-    material->colorTexture = makeTexture();
     Mesh::SP mesh = Mesh::create(material);
+    mesh->colorTexture = makeTexture();
     for (int i=0;i<=sphereRes;i++)
       for (int j=0;j<2*sphereRes;j++) {
         float fu = j/(2.f*sphereRes);

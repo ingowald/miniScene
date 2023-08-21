@@ -192,15 +192,15 @@ namespace mini {
       return in;
     if (!in->material)
       return in;
-    if (!in->material->colorTexture)
+    if (!in->colorTexture)
       return in;
-    if (in->material->colorTexture->format != Texture::EMBEDDED_PTEX)
+    if (in->colorTexture->format != Texture::EMBEDDED_PTEX)
       return in;
 
     Mesh::SP out = std::make_shared<Mesh>();//doBakeMesh(in,ptexBakingWidth);
     out->material = in->material->clone();
-    out->material->colorTexture = bakeTexture(in->material->colorTexture,ptexBakingWidth);
-    if (!out->material->colorTexture)
+    out->colorTexture = bakeTexture(in->colorTexture,ptexBakingWidth);
+    if (!out->colorTexture)
       throw std::runtime_error("some error in baking....");
 
     std::cout << " -> re-meshing (for new texcoords) mesh with " << in->indices.size() << " triangles" << std::endl;
@@ -229,7 +229,7 @@ namespace mini {
 
       assert(out->material);
       assert(out->material->colorTexture);
-      const vec2i texSize = out->material->colorTexture->size;
+      const vec2i texSize = out->colorTexture->size;
       
       const int quadsPerRowOfPtexAtlas
         = texSize.x

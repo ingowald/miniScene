@@ -68,12 +68,14 @@ namespace mini {
     int getID(Texture::SP t)  { return textures.getID(t); }
     int getID(Material::SP m) { return materials.getID(m); }
     int getID(Mesh::SP t)     { return meshes.getID(t); }
+    int getID(QuadMesh::SP t) { return quadMeshes.getID(t); }
     int getID(Object::SP t)   { return objects.getID(t); }
       
     Serialized<Texture::SP>  textures;
     Serialized<Material::SP> materials;
     Serialized<Object::SP>   objects;
     Serialized<Mesh::SP>     meshes;
+    Serialized<QuadMesh::SP> quadMeshes;
   };
 
 } // ::mini

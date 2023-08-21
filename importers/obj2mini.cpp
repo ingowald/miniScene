@@ -293,14 +293,17 @@ namespace mini {
         } else {
           baseMaterial = dummyMaterial;
         }
-        std::pair<Material::SP,Texture::SP> tuple = { baseMaterial,diffuseTexture };
-        if (texturedMaterials.find(tuple) == texturedMaterials.end()) {
-          mesh->material = std::make_shared<Material>();
-          *mesh->material = *baseMaterial;
-          mesh->material->colorTexture = diffuseTexture;
-          texturedMaterials[tuple] = mesh->material;
-        } else
-          mesh->material = texturedMaterials[tuple];
+        
+        mesh->material = baseMaterial;
+        mesh->colorTexture = diffuseTexture;
+        // std::pair<Material::SP,Texture::SP> tuple = { baseMaterial,diffuseTexture };
+        // if (texturedMaterials.find(tuple) == texturedMaterials.end()) {
+        //   mesh->material = std::make_shared<Material>();
+        //   *mesh->material = *baseMaterial;
+        //   mesh->colorTexture = diffuseTexture;
+        //   texturedMaterials[tuple] = mesh->material;
+        // } else
+        //   mesh->material = texturedMaterials[tuple];
           
         if (mesh->vertices.empty())
           /* ignore this mesh */;

@@ -100,22 +100,6 @@ namespace mini {
     float roughness    { 0.f };
     float transmission { 0.f };
     float ior          { 1.45f };
-
-    /*! color texture to be applied to the surface(s) that this
-        material is being applied to; may be empty. If specified, this
-        is supposed to replace the `baseColor` value */
-    std::shared_ptr<Texture> colorTexture;
-    
-    /*! alpha texture to be applied to the surface(s) that this
-        material is being applied to; may be empty. If specified, the
-        'w' coordinate of the tex2D<float4> sample from this texture
-        is supposed to replace the `transmission` value. Note that for
-        some models this texture _can_ absoltely be the same texture
-        as the colorTexture, in which case this will be a float4
-        texturew with the xyz value going in as color value, and the
-        'w' value as alpha value; other models may use a float3
-        texture for color, and a separate float1 texture for alpha. */
-    std::shared_ptr<Texture> alphaTexture;
   };
 
   /*! a typical triangle mesh that mesh embree and optix mesh requirements */
@@ -148,6 +132,77 @@ namespace mini {
 
     /*! the material to be applied to this mesh */
     Material::SP       material;
+
+    /*! color texture to be applied to the surface(s) that this
+        material is being applied to; may be empty. If specified, this
+        is supposed to replace the `baseColor` value */
+    std::shared_ptr<Texture> colorTexture;
+    
+    /*! displacement texture */
+    std::shared_ptr<Texture> dispTexture;
+    
+    /*! alpha texture to be applied to the surface(s) that this
+        material is being applied to; may be empty. If specified, the
+        'w' coordinate of the tex2D<float4> sample from this texture
+        is supposed to replace the `transmission` value. Note that for
+        some models this texture _can_ absoltely be the same texture
+        as the colorTexture, in which case this will be a float4
+        texturew with the xyz value going in as color value, and the
+        'w' value as alpha value; other models may use a float3
+        texture for color, and a separate float1 texture for alpha. */
+    std::shared_ptr<Texture> alphaTexture;
+  };
+
+  /*! a typical mesh of quadrilaterals. almost exactly the same as
+      `Mesh`, exept using quads instead of triangles */
+  struct QuadMesh {
+    typedef std::shared_ptr<QuadMesh> SP;
+    
+    QuadMesh(Material::SP material = {})
+      : material(material ? material : Material::create())
+    {}
+
+    inline static SP create(Material::SP material = {})
+    { return std::make_shared<QuadMesh>(material); }
+    
+    bool   isEmissive() const { return material->isEmissive(); }
+    size_t getNumPrims() const { return indices.size(); }
+
+    /*! computes a bounding box over all the triangles in this mesh */
+    box3f getBounds() const;
+
+    /*! array of vertices */
+    std::vector<vec3f> vertices;
+
+    /*! one vertex normal per vertex; or empty */
+    std::vector<vec3f> normals;
+    
+    /*! one texture coordinate per vertex; or empty */
+    std::vector<vec2f> texcoords;
+    
+    /*! the vector containing the triangles' vertex indices */
+    std::vector<vec4i> indices;
+
+    /*! the material to be applied to this mesh */
+    Material::SP       material;
+    /*! color texture to be applied to the surface(s) that this
+        material is being applied to; may be empty. If specified, this
+        is supposed to replace the `baseColor` value */
+    std::shared_ptr<Texture> colorTexture;
+    
+    /*! displacement texture */
+    std::shared_ptr<Texture> dispTexture;
+    
+    /*! alpha texture to be applied to the surface(s) that this
+        material is being applied to; may be empty. If specified, the
+        'w' coordinate of the tex2D<float4> sample from this texture
+        is supposed to replace the `transmission` value. Note that for
+        some models this texture _can_ absoltely be the same texture
+        as the colorTexture, in which case this will be a float4
+        texturew with the xyz value going in as color value, and the
+        'w' value as alpha value; other models may use a float3
+        texture for color, and a separate float1 texture for alpha. */
+    std::shared_ptr<Texture> alphaTexture;
   };
 
   /*! an object is a collection of one or more meshes. note it is
@@ -165,13 +220,16 @@ namespace mini {
 
     /*! creates a new Object for given set of meshes, and returns a
         Object::SP for that object */
-    inline static SP create(const std::vector<Mesh::SP> &meshes={})
-    { return std::make_shared<Object>(meshes); }
+    inline static SP create(const std::vector<Mesh::SP> &meshes={},
+                            const std::vector<QuadMesh::SP> &quadMeshes={})
+    { return std::make_shared<Object>(meshes,quadMeshes); }
 
     /*! constructs a new Object for given set of meshes - note you
         _probably_ want to use Object::create() instead */
-    Object(const std::vector<Mesh::SP> &meshes={})
-      : meshes(meshes)
+    Object(const std::vector<Mesh::SP> &meshes={},
+           const std::vector<QuadMesh::SP> &quadMeshes={})
+      : meshes(meshes),
+        quadMeshes(quadMeshes)
     {}
     
     /*! computes and returns the bounding box of this object, which is
@@ -185,6 +243,7 @@ namespace mini {
       was extracted from, just some of its elements might be
       empty */
     std::vector<Mesh::SP> meshes;
+    std::vector<QuadMesh::SP> quadMeshes;
   };
 
   /*! represents instances of objects, with an affine transformation matrix */
