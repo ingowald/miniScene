@@ -41,6 +41,9 @@ namespace mini {
   inline box3f transformedBoxBounds(const affine3f &xfm,
                                     const box3f &box)
   {
+    if (box.empty())
+      return box;
+    
     box3f bounds;
     for (int i=0;i<8;i++) {
       vec3f corner((i&1?box.lower:box.upper).x,
@@ -268,8 +271,9 @@ namespace mini {
       io::writeElement(out,tex->format);
       io::writeElement(out,tex->filterMode);
       io::writeVector(out,tex->data);
-    } else
+    } else {
       io::writeElement(out,int(0));
+    }
         
     // ------------------------------------------------------------------
     // materials
@@ -293,8 +297,9 @@ namespace mini {
     for (auto &obj : serialized.objects.list) {
 
       io::writeElement(out,size_t(-1));
-      io::writeElement(out,obj->meshes.size()+obj->quadMeshes.size());
-      
+      io::writeElement(out,size_t(obj->meshes.size()+obj->quadMeshes.size()));
+
+      int localMeshID = 0;
       for (auto mesh : obj->meshes) {
         io::writeElement(out,int(GEOM_TYPE_MESH));
         if (!mesh) { io::writeElement(out,int(0)); continue; }
@@ -312,8 +317,6 @@ namespace mini {
         io::writeElement(out,serialized.getID(mesh->alphaTexture));
         io::writeElement(out,serialized.getID(mesh->dispTexture));
       }
-
-      io::writeElement(out,obj->meshes.size());
       for (auto mesh : obj->quadMeshes) {
         io::writeElement(out,int(GEOM_TYPE_QUADMESH));
         if (!mesh) { io::writeElement(out,int(0)); continue; }
@@ -451,6 +454,7 @@ namespace mini {
         // pre-version 11 model - objects only have triangle meshes,
         // and these are direclty 'inlines' here in the object.
         for (int meshID=0;meshID<(int)numMeshes;meshID++) {
+          std::cout << "meshID " << meshID << std::endl;
           int isValid = io::readElement<int>(in);
           if (!isValid) {
             continue;
@@ -545,48 +549,48 @@ namespace mini {
         }
       }
       
-      // ------------------------------------------------------------------
-      { // TRIANGLE meshes
-        size_t numMeshes = io::readElement<size_t>(in);
-        for (int meshID=0;meshID<(int)numMeshes;meshID++) {
-          int isValid = io::readElement<int>(in);
-          if (!isValid) {
-            continue;
-          }
-          Mesh::SP mesh = std::make_shared<Mesh>();
-          io::readVector(in,mesh->indices);
-          io::readVector(in,mesh->vertices);
-          io::readVector(in,mesh->normals);
-          io::readVector(in,mesh->texcoords);
-          int matID = io::readElement<int>(in);
-          assert(matID >= 0);
-          assert(matID < materials.size());
-          mesh->material = materials[matID];
-          object->meshes.push_back(mesh);
-        }
-      }
+      // // ------------------------------------------------------------------
+      // { // TRIANGLE meshes
+      //   size_t numMeshes = io::readElement<size_t>(in);
+      //   for (int meshID=0;meshID<(int)numMeshes;meshID++) {
+      //     int isValid = io::readElement<int>(in);
+      //     if (!isValid) {
+      //       continue;
+      //     }
+      //     Mesh::SP mesh = std::make_shared<Mesh>();
+      //     io::readVector(in,mesh->indices);
+      //     io::readVector(in,mesh->vertices);
+      //     io::readVector(in,mesh->normals);
+      //     io::readVector(in,mesh->texcoords);
+      //     int matID = io::readElement<int>(in);
+      //     assert(matID >= 0);
+      //     assert(matID < materials.size());
+      //     mesh->material = materials[matID];
+      //     object->meshes.push_back(mesh);
+      //   }
+      // }
 
-      // ------------------------------------------------------------------
-      { // QUAD meshes
-        size_t numMeshes = io::readElement<size_t>(in);
+      // // ------------------------------------------------------------------
+      // { // QUAD meshes
+      //   size_t numMeshes = io::readElement<size_t>(in);
 
-        for (int meshID=0;meshID<(int)numMeshes;meshID++) {
-          int isValid = io::readElement<int>(in);
-          if (!isValid) {
-            continue;
-          }
-          QuadMesh::SP mesh = std::make_shared<QuadMesh>();
-          io::readVector(in,mesh->indices);
-          io::readVector(in,mesh->vertices);
-          io::readVector(in,mesh->normals);
-          io::readVector(in,mesh->texcoords);
-          int matID = io::readElement<int>(in);
-          assert(matID >= 0);
-          assert(matID < materials.size());
-          mesh->material = materials[matID];
-          object->quadMeshes.push_back(mesh);
-        }
-      }
+      //   for (int meshID=0;meshID<(int)numMeshes;meshID++) {
+      //     int isValid = io::readElement<int>(in);
+      //     if (!isValid) {
+      //       continue;
+      //     }
+      //     QuadMesh::SP mesh = std::make_shared<QuadMesh>();
+      //     io::readVector(in,mesh->indices);
+      //     io::readVector(in,mesh->vertices);
+      //     io::readVector(in,mesh->normals);
+      //     io::readVector(in,mesh->texcoords);
+      //     int matID = io::readElement<int>(in);
+      //     assert(matID >= 0);
+      //     assert(matID < materials.size());
+      //     mesh->material = materials[matID];
+      //     object->quadMeshes.push_back(mesh);
+      //   }
+      // }
       
       objects.push_back(object);
     }

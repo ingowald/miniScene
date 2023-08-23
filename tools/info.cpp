@@ -99,15 +99,18 @@ namespace mini {
     std::cout << "num materials\t\t: " << myPretty(serialized.materials.size()) << std::endl;
     std::cout << "num quad lights\t\t: " << myPretty(scene->quadLights.size()) << std::endl;
     std::cout << "num dir lights\t\t: " << myPretty(scene->dirLights.size()) << std::endl;
-    if (scene->envMapLight)
-      std::cout << "has env-map light?\t: yes, with " 
-                << scene->envMapLight->texture->size.x
-                << "x"
-                << scene->envMapLight->texture->size.y
-                << " texels" << std::endl;
+    if (scene->envMapLight) {
+      std::cout << "has env-map light?\t: yes"  << std::endl;
+      if (scene->envMapLight->texture)
+        std::cout << "has env-map light texture?\t: yes, with " 
+                  << scene->envMapLight->texture->size.x
+                  << "x"
+                  << scene->envMapLight->texture->size.y
+                  << " texels" << std::endl;
+    }
     else
       std::cout << "has env-map light?\t: no"  << std::endl;
-
+    
     std::cout << "bounding box\t: " << scene->getBounds() << std::endl;
   }
     

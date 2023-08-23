@@ -114,51 +114,52 @@ namespace mini {
         std::cout << OWL_TERMINAL_GREEN
                   << "successfully read image file " << fileName
                   << OWL_TERMINAL_DEFAULT << std::endl;
-      // std::cout << " -> read image texture " << fileName << std::endl;
-      switch(numChannels) {
-      case 1: {
-        // note we're actually wasing a lot here - the "STBI_rgb_alpha"
-        // will always load four bytes per texel, even though this would
-        // only have the fourth channel set to anything other than 0
-        texture->format = Texture::RGBA_UINT8;
-        texture->size   = size;
-        texture->data.resize(size.x*size.y*sizeof(uint32_t));
-        uint32_t *in  = (uint32_t*)texels;
-        uint32_t *out = (uint32_t*)texture->data.data();
-        for (int y=0;y<size.y;y++) {
-          for (int x=0;x<size.x;x++) {
-            out[(y)*size.x+x] = in[y*size.x+x];
-            // out[(size.y-1-y)*size.x+x] = in[y*size.x+x];
+        // std::cout << " -> read image texture " << fileName << std::endl;
+        switch(numChannels) {
+        case 1: {
+          // note we're actually wasing a lot here - the "STBI_rgb_alpha"
+          // will always load four bytes per texel, even though this would
+          // only have the fourth channel set to anything other than 0
+          texture->format = Texture::RGBA_UINT8;
+          texture->size   = size;
+          texture->data.resize(size.x*size.y*sizeof(uint32_t));
+          uint32_t *in  = (uint32_t*)texels;
+          uint32_t *out = (uint32_t*)texture->data.data();
+          for (int y=0;y<size.y;y++) {
+            for (int x=0;x<size.x;x++) {
+              out[(y)*size.x+x] = in[y*size.x+x];
+              // out[(size.y-1-y)*size.x+x] = in[y*size.x+x];
+            }
           }
-        }
-      } break;
-      case 3: 
-      case 4: {
-        // note the 'numChannels=3' only means that the _input_ had only
-        // three channels - the loader "STBI_rgb_alpha" actually loads
-        // four, and automatically sets and alpha channel of 0xFF in
-        // that fourth component
-        texture->format = Texture::RGBA_UINT8;
-        texture->size   = size;
-        texture->data.resize(size.x*size.y*sizeof(uint32_t));
-        uint32_t *in  = (uint32_t*)texels;
-        uint32_t *out = (uint32_t*)texture->data.data();
-        for (int y=0;y<size.y;y++) {
-          for (int x=0;x<size.x;x++) {
-            out[(y)*size.x+x] = in[y*size.x+x];
-            // out[(size.y-1-y)*size.x+x] = in[y*size.x+x];
+        } break;
+        case 3: 
+        case 4: {
+          // note the 'numChannels=3' only means that the _input_ had only
+          // three channels - the loader "STBI_rgb_alpha" actually loads
+          // four, and automatically sets and alpha channel of 0xFF in
+          // that fourth component
+          texture->format = Texture::RGBA_UINT8;
+          texture->size   = size;
+          texture->data.resize(size.x*size.y*sizeof(uint32_t));
+          uint32_t *in  = (uint32_t*)texels;
+          uint32_t *out = (uint32_t*)texture->data.data();
+          for (int y=0;y<size.y;y++) {
+            for (int x=0;x<size.x;x++) {
+              out[(y)*size.x+x] = in[y*size.x+x];
+              // out[(size.y-1-y)*size.x+x] = in[y*size.x+x];
+            }
           }
-        }
-      } break;
-      default:
-        PING;
-        PRINT(numChannels);
-        throw std::runtime_error("unsupported number of channels in texture loader...");
-      }}
+        } break;
+        default:
+          PING;
+          PRINT(numChannels);
+          throw std::runtime_error("unsupported number of channels in texture loader...");
+        }}
       else {
         std::cout << OWL_TERMINAL_RED
                   << " -> FAILED trying to load image texture " << fileName
                   << OWL_TERMINAL_DEFAULT << std::endl;
+        return {};
       }
     } else if (mini::common::endsWith(fileName,".exr")) {
       texture = loadEXR(fileName);
@@ -433,11 +434,17 @@ namespace mini {
   }
 
 
-Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape, const std::string &key)
+Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape,
+                            const std::string &key,
+                            bool &wasDisplacementPTEX)
 {
   // std::cout << "looking for shape texture '"+key+"'" << std::endl;
+  wasDisplacementPTEX = false;
+  // for (auto it : pbrtShape->textures)
+  //   PRINT(it.first);
   auto it = pbrtShape->textures.find(key);
-  if (it == pbrtShape->textures.end()) return {};
+  if (it == pbrtShape->textures.end()) 
+    return {};
 
   // std::cout << "  FOUND texture " << it->second->toString() << std::endl;
   if (pbrt::ImageTexture::SP image
@@ -449,6 +456,12 @@ Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape, const std::string &key)
   if (pbrt::PtexFileTexture::SP ptex
       = it->second->as<pbrt::PtexFileTexture>()) {
     auto tex = getOrLoadPtex(ptex->fileName);
+    
+    wasDisplacementPTEX
+      =  (key == "bumpmap")
+      && (ptex->fileName.find("/Displacement/") != std::string::npos);
+    if (wasDisplacementPTEX)
+      std::cout << " ... found displacement texture '" << ptex->fileName << "'" << std::endl;
     return tex;
   }
 
@@ -469,14 +482,17 @@ Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape, const std::string &key)
                                            alphaTexture,
                                            dispTexture,
                                            pbrtShape->material);
-    Texture::SP colorFromShape = getShapeTexture(pbrtShape,"color");
-    Texture::SP alphaFromShape = getShapeTexture(pbrtShape,"alpha");
-    Texture::SP dispFromShape  = getShapeTexture(pbrtShape,"disp");
+
+    bool wasDisplacementPTEX;
+    Texture::SP colorFromShape = getShapeTexture(pbrtShape,"color",wasDisplacementPTEX);
+    Texture::SP alphaFromShape = getShapeTexture(pbrtShape,"alpha",wasDisplacementPTEX);
+    Texture::SP dispFromShape  = getShapeTexture(pbrtShape,"bumpmap",wasDisplacementPTEX);
+
     if (colorFromShape)
       colorTexture = colorFromShape;
     if (alphaFromShape)
       alphaTexture = alphaFromShape;
-    if (dispFromShape)
+    if (dispFromShape && wasDisplacementPTEX)
       dispTexture = dispFromShape;
 
     return material;
@@ -803,6 +819,7 @@ Texture::SP getShapeTexture(pbrt::Shape::SP pbrtShape, const std::string &key)
               << std::endl;
 
     scene->envMapLight = extractEnvMapLight(inScene);
+    if (!scene->envMapLight) std::cout << "*NO* envmap light" << std::endl;
     scene->dirLights   = extractDirLights(inScene);
     for (auto inst : inScene->world->instances)
       importInstance(inst,scene);

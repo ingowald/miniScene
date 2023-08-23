@@ -219,13 +219,13 @@ namespace mini {
     typedef std::shared_ptr<Object> SP;
 
     /*! creates a new Object for given set of meshes, and returns a
-        Object::SP for that object */
+      Object::SP for that object */
     inline static SP create(const std::vector<Mesh::SP> &meshes={},
                             const std::vector<QuadMesh::SP> &quadMeshes={})
     { return std::make_shared<Object>(meshes,quadMeshes); }
 
     /*! constructs a new Object for given set of meshes - note you
-        _probably_ want to use Object::create() instead */
+      _probably_ want to use Object::create() instead */
     Object(const std::vector<Mesh::SP> &meshes={},
            const std::vector<QuadMesh::SP> &quadMeshes={})
       : meshes(meshes),
@@ -233,8 +233,8 @@ namespace mini {
     {}
     
     /*! computes and returns the bounding box of this object, which is
-        the bounding box over all the mshes that this object
-        contains */
+      the bounding box over all the mshes that this object
+      contains */
     box3f getBounds() const;
     
     /*! list of all geometries in this object. if this object is in
@@ -265,24 +265,24 @@ namespace mini {
   };
 
   /*! a quadrilateral area light that emits light into the direction
-      pointed to by the normal. The light shape is given by an
-      "anchor" point describing one of the corners of the light
-      soruces, and two edges spanning the quadrilateral from that
-      point */
+    pointed to by the normal. The light shape is given by an
+    "anchor" point describing one of the corners of the light
+    soruces, and two edges spanning the quadrilateral from that
+    point */
   struct QuadLight {
     vec3f corner, edge0, edge1, emission;
     /*! normal of this lights source; this could obviously be derived
-        from cross(edge0,edge1), but is handle to have in a
-        renderer */
+      from cross(edge0,edge1), but is handle to have in a
+      renderer */
     vec3f normal;
     /*! area of this lights source; this could obviously be derived
-        from cross(edge0,edge1), but is handle to have in a
-        renderer */
+      from cross(edge0,edge1), but is handle to have in a
+      renderer */
     float area;
   };
 
   /*! a directional light at infinity, shining *into* given direction,
-      with a given radiance */
+    with a given radiance */
   struct DirLight {
     std::string toString();
     vec3f direction;

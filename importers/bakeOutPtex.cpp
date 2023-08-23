@@ -179,29 +179,39 @@ namespace mini {
   Texture::SP bakeTexture(Texture::SP in,
                           int RES)
   {
+    if (!in) return {};
+    
     static std::map<Texture::SP,Texture::SP> alreadyBaked;
     if (alreadyBaked.find(in) == alreadyBaked.end())
       alreadyBaked[in] = doBakeTexture(in,RES);
     return alreadyBaked[in];
   }
 
+  bool isPTEX(Texture::SP tex)
+  {
+    if (!tex) return false;
+    return tex->format == Texture::EMBEDDED_PTEX;
+  }
+  
   /*! do baking of mesh (if applicable), do _not_ check if it's already been done */
   Mesh::SP doBakeMesh(Mesh::SP in, int ptexBakingWidth)
   {
     if (!in)
       return in;
-    if (!in->material)
+
+    if (!isPTEX(in->colorTexture)  && !isPTEX(in->dispTexture))
       return in;
-    if (!in->colorTexture)
-      return in;
-    if (in->colorTexture->format != Texture::EMBEDDED_PTEX)
-      return in;
+    // if (!in->colorTexture && !in->dispTexture)
+    //   return in;
+    // if (in->colorTexture->format != Texture::EMBEDDED_PTEX)
+    //   return in;
 
     Mesh::SP out = std::make_shared<Mesh>();//doBakeMesh(in,ptexBakingWidth);
     out->material = in->material->clone();
     out->colorTexture = bakeTexture(in->colorTexture,ptexBakingWidth);
-    if (!out->colorTexture)
-      throw std::runtime_error("some error in baking....");
+    out->dispTexture = bakeTexture(in->dispTexture,ptexBakingWidth);
+    // if (!out->colorTexture)
+    //   throw std::runtime_error("some error in baking....");
 
     std::cout << " -> re-meshing (for new texcoords) mesh with " << in->indices.size() << " triangles" << std::endl;
     for (int quadID=0;quadID<in->indices.size()/2;quadID++) {
