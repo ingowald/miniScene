@@ -54,7 +54,7 @@ namespace mini {
         for (int i=0;i<3;i++) {
           auto thisVtx = tri.v[i];
           if (knownVertices.find(thisVtx) == knownVertices.end()) {
-            knownVertices[thisVtx] = mesh->vertices.size();
+            knownVertices[thisVtx] = (int)mesh->vertices.size();
             mesh->vertices.push_back(thisVtx);
           }
           indices[i] = knownVertices[thisVtx];

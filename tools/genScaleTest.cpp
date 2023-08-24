@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "miniScene/Scene.h"
+#include <random>
 
 namespace mini {
   int texRes = 8;
@@ -23,8 +24,10 @@ namespace mini {
   
   float rng()
   {
-    return drand48();
-    
+      static std::random_device rd;  // Will be used to obtain a seed for the random number engine
+      static std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
+      std::uniform_real_distribution<float> dis(0.f, 1.f);
+      return dis(gen);
   }
   vec3f rng3f() { return vec3f(rng(),rng(),rng()); }
 
@@ -59,8 +62,8 @@ namespace mini {
       for (int j=0;j<2*sphereRes;j++) {
         float fu = j/(2.f*sphereRes);
         float fv = i/float(sphereRes); 
-        float u = fu*2.f*M_PI;;
-        float v = fv*M_PI;
+        float u = float(fu*2.f*M_PI);
+        float v = float(fv*M_PI);
         vec3f n;
         n.x = cos(u)*sin(v);
         n.y = sin(u)*sin(v);
@@ -111,7 +114,7 @@ namespace mini {
     }
     vec3f domainSize = vec3f(1000,100,1000);
     int numVisibleSpheres = numInstances + numBaseSpheres;
-    float avgRadius  = 200.f*powf(numVisibleSpheres,-1.f/3.f);
+    float avgRadius  = 200.f*powf((float)numVisibleSpheres,-1.f/3.f);
 
     Scene::SP scene = Scene::create();
 

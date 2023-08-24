@@ -59,8 +59,8 @@ namespace mini {
     if (!inMesh->texcoords.empty())
       outMesh->texcoords.push_back(inMesh->texcoords[vtxID]);
     
-    alreadyExtracted[vtxID] = newID;
-    return newID;
+    alreadyExtracted[vtxID] = (int)newID;
+    return (int)newID;
   }
   
   Mesh::SP extractMesh(Mesh::SP in, const std::vector<vec3i> &indices)
@@ -173,7 +173,7 @@ namespace mini {
       brokenObjects[inst->object] = {};
 
     for (auto &pair : brokenObjects)
-      pair.second = breakObject(pair.first,maxMeshSize);
+      pair.second = breakObject(pair.first,(int)maxMeshSize);
 
     for (auto inst : in->instances) {
       auto &fragments = brokenObjects[inst->object];

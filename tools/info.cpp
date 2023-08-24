@@ -141,5 +141,14 @@ namespace mini {
 } // ::mini
 
 int main(int ac, char **av)
-{ mini::miniInfo(ac,av); return 0; }
+{ 
+    try {
+        mini::miniInfo(ac, av);
+    }
+    catch (std::exception& e) {
+            std::cerr << "*** Fatal error *** " << std::endl << e.what() << std::endl;
+            exit(1);
+    }
+    return 0; 
+}
 
