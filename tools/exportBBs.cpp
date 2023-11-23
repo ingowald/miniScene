@@ -66,13 +66,13 @@ namespace mini {
       std::string mmFileName = outPrefix+"-obj"+std::to_string(objID)+".mm";
       std::cout << "saving object's meshes in " << mmFileName << std::endl;
       std::ofstream mm(mmFileName.c_str(),std::ios::binary);
-      int numMeshes = (int)obj->meshes.size();
+      size_t numMeshes = (int)obj->meshes.size();
       mm.write((char*)&numMeshes,sizeof(numMeshes));
       for (auto mesh : obj->meshes) {
-        int numVertices = mesh->vertices.size();
+        size_t numVertices = mesh->vertices.size();
         mm.write((char*)&numVertices,sizeof(numVertices));
         mm.write((char*)mesh->vertices.data(),mesh->vertices.size()*sizeof(mesh->vertices[0]));
-        int numIndices = mesh->indices.size();
+        size_t numIndices = mesh->indices.size();
         mm.write((char*)&numIndices,sizeof(numIndices));
         mm.write((char*)mesh->indices.data(),mesh->indices.size()*sizeof(mesh->indices[0]));
       }
