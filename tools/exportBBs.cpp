@@ -51,6 +51,7 @@ namespace mini {
         allObjects.insert(inst->object);
         instBounds.push_back(inst->getBounds());
       }
+    PRINT(allObjects.size());
 
     {
       std::string instsFileName = outPrefix+"-instances.bb3";
@@ -63,6 +64,7 @@ namespace mini {
     for (auto obj : allObjects) {
       int objID = numWritten++;
       std::string mmFileName = outPrefix+"-obj"+std::to_string(objID)+".mm";
+      std::cout << "saving object's meshes in " << mmFileName << std::endl;
       std::ofstream mm(mmFileName.c_str(),std::ios::binary);
       int numMeshes = (int)obj->meshes.size();
       mm.write((char*)&numMeshes,sizeof(numMeshes));
