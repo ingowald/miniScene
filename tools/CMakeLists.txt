@@ -26,6 +26,18 @@ target_link_libraries(miniInfo
   )
 
 # -----------------------------------------------------------------------------
+# tool that reads a scene, and writes both multi-meshes (for objects)
+# and bb3's (for instances)
+# -----------------------------------------------------------------------------
+add_executable(miniExportBBs
+  exportBBs.cpp
+  )
+target_link_libraries(miniExportBBs
+  PUBLIC
+  miniScene
+  )
+
+# -----------------------------------------------------------------------------
 # 'lint' like tool that runs some basic sanity tests such as checking indices
 # -----------------------------------------------------------------------------
 add_executable(miniLint

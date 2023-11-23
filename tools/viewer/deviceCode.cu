@@ -45,7 +45,7 @@ OPTIX_CLOSEST_HIT_PROGRAM(MeshCH)()
   prd.u      = optixGetTriangleBarycentrics().x;
   prd.v      = optixGetTriangleBarycentrics().y;
 
-#if 1
+#if 0
   prd.scale = 1.f;
 #else
   float3 vtx[3];
