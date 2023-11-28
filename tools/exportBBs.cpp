@@ -53,7 +53,9 @@ namespace mini {
       }
     PRINT(allObjects.size());
 
-    {
+    if (scene->instances.size() == 1) {
+      std::cout << "model has a single instance; not dumping this and only dumping the mm for the root object..." << std::endl;
+    } else{
       std::string instsFileName = outPrefix+"-instances.bb3";
       std::cout << "saving " << prettyNumber(instBounds.size()) << "instances to " << instsFileName << std::endl;
       std::ofstream out(instsFileName.c_str());
@@ -63,7 +65,10 @@ namespace mini {
     int numWritten = 0;
     for (auto obj : allObjects) {
       int objID = numWritten++;
-      std::string mmFileName = outPrefix+"-obj"+std::to_string(objID)+".mm";
+      std::string mmFileName
+        = (scene->instances.size() == 1)
+        ? outPrefix
+        : (outPrefix+"-obj"+std::to_string(objID)+".mm");
       std::cout << "saving object's meshes in " << mmFileName << std::endl;
       std::ofstream mm(mmFileName.c_str(),std::ios::binary);
       size_t numMeshes = (int)obj->meshes.size();
