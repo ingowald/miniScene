@@ -35,6 +35,8 @@ namespace mini {
       std::string arg = av[i];
       if (arg[0] != '-')
         inFileName = arg;
+      else if (arg == "-o")
+        outFileName = av[++i];
       else
         throw std::runtime_error("unknown cmdline argument '"+arg+"'");
     }
