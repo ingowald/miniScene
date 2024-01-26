@@ -116,6 +116,18 @@ target_link_libraries(miniReplicate
   )
 
 # -----------------------------------------------------------------------------
+# load a scene, create a (world space) bounding box for each triangle,
+# and store list of those bbs (for some external bvh builder tests)
+# -----------------------------------------------------------------------------
+add_executable(miniDumpBBs
+  dumpBBs.cpp
+  )
+target_link_libraries(miniDumpBBs
+  PUBLIC
+  miniScene
+  )
+
+# -----------------------------------------------------------------------------
 # tool that reads a scene, and then prints some basic information
 # -----------------------------------------------------------------------------
 add_executable(miniGenScaleTest
