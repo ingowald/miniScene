@@ -82,6 +82,20 @@ endif()
 
 
 
+#option(MINI_BUILD_XMLBIN_IMPORTER "Build Embree xml/bin importer" OFF)
+#if (MINI_BUILD_XMLBIN_IMPORTER)
+#find_package(LibXml2 REQUIRED)
+find_package(LibXml2)
+if (LibXml2_FOUND)
+  add_executable(xmlbin2mini
+    xmlbin2mini.cpp
+    )
+  target_link_libraries(xmlbin2mini
+    PUBLIC miniScene LibXml2::LibXml2
+    )
+endif()
+
+
 
 
 if (MINI_BUILD_ADVANCED_IMPORTERS)
