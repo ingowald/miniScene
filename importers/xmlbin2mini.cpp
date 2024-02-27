@@ -60,6 +60,7 @@ std::vector<vec3f> parse_positions(xmlNode *root, const std::vector<uint8_t> &bi
       throw std::runtime_error("un-recognized attributed "+key+" = "+value+" in TriangleMesh/triangles");
   }
   std::vector<vec3f> data(size);
+  PING; PRINT(size); PRINT(ofs); 
   memcpy(data.data(),binData.data()+ofs,size*sizeof(data[0]));
   return data;
 }
@@ -342,6 +343,7 @@ Material::SP parse_material(xmlNode *root, const std::vector<uint8_t> &binData)
     if (type == "code") {
       const std::string code
         = (const char *)xmlNodeListGetString(root->doc, node->children, 1);
+      PING; PRINT(code);
       try {
         if (code == "\"Metal\"") {
           return parse_Metal(root);

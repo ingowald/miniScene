@@ -359,6 +359,7 @@ namespace mini {
     
   void Scene::save(const std::string &baseName)
   {
+    PING;
     std::ofstream out(baseName,std::ios::binary);
     if (!out.good())
       throw std::runtime_error("could not open file '"+baseName+"'");
