@@ -133,6 +133,148 @@ float get1f(const std::string &s)
   return v;
 }
 
+
+xmlNode *findParams(xmlNode *root)
+{
+  for (xmlNode *node = root; node; node = node->next) {
+    if (node->type != XML_ELEMENT_NODE)
+      continue;
+    const std::string type = (const char *)node->name;
+    if (type == "code")
+      continue;
+    if (type == "parameters")
+      return node->children;
+    throw std::runtime_error("unexpected tag '"+type+"' in material...");
+  }
+  throw std::runtime_error("could not find <parameters> in material...");
+}
+
+std::string getName(xmlNode *param)
+{
+  for (xmlAttr *prop = param->properties; prop; prop = prop->next) {
+    const std::string key = (const char *)prop->name;
+    const std::string value = (const char *)xmlNodeListGetString(param->doc, prop->children, 1);
+    if (key == "name")
+      return value;
+  }
+  throw std::runtime_error("could not find 'name' of material parameter");
+}
+
+Material::SP parse_Metal(xmlNode *root)
+{
+  Metal::SP mat = Metal::create();
+  for (xmlNode *param = findParams(root); param; param = param->next) {
+    if (param->type != XML_ELEMENT_NODE)
+      continue;
+    const std::string name  = getName(param);
+    const std::string type  = (const char *)param->name;
+    const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
+    if (name == "eta") {
+      mat->eta = get3f(value);
+      continue;
+    }
+    if (name == "k") {
+      mat->k = get3f(value);
+      continue;
+    }
+    if (name == "roughness") {
+      mat->roughness = get1f(value);
+      continue;
+    }
+      
+    throw std::runtime_error("un-handled param "+type+" "+name+" = "+value);
+  }
+  return mat;
+}
+
+Material::SP parse_MetallicPaint(xmlNode *root)
+{
+  MetallicPaint::SP mat = MetallicPaint::create();
+  for (xmlNode *param = findParams(root); param; param = param->next) {
+    if (param->type != XML_ELEMENT_NODE)
+      continue;
+    const std::string name  = getName(param);
+    const std::string type  = (const char *)param->name;
+    const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
+    if (name == "eta") {
+      mat->eta = get1f(value);
+      continue;
+    }
+    if (name == "glitterColor") {
+      mat->glitterColor = get3f(value);
+      continue;
+    }
+    if (name == "shadeColor") {
+      mat->shadeColor = get3f(value);
+      continue;
+    }
+    if (name == "glitterSpread") {
+      mat->glitterSpread = get1f(value);
+      continue;
+    }
+      
+    throw std::runtime_error("un-handled param "+type+" "+name+" = "+value);
+  }
+  return mat;
+}
+
+Material::SP parse_Matte(xmlNode *root)
+{
+  Matte::SP mat = Matte::create();
+  for (xmlNode *param = findParams(root); param; param = param->next) {
+    if (param->type != XML_ELEMENT_NODE)
+      continue;
+    const std::string name  = getName(param);
+    const std::string type  = (const char *)param->name;
+    const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
+    if (name == "reflectance") {
+      mat->reflectance = get3f(value);
+      continue;
+    }
+      
+    throw std::runtime_error("un-handled param "+type+" "+name+" = "+value);
+  }
+  return mat;
+}
+
+Material::SP parse_Dielectric(xmlNode *root)
+{
+  Dielectric::SP mat = Dielectric::create();
+  for (xmlNode *param = findParams(root); param; param = param->next) {
+    if (param->type != XML_ELEMENT_NODE)
+      continue;
+    const std::string name  = getName(param);
+    const std::string type  = (const char *)param->name;
+    const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
+    // if (name == "reflectance") {
+    //   mat->reflectance = get3f(value);
+    //   continue;
+    // }
+      
+    throw std::runtime_error("un-handled param "+type+" "+name+" = "+value);
+  }
+  return mat;
+}
+
+Material::SP parse_ThinGlass(xmlNode *root)
+{
+  ThinGlass::SP mat = ThinGlass::create();
+  for (xmlNode *param = findParams(root); param; param = param->next) {
+    if (param->type != XML_ELEMENT_NODE)
+      continue;
+    const std::string name  = getName(param);
+    const std::string type  = (const char *)param->name;
+    const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
+    // if (name == "reflectance") {
+    //   mat->reflectance = get3f(value);
+    //   continue;
+    // }
+      
+    throw std::runtime_error("un-handled param "+type+" "+name+" = "+value);
+  }
+  return mat;
+}
+
 // TriangleMesh/material
 Material::SP parse_material(xmlNode *root, const std::vector<uint8_t> &binData)
 {
@@ -145,149 +287,161 @@ Material::SP parse_material(xmlNode *root, const std::vector<uint8_t> &binData)
   //   </parameters>
   // </material>
   
-  std::string code = "";
-  Material::SP mat = Material::create();
+  // std::string code = "";
   for (xmlNode *node = root; node; node = node->next) {
     if (node->type != XML_ELEMENT_NODE)
       continue;
     const std::string type = (const char *)node->name;
     if (type == "code") {
-      code = (const char *)xmlNodeListGetString(root->doc, node->children, 1);
-      if (code == "\"Metal\"") {
-        code = "Metal";
-      } else if (code == "\"MetallicPaint\"") {
-        code = "MetallicPaint";
-      } else if (code == "\"Plastic\"") {
-        code = "Plastic";
-      } else if (code == "\"Matte\"") {
-        code = "Matte";
-      } else if (code == "\"Dielectric\"") {
-        code = "Dielectric";
-        mat->transmission = 1.f;
-      } else if (code == "\"ThinGlass\"") {
-        code = "ThinGlass";
-        mat->transmission = 1.f;
-      } else
-        throw std::runtime_error("unknown material code '"+code+"'");
-    } else if (type == "parameters") {
-      for (xmlNode *param = node->children; param; param = param->next) {
-        std::string name;
-        for (xmlAttr *prop = param->properties; prop; prop = prop->next) {
-          const std::string key = (const char *)prop->name;
-          const std::string value = (const char *)xmlNodeListGetString(root->doc, prop->children, 1);
-          if (key == "name")
-            name = value;
-        }
-        if (param->type != XML_ELEMENT_NODE)
-          continue;
-        const std::string type = (const char *)param->name;
-        const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
-
-        if (code == "Metal") {
-          if (name == "k") {
-            // ????
-            mat->baseColor = get3f(value);
-            continue;
-          }
-          if (name == "eta") {
-            // ????
-            mat->metallic = get3f(value).x;
-            continue;
-          }
-          if (name == "roughness") {
-            // ????
-            mat->metallic = get1f(value);
-            continue;
-          }
-        }
-        if (code == "MetallicPaint") {
-          if (name == "eta") {
-            // ????
-            mat->metallic = get1f(value);
-            continue;
-          }
-          if (name == "glitterColor") {
-            // ????
-            // ignoring!?
-            continue;
-          }
-          if (name == "glitterSpread") {
-            // ????
-            // ignoring!?
-            continue;
-          }
-          if (name == "shadeColor") {
-            // ????
-            mat->baseColor = get3f(value);
-            continue;
-          }
-        }
-        if (code == "Plastic") {
-          if (name == "Ks") { // 3f, apparently 1,1,1
-            // ????
-            continue;
-          }
-          if (name == "pigmentColor") { // 3f, apparently 0.05
-            // ????
-            mat->baseColor = get3f(value);
-            continue;
-          }
-          if (name == "eta") { // 1f, apparently 1.5
-            // ????
-            continue;
-          }
-          if (name == "roughness") { // 1f, apparently 0.1
-            // ????
-            mat->roughness = get1f(value);
-            continue;
-          }
-        }
-        if (code == "Matte") {
-          if (name == "reflectance") { // 3f, apparently 1,1,1
-            // ????
-            mat->baseColor = get3f(value);
-            continue;
-          }
-        }
-        if (code == "Dielectric") {
-          if (name == "etaInside") { // 1f, apparently 1.45
-            mat->ior = get1f(value);
-            continue;
-          }
-          if (name == "etaOutside") { // 1f, apparently 1
-            // mat->ior = get1f(value);
-            //ignore
-            continue;
-          }
-          if (name == "transmission") { // 3f, apparently .95
-            mat->baseColor = get3f(value);
-            continue;
-          }
-        }
-        if (code == "ThinGlass") {
-          if (name == "eta") { // 1f, apparently 1.5
-            mat->ior = get1f(value);
-            continue;
-          }
-          if (name == "transmission") { // 3f, apparently .95
-            mat->baseColor = get3f(value);
-            continue;
-          }
-          if (name == "thickness") { // 1f, apparently 1
-            // ignore
-            continue;
-          }
-        }
+      const std::string code
+        = (const char *)xmlNodeListGetString(root->doc, node->children, 1);
+      try {
+        if (code == "\"Metal\"") {
+          return parse_Metal(root);
+        } else if (code == "\"MetallicPaint\"") {
+          return parse_MetallicPaint(root);
+          // code = "MetallicPaint";
+        } else if (code == "\"Plastic\"") {
+          // code = "Plastic";
+        } else if (code == "\"Matte\"") {
+          return parse_Matte(root);
+          // code = "Matte";
+        } else if (code == "\"Dielectric\"") {
+          return parse_Dielectric(root);
+          // code = "Dielectric";
+          // mat->transmission = 1.f;
+        } else if (code == "\"ThinGlass\"") {
+          return parse_ThinGlass(root);
+          // code = "ThinGlass";
+          // mat->transmission = 1.f;
+        } else
+          throw std::runtime_error("unknown material code '"+code+"'");
+      } catch (std::exception &e) {
+        throw std::runtime_error("error parsing material code '"+code+"' : "+e.what());
         
-        throw std::runtime_error("un-handled material "+code+" param "+type+" "+name+" = "+value);
-        // PRINT(type);
-        // PRINT(name);
-        // PRINT(value);
       }
-    } else 
-      throw std::runtime_error("unknown material node type '"+type+"'");
+    }
   }
-  return mat;
+  throw std::runtime_error("could not find material '<code>' tag");
+    // } else if (type == "parameters") {
+    //   for (xmlNode *param = node->children; param; param = param->next) {
+    //     std::string name;
+    //     for (xmlAttr *prop = param->properties; prop; prop = prop->next) {
+    //       const std::string key = (const char *)prop->name;
+    //       const std::string value = (const char *)xmlNodeListGetString(root->doc, prop->children, 1);
+    //       if (key == "name")
+    //         name = value;
+    //     }
+    //     if (param->type != XML_ELEMENT_NODE)
+    //       continue;
+    //     const std::string type = (const char *)param->name;
+    //     const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
+
+    //     if (code == "Metal") {
+    //       if (name == "k") {
+    //         // ????
+    //         mat->baseColor = get3f(value);
+    //         continue;
+    //       }
+    //       if (name == "eta") {
+    //         // ????
+    //         mat->metallic = get3f(value).x;
+    //         continue;
+    //       }
+    //       if (name == "roughness") {
+    //         // ????
+    //         mat->metallic = get1f(value);
+    //         continue;
+    //       }
+    //     }
+    //     if (code == "MetallicPaint") {
+    //       if (name == "eta") {
+    //         // ????
+    //         mat->metallic = get1f(value);
+    //         continue;
+    //       }
+    //       if (name == "glitterColor") {
+    //         // ????
+    //         // ignoring!?
+    //         continue;
+    //       }
+    //       if (name == "glitterSpread") {
+    //         // ????
+    //         // ignoring!?
+    //         continue;
+    //       }
+    //       if (name == "shadeColor") {
+    //         // ????
+    //         mat->baseColor = get3f(value);
+    //         continue;
+    //       }
+    //     }
+    //     if (code == "Plastic") {
+    //       if (name == "Ks") { // 3f, apparently 1,1,1
+    //         // ????
+    //         continue;
+    //       }
+    //       if (name == "pigmentColor") { // 3f, apparently 0.05
+    //         // ????
+    //         mat->baseColor = get3f(value);
+    //         continue;
+    //       }
+    //       if (name == "eta") { // 1f, apparently 1.5
+    //         // ????
+    //         continue;
+    //       }
+    //       if (name == "roughness") { // 1f, apparently 0.1
+    //         // ????
+    //         mat->roughness = get1f(value);
+    //         continue;
+    //       }
+    //     }
+    //     if (code == "Matte") {
+    //       if (name == "reflectance") { // 3f, apparently 1,1,1
+    //         // ????
+    //         mat->baseColor = get3f(value);
+    //         continue;
+    //       }
+    //     }
+    //     if (code == "Dielectric") {
+    //       if (name == "etaInside") { // 1f, apparently 1.45
+    //         mat->ior = get1f(value);
+    //         continue;
+    //       }
+    //       if (name == "etaOutside") { // 1f, apparently 1
+    //         // mat->ior = get1f(value);
+    //         //ignore
+    //         continue;
+    //       }
+    //       if (name == "transmission") { // 3f, apparently .95
+    //         mat->baseColor = get3f(value);
+    //         continue;
+    //       }
+    //     }
+    //     if (code == "ThinGlass") {
+    //       if (name == "eta") { // 1f, apparently 1.5
+    //         mat->ior = get1f(value);
+    //         continue;
+    //       }
+    //       if (name == "transmission") { // 3f, apparently .95
+    //         mat->baseColor = get3f(value);
+    //         continue;
+    //       }
+    //       if (name == "thickness") { // 1f, apparently 1
+    //         // ignore
+    //         continue;
+    //       }
+    //     }
+        
+    //     throw std::runtime_error("un-handled material "+code+" param "+type+" "+name+" = "+value);
+    //     // PRINT(type);
+    //     // PRINT(name);
+    //     // PRINT(value);
+  //     }
+  //   } else 
+  //     throw std::runtime_error("unknown material node type '"+type+"'");
+  // }
+  // return mat;
 }
 
 void parse_TriangleMesh(xmlNode *root, const std::vector<uint8_t> &binData)

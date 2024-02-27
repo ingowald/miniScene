@@ -148,6 +148,143 @@ namespace mini {
     std::shared_ptr<Texture> alphaTexture;
   };
 
+
+  struct Metal : public Material {
+    typedef std::shared_ptr<Metal> SP;
+
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Metal() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Metal(const Metal &) = default;
+
+    /*! constructs a new Material and returns a Material::SP to that
+        created material */
+    inline static SP create() { return std::make_shared<Metal>(); }
+    
+    /*! constructs a new Material that is a identical clone of the
+        current material */
+    Material::SP clone() const override { return std::make_shared<Metal>(*this); }
+    void write(std::ofstream &out,
+               const std::map<Texture::SP,int> &textures) override;
+    void read(std::ifstream &in,
+              const std::vector<Texture::SP> &textures) override;
+    std::string toString() const override { return "Metal"; }
+
+    vec3f eta { 2.485f,2.485f,2.485f };
+    vec3f k { 3.43f,3.43f,3.43f };
+    float roughness { .1f };
+  };
+  struct Dielectric : public Material {
+    typedef std::shared_ptr<Dielectric> SP;
+
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Dielectric() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Dielectric(const Dielectric &) = default;
+
+    /*! constructs a new Material and returns a Material::SP to that
+        created material */
+    inline static SP create() { return std::make_shared<Dielectric>(); }
+    
+    /*! constructs a new Material that is a identical clone of the
+        current material */
+    Material::SP clone() const override { return std::make_shared<Dielectric>(*this); }
+    void write(std::ofstream &out,
+               const std::map<Texture::SP,int> &textures) override;
+    void read(std::ifstream &in,
+              const std::vector<Texture::SP> &textures) override;
+    std::string toString() const override { return "Dielectric"; }
+    
+  };
+  struct ThinGlass : public Material {
+    typedef std::shared_ptr<ThinGlass> SP;
+
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    ThinGlass() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    ThinGlass(const ThinGlass &) = default;
+
+    /*! constructs a new Material and returns a Material::SP to that
+        created material */
+    inline static SP create() { return std::make_shared<ThinGlass>(); }
+    
+    /*! constructs a new Material that is a identical clone of the
+        current material */
+    Material::SP clone() const override { return std::make_shared<ThinGlass>(*this); }
+    void write(std::ofstream &out,
+               const std::map<Texture::SP,int> &textures) override;
+    void read(std::ifstream &in,
+              const std::vector<Texture::SP> &textures) override;
+    std::string toString() const override { return "ThinGlass"; }
+    
+  };
+  struct MetallicPaint : public Material {
+    typedef std::shared_ptr<MetallicPaint> SP;
+
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    MetallicPaint() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    MetallicPaint(const MetallicPaint &) = default;
+
+    /*! constructs a new Material and returns a Material::SP to that
+        created material */
+    inline static SP create() { return std::make_shared<MetallicPaint>(); }
+    
+    /*! constructs a new Material that is a identical clone of the
+        current material */
+    Material::SP clone() const override { return std::make_shared<MetallicPaint>(*this); }
+    void write(std::ofstream &out,
+               const std::map<Texture::SP,int> &textures) override;
+    void read(std::ifstream &in,
+              const std::vector<Texture::SP> &textures) override;
+    std::string toString() const override { return "MetallicPaint"; }
+    
+    float eta = 1.45f;
+    vec3f glitterColor { 0.055f, 0.16f, 0.25f };
+    float glitterSpread = 0.025f;
+    vec3f shadeColor { 0.f, 0.03f, 0.07f };
+  };
+
+  struct Matte : public Material {
+    typedef std::shared_ptr<Matte> SP;
+
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Matte() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Matte(const Matte &) = default;
+
+    /*! constructs a new Material and returns a Material::SP to that
+        created material */
+    inline static SP create() { return std::make_shared<Matte>(); }
+    
+    /*! constructs a new Material that is a identical clone of the
+        current material */
+    Material::SP clone() const override { return std::make_shared<Matte>(*this); }
+    void write(std::ofstream &out,
+               const std::map<Texture::SP,int> &textures) override;
+    void read(std::ifstream &in,
+              const std::vector<Texture::SP> &textures) override;
+    std::string toString() const override { return "Matte"; }
+    
+    vec3f reflectance { 0.5f,0.5f,0.5f };
+  };
+
+  
   /*! a typical triangle mesh that mesh embree and optix mesh requirements */
   struct Mesh {
     typedef std::shared_ptr<Mesh> SP;

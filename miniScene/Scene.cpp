@@ -45,15 +45,29 @@ namespace mini {
   }
 
 
-  typedef enum { Disney } MaterialTag;
+  typedef enum { INVALID=0,
+    DISNEY,
+    MATTE,
+    METAL,
+  } MaterialTag;
   
   MaterialTag materialTagOf(Material::SP mat)
   {
+    if (mat->as<DisneyMaterial>()) return DISNEY;
+    if (mat->as<Matte>()) return MATTE;
+    if (mat->as<Metal>()) return METAL;
+    
     throw std::runtime_error("un-supported material type "+mat->toString()+" in Scene::save");
   }
+  
   Material::SP createMaterialFromTag(MaterialTag tag,
                                      const std::vector<Texture::SP> &textures)
   {
+    switch (tag){
+    case DISNEY: return DisneyMaterial::create();
+    case METAL: return Metal::create();
+    case MATTE: return Matte::create();
+    }
     throw std::runtime_error("un-supported material tag "+std::to_string((int)tag)+" in Scene::load");
   }
   
@@ -65,6 +79,78 @@ namespace mini {
     return it->second;
   }
   
+  // ------------------------------------------------------------------
+  void Matte::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->reflectance);
+  }
+
+  void Matte::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->reflectance);
+  }
+  
+  // ------------------------------------------------------------------
+  void MetallicPaint::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->glitterColor);
+    io::writeElement(out,this->glitterSpread);
+    io::writeElement(out,this->shadeColor);
+    io::writeElement(out,this->eta);
+  }
+
+  void MetallicPaint::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->glitterColor);
+    io::readElement(in,this->glitterSpread);
+    io::readElement(in,this->shadeColor);
+    io::readElement(in,this->eta);
+  }
+  
+  // ------------------------------------------------------------------
+  void ThinGlass::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+  }
+
+  void ThinGlass::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+  }
+  
+  // ------------------------------------------------------------------
+  void Dielectric::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+  }
+
+  void Dielectric::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+  }
+  
+  // ------------------------------------------------------------------
+  void Metal::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->eta);
+    io::writeElement(out,this->k);
+    io::writeElement(out,this->roughness);
+  }
+
+  void Metal::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->eta);
+    io::readElement(in,this->k);
+    io::readElement(in,this->roughness);
+  }
+  
+  // ------------------------------------------------------------------
   void DisneyMaterial::write(std::ofstream &out,
                              const std::map<Texture::SP,int> &textures)
   {
