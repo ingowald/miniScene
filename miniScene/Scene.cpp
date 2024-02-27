@@ -50,6 +50,7 @@ namespace mini {
     MATTE,
     PLASTIC,
     METAL,
+    VELVET,
     METALLICPAINT,
     THINGLASS,
     DIELECTRIC
@@ -60,6 +61,7 @@ namespace mini {
     if (mat->as<DisneyMaterial>()) return DISNEY;
     if (mat->as<Matte>()) return MATTE;
     if (mat->as<Metal>()) return METAL;
+    if (mat->as<Velvet>()) return VELVET;
     if (mat->as<Plastic>()) return PLASTIC;
     if (mat->as<MetallicPaint>()) return METALLICPAINT;
     if (mat->as<Dielectric>()) return DIELECTRIC;
@@ -74,6 +76,7 @@ namespace mini {
     switch (tag){
     case DISNEY: return DisneyMaterial::create();
     case METAL: return Metal::create();
+    case VELVET: return Velvet::create();
     case PLASTIC: return Plastic::create();
     case MATTE: return Matte::create();
     case DIELECTRIC: return Dielectric::create();
@@ -191,6 +194,25 @@ namespace mini {
     io::readElement(in,this->eta);
     io::readElement(in,this->k);
     io::readElement(in,this->roughness);
+  }
+  
+  // ------------------------------------------------------------------
+  void Velvet::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->reflectance);
+    io::writeElement(out,this->horizonScatteringColor);
+    io::writeElement(out,this->horizonScatteringFallOff);
+    io::writeElement(out,this->backScattering);
+  }
+
+  void Velvet::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->reflectance);
+    io::readElement(in,this->horizonScatteringColor);
+    io::readElement(in,this->horizonScatteringFallOff);
+    io::readElement(in,this->backScattering);
   }
   
   // ------------------------------------------------------------------
@@ -359,7 +381,6 @@ namespace mini {
     
   void Scene::save(const std::string &baseName)
   {
-    PING;
     std::ofstream out(baseName,std::ios::binary);
     if (!out.good())
       throw std::runtime_error("could not open file '"+baseName+"'");

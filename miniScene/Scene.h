@@ -207,6 +207,37 @@ namespace mini {
     vec3f k { 3.43f,3.43f,3.43f };
     float roughness { .1f };
   };
+
+  struct Velvet : public Material {
+    typedef std::shared_ptr<Velvet> SP;
+
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Velvet() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Velvet(const Velvet &) = default;
+
+    /*! constructs a new Material and returns a Material::SP to that
+        created material */
+    inline static SP create() { return std::make_shared<Velvet>(); }
+    
+    /*! constructs a new Material that is a identical clone of the
+        current material */
+    Material::SP clone() const override { return std::make_shared<Velvet>(*this); }
+    void write(std::ofstream &out,
+               const std::map<Texture::SP,int> &textures) override;
+    void read(std::ifstream &in,
+              const std::vector<Texture::SP> &textures) override;
+    std::string toString() const override { return "Velvet"; }
+
+    vec3f reflectance { 0.55f, 0.0f, 0.0f };
+    vec3f horizonScatteringColor { 0.75f, 0.2f, 0.2f };
+    float horizonScatteringFallOff = 7.f;
+    float backScattering = .5f;
+  };
+
   struct Dielectric : public Material {
     typedef std::shared_ptr<Dielectric> SP;
 

@@ -42,7 +42,6 @@ void parse_AffineSpace(xmlNode *root, const std::vector<uint8_t> &binData)
          &xfm.l.vz.z,
          &xfm.p.z);
   g_xfm = g_xfm * xfm;
-//   PRINT(value);
 }
 
 // TriangleMesh/positions
@@ -60,7 +59,8 @@ std::vector<vec3f> parse_positions(xmlNode *root, const std::vector<uint8_t> &bi
       throw std::runtime_error("un-recognized attributed "+key+" = "+value+" in TriangleMesh/triangles");
   }
   std::vector<vec3f> data(size);
-  PING; PRINT(size); PRINT(ofs); 
+  if (ofs+size*sizeof(data[0]) > binData.size())
+    throw std::runtime_error("invalid ofs/size field - probably read incomplete bin file!?");
   memcpy(data.data(),binData.data()+ofs,size*sizeof(data[0]));
   return data;
 }
@@ -80,6 +80,8 @@ std::vector<vec3f> parse_normals(xmlNode *root, const std::vector<uint8_t> &binD
       throw std::runtime_error("un-recognized attributed "+key+" = "+value+" in TriangleMesh/triangles");
   }
   std::vector<vec3f> data(size);
+  if (ofs+size*sizeof(data[0]) > binData.size())
+    throw std::runtime_error("invalid ofs/size field - probably read incomplete bin file!?");
   memcpy(data.data(),binData.data()+ofs,size*sizeof(data[0]));
   return data;
 }
@@ -99,6 +101,8 @@ std::vector<vec2f> parse_texcoords(xmlNode *root, const std::vector<uint8_t> &bi
       throw std::runtime_error("un-recognized attributed "+key+" = "+value+" in TriangleMesh/triangles");
   }
   std::vector<vec2f> data(size);
+  if (ofs+size*sizeof(data[0]) > binData.size())
+    throw std::runtime_error("invalid ofs/size field - probably read incomplete bin file!?");
   memcpy(data.data(),binData.data()+ofs,size*sizeof(data[0]));
   return data;
 }
@@ -117,6 +121,8 @@ std::vector<vec3i> parse_triangles(xmlNode *root, const std::vector<uint8_t> &bi
       throw std::runtime_error("un-recognized attributed "+key+" = "+value+" in TriangleMesh/triangles");
   }
   std::vector<vec3i> data(size);
+  if (ofs+size*sizeof(data[0]) > binData.size())
+    throw std::runtime_error("invalid ofs/size field - probably read incomplete bin file!?");
   memcpy(data.data(),binData.data()+ofs,size*sizeof(data[0]));
   return data;
 }
@@ -211,6 +217,37 @@ Material::SP parse_Plastic(xmlNode *root)
     }
     if (name == "roughness") {
       mat->roughness = get1f(value);
+      continue;
+    }
+      
+    throw std::runtime_error("un-handled param "+type+" "+name+" = "+value);
+  }
+  return mat;
+}
+
+Material::SP parse_Velvet(xmlNode *root)
+{
+  Velvet::SP mat = Velvet::create();
+  for (xmlNode *param = findParams(root); param; param = param->next) {
+    if (param->type != XML_ELEMENT_NODE)
+      continue;
+    const std::string name  = getName(param);
+    const std::string type  = (const char *)param->name;
+    const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
+    if (name == "reflectance") {
+      mat->reflectance = get3f(value);
+      continue;
+    }
+    if (name == "horizonScatteringColor") {
+      mat->horizonScatteringColor = get3f(value);
+      continue;
+    }
+    if (name == "horizonScatteringFallOff") {
+      mat->horizonScatteringFallOff = get1f(value);
+      continue;
+    }
+    if (name == "backScattering") {
+      mat->backScattering = get1f(value);
       continue;
     }
       
@@ -343,7 +380,6 @@ Material::SP parse_material(xmlNode *root, const std::vector<uint8_t> &binData)
     if (type == "code") {
       const std::string code
         = (const char *)xmlNodeListGetString(root->doc, node->children, 1);
-      PING; PRINT(code);
       try {
         if (code == "\"Metal\"") {
           return parse_Metal(root);
@@ -351,6 +387,8 @@ Material::SP parse_material(xmlNode *root, const std::vector<uint8_t> &binData)
           return parse_MetallicPaint(root);
         } else if (code == "\"Plastic\"") {
           return parse_Plastic(root);
+        } else if (code == "\"Velvet\"") {
+          return parse_Velvet(root);
         } else if (code == "\"Matte\"") {
           return parse_Matte(root);
         } else if (code == "\"Dielectric\"") {
