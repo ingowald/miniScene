@@ -35,9 +35,12 @@ namespace mini {
           auto material = mesh->material;
           assert(material);
           if (materials.addWasKnown(material)) continue;
-            
-          textures.add(material->colorTexture);
-          textures.add(material->alphaTexture);
+
+          DisneyMaterial::SP disney = material->as<DisneyMaterial>();
+          if (disney) {
+            textures.add(disney->colorTexture);
+            textures.add(disney->alphaTexture);
+          }
         }
       }
     }

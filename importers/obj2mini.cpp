@@ -212,13 +212,13 @@ namespace mini {
                 << "WARNING: NO MATERIALS (could not find/parse mtl file!?)"
                 << MINI_TERMINAL_DEFAULT << std::endl;
 
-    Material::SP dummyMaterial = std::make_shared<Material>();
+    DisneyMaterial::SP dummyMaterial = std::make_shared<DisneyMaterial>();
     dummyMaterial->baseColor = randomColor(size_t(dummyMaterial.get()));
 
     std::vector<Material::SP> baseMaterials;
     tinyobj::material_t *objDefaultMaterial = 0;
     for (auto &objMat : materials) {
-      Material::SP baseMaterial = std::make_shared<Material>();
+      DisneyMaterial::SP baseMaterial = std::make_shared<DisneyMaterial>();
       baseMaterial->baseColor =
         { float(objMat.diffuse[0]),
           float(objMat.diffuse[1]),
@@ -295,9 +295,9 @@ namespace mini {
         }
         std::pair<Material::SP,Texture::SP> tuple = { baseMaterial,diffuseTexture };
         if (texturedMaterials.find(tuple) == texturedMaterials.end()) {
-          mesh->material = std::make_shared<Material>();
+          mesh->material = std::make_shared<DisneyMaterial>();
           *mesh->material = *baseMaterial;
-          mesh->material->colorTexture = diffuseTexture;
+          mesh->material->as<DisneyMaterial>()->colorTexture = diffuseTexture;
           texturedMaterials[tuple] = mesh->material;
         } else
           mesh->material = texturedMaterials[tuple];

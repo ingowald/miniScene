@@ -51,7 +51,7 @@ namespace mini {
     
   Mesh::SP genSphere(vec3f center, float radius)
   {
-    Material::SP material  = Material::create();
+    DisneyMaterial::SP material  = DisneyMaterial::create();
     material->baseColor    = rng3f();
     material->colorTexture = makeTexture();
     Mesh::SP mesh = Mesh::create(material);

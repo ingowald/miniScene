@@ -65,32 +65,62 @@ namespace mini {
     std::vector<uint8_t> data;
   };
 
+  struct Material : public std::enable_shared_from_this<Material> {
+    typedef std::shared_ptr<Material> SP;
+
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Material() = default;
+
+    virtual std::string toString() const = 0;
+    
+    virtual void write(std::ofstream &out,
+                       const std::map<Texture::SP,int> &textures) = 0;
+    virtual void read(std::ifstream &in,
+                      const std::vector<Texture::SP> &textures) = 0;
+    virtual Material::SP clone() const = 0;
+
+    template<typename ActualMaterial>
+    inline std::shared_ptr<ActualMaterial> as() 
+    { return std::dynamic_pointer_cast<ActualMaterial>(shared_from_this()); }
+    
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Material(const Material &) = default;
+  };
+    
   /* a Disney-style material that can represent both metallic,
      plastic, and dielectric materials. Not nearly as powerful as some
      of the more advanced material models out there, but can actually
      represent quite a bit of different content reasonably well - and
      is much easier to use than 20 different mroe specialized
      models */
-  struct Material {
-    typedef std::shared_ptr<Material> SP;
+  struct DisneyMaterial : public Material {
+    typedef std::shared_ptr<DisneyMaterial> SP;
 
     /*! constructs a new Material - note you _probably_ want to use
         Material::create() instead */
-    Material() = default;
+    DisneyMaterial() = default;
     
     /*! constructs a new Material - note you _probably_ want to use
         Material::create() instead */
-    Material(const Material &) = default;
+    DisneyMaterial(const DisneyMaterial &) = default;
 
     /*! constructs a new Material and returns a Material::SP to that
         created material */
-    inline static SP create() { return std::make_shared<Material>(); }
+    inline static SP create() { return std::make_shared<DisneyMaterial>(); }
     
     /*! constructs a new Material that is a identical clone of the
         current material */
-    SP clone() const { return std::make_shared<Material>(*this); }
+    Material::SP clone() const override { return std::make_shared<DisneyMaterial>(*this); }
+    void write(std::ofstream &out,
+               const std::map<Texture::SP,int> &textures) override;
+    void read(std::ifstream &in,
+              const std::vector<Texture::SP> &textures) override;
+    std::string toString() const override { return "DisneyMaterial"; }
     
-    bool isEmissive() const { return reduce_max(emission) != 0.f; }
+    
+    // bool isEmissive() const { return reduce_max(emission) != 0.f; }
     
     vec3f emission     { 0.f,0.f,0.f };
     /* default base color is what every object _without_ a proper base
@@ -123,12 +153,13 @@ namespace mini {
     typedef std::shared_ptr<Mesh> SP;
     
     Mesh(Material::SP material = {})
-      : material(material ? material : Material::create())
+      : material(material ? material : DisneyMaterial::create())
     {}
 
-    inline static SP create(Material::SP material = {}) { return std::make_shared<Mesh>(material); }
+    inline static SP create(Material::SP material = {})
+    { return std::make_shared<Mesh>(material); }
     
-    bool   isEmissive() const { return material->isEmissive(); }
+    // bool   isEmissive() const { return material->isEmissive(); }
     size_t getNumPrims() const { return indices.size(); }
 
     /*! computes a bounding box over all the triangles in this mesh */

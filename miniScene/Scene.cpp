@@ -43,7 +43,66 @@ namespace mini {
     }
     return bounds;
   }
-                                    
+
+
+  typedef enum { Disney } MaterialTag;
+  
+  MaterialTag materialTagOf(Material::SP mat)
+  {
+    throw std::runtime_error("un-supported material type "+mat->toString()+" in Scene::save");
+  }
+  Material::SP createMaterialFromTag(MaterialTag tag,
+                                     const std::vector<Texture::SP> &textures)
+  {
+    throw std::runtime_error("un-supported material tag "+std::to_string((int)tag)+" in Scene::load");
+  }
+  
+  int getID(Texture::SP texture,
+            const std::map<Texture::SP,int> &serialized)
+  {
+    auto it = serialized.find(texture);
+    if (it == serialized.end()) return -1;
+    return it->second;
+  }
+  
+  void DisneyMaterial::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->emission);
+    io::writeElement(out,this->baseColor);
+    io::writeElement(out,this->metallic);
+    io::writeElement(out,this->roughness);
+    io::writeElement(out,this->transmission);
+    io::writeElement(out,this->ior);
+
+    io::writeElement(out,getID(this->colorTexture,textures));
+    io::writeElement(out,getID(this->alphaTexture,textures));
+  }
+
+  void DisneyMaterial::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->emission);
+    io::readElement(in,this->baseColor);
+    io::readElement(in,this->metallic);
+    io::readElement(in,this->roughness);
+    io::readElement(in,this->transmission);
+    io::readElement(in,this->ior);
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
+      this->colorTexture = textures[texID];
+    }
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
+      this->alphaTexture = textures[texID];
+    }
+  }
+
+  
   std::string DirLight::toString()
   {
     std::stringstream ss;
@@ -217,7 +276,10 @@ namespace mini {
     io::writeElement(out,serialized.materials.list.size());
     for (auto mat : serialized.materials.list) {
       // io::writeElement(out,(MaterialData&)*mat);
-
+#if 1
+      io::writeElement(out,(int)materialTagOf(mat));
+      mat->write(out,serialized.textures.registry);
+#else
       io::writeElement(out,mat->emission);
       io::writeElement(out,mat->baseColor);
       io::writeElement(out,mat->metallic);
@@ -227,6 +289,7 @@ namespace mini {
 
       io::writeElement(out,serialized.getID(mat->colorTexture));
       io::writeElement(out,serialized.getID(mat->alphaTexture));
+#endif
     }
       
     // ------------------------------------------------------------------
@@ -332,8 +395,13 @@ namespace mini {
     std::vector<Material::SP> materials;
     size_t numMaterials = io::readElement<size_t>(in);
     for (int i=0;i<numMaterials;i++) {
-      Material::SP mat = std::make_shared<Material>();
       // io::readElement(in,(MaterialData&)*mat);
+#if 1
+      int tag;
+      io::readElement(in,tag);
+      Material::SP mat = createMaterialFromTag((MaterialTag)tag,textures);
+#else
+      Material::SP mat = std::make_shared<Material>();
       io::readElement(in,mat->emission);
       io::readElement(in,mat->baseColor);
       io::readElement(in,mat->metallic);
@@ -352,6 +420,7 @@ namespace mini {
         assert(texID < textures.size());
         mat->alphaTexture = textures[texID];
       }
+#endif
       materials.push_back(mat);
     }
 

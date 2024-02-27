@@ -63,7 +63,7 @@ int main(int ac, char **av)
   
   Object::SP object = Object::create();
   Mesh::SP mesh = Mesh::create();
-  mesh->material = Material::create();
+  mesh->material = DisneyMaterial::create();
   
   std::ifstream in(inFileName,std::ios::binary);
 
@@ -97,7 +97,7 @@ int main(int ac, char **av)
     if (mesh->vertices.size() >= maxMeshSize) {
       object->meshes.push_back(mesh);
       mesh = mini::Mesh::create();
-      mesh->material = mini::Material::create();
+      mesh->material = mini::DisneyMaterial::create();
       currentVertices.clear();
       std::cout << "[" << prettyNumber(triID+1) << "]" << std::flush;
     }
