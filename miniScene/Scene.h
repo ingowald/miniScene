@@ -148,6 +148,36 @@ namespace mini {
     std::shared_ptr<Texture> alphaTexture;
   };
 
+  struct Plastic : public Material {
+    typedef std::shared_ptr<Plastic> SP;
+
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Plastic() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+        Material::create() instead */
+    Plastic(const Plastic &) = default;
+
+    /*! constructs a new Material and returns a Material::SP to that
+        created material */
+    inline static SP create() { return std::make_shared<Plastic>(); }
+    
+    /*! constructs a new Material that is a identical clone of the
+        current material */
+    Material::SP clone() const override { return std::make_shared<Plastic>(*this); }
+    void write(std::ofstream &out,
+               const std::map<Texture::SP,int> &textures) override;
+    void read(std::ifstream &in,
+              const std::vector<Texture::SP> &textures) override;
+    std::string toString() const override { return "Plastic"; }
+
+
+    vec3f Ks = { 1.f, 1.f, 1.f };
+    float eta = 1.5f;
+    vec3f pigmentColor { 0.05f, 0.05f, 0.05f };
+    float roughness = 0.001f;
+  };
 
   struct Metal : public Material {
     typedef std::shared_ptr<Metal> SP;
@@ -200,7 +230,10 @@ namespace mini {
     void read(std::ifstream &in,
               const std::vector<Texture::SP> &textures) override;
     std::string toString() const override { return "Dielectric"; }
-    
+
+    float etaInside = 1.45f;
+    float etaOutside = 1.f;
+    vec3f transmission = .95;
   };
   struct ThinGlass : public Material {
     typedef std::shared_ptr<ThinGlass> SP;
@@ -226,6 +259,9 @@ namespace mini {
               const std::vector<Texture::SP> &textures) override;
     std::string toString() const override { return "ThinGlass"; }
     
+    float eta = 1.45f;
+    float thickness = 1.f;
+    vec3f transmission = .95;
   };
   struct MetallicPaint : public Material {
     typedef std::shared_ptr<MetallicPaint> SP;

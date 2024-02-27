@@ -187,6 +187,37 @@ Material::SP parse_Metal(xmlNode *root)
   return mat;
 }
 
+Material::SP parse_Plastic(xmlNode *root)
+{
+  Plastic::SP mat = Plastic::create();
+  for (xmlNode *param = findParams(root); param; param = param->next) {
+    if (param->type != XML_ELEMENT_NODE)
+      continue;
+    const std::string name  = getName(param);
+    const std::string type  = (const char *)param->name;
+    const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
+    if (name == "Ks") {
+      mat->Ks = get3f(value);
+      continue;
+    }
+    if (name == "pigmentColor") {
+      mat->pigmentColor = get3f(value);
+      continue;
+    }
+    if (name == "eta") {
+      mat->eta = get1f(value);
+      continue;
+    }
+    if (name == "roughness") {
+      mat->roughness = get1f(value);
+      continue;
+    }
+      
+    throw std::runtime_error("un-handled param "+type+" "+name+" = "+value);
+  }
+  return mat;
+}
+
 Material::SP parse_MetallicPaint(xmlNode *root)
 {
   MetallicPaint::SP mat = MetallicPaint::create();
@@ -246,10 +277,18 @@ Material::SP parse_Dielectric(xmlNode *root)
     const std::string name  = getName(param);
     const std::string type  = (const char *)param->name;
     const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
-    // if (name == "reflectance") {
-    //   mat->reflectance = get3f(value);
-    //   continue;
-    // }
+    if (name == "transmission") {
+      mat->transmission = get3f(value);
+      continue;
+    }
+    if (name == "etaInside") {
+      mat->etaInside = get1f(value);
+      continue;
+    }
+    if (name == "etaOutside") {
+      mat->etaOutside = get1f(value);
+      continue;
+    }
       
     throw std::runtime_error("un-handled param "+type+" "+name+" = "+value);
   }
@@ -265,10 +304,18 @@ Material::SP parse_ThinGlass(xmlNode *root)
     const std::string name  = getName(param);
     const std::string type  = (const char *)param->name;
     const std::string value = (const char *)xmlNodeListGetString(root->doc, param->children, 1);
-    // if (name == "reflectance") {
-    //   mat->reflectance = get3f(value);
-    //   continue;
-    // }
+    if (name == "transmission") {
+      mat->transmission = get3f(value);
+      continue;
+    }
+    if (name == "eta") {
+      mat->eta = get1f(value);
+      continue;
+    }
+    if (name == "thickness") {
+      mat->thickness = get1f(value);
+      continue;
+    }
       
     throw std::runtime_error("un-handled param "+type+" "+name+" = "+value);
   }
@@ -300,20 +347,14 @@ Material::SP parse_material(xmlNode *root, const std::vector<uint8_t> &binData)
           return parse_Metal(root);
         } else if (code == "\"MetallicPaint\"") {
           return parse_MetallicPaint(root);
-          // code = "MetallicPaint";
         } else if (code == "\"Plastic\"") {
-          // code = "Plastic";
+          return parse_Plastic(root);
         } else if (code == "\"Matte\"") {
           return parse_Matte(root);
-          // code = "Matte";
         } else if (code == "\"Dielectric\"") {
           return parse_Dielectric(root);
-          // code = "Dielectric";
-          // mat->transmission = 1.f;
         } else if (code == "\"ThinGlass\"") {
           return parse_ThinGlass(root);
-          // code = "ThinGlass";
-          // mat->transmission = 1.f;
         } else
           throw std::runtime_error("unknown material code '"+code+"'");
       } catch (std::exception &e) {

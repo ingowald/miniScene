@@ -48,7 +48,11 @@ namespace mini {
   typedef enum { INVALID=0,
     DISNEY,
     MATTE,
+    PLASTIC,
     METAL,
+    METALLICPAINT,
+    THINGLASS,
+    DIELECTRIC
   } MaterialTag;
   
   MaterialTag materialTagOf(Material::SP mat)
@@ -56,6 +60,10 @@ namespace mini {
     if (mat->as<DisneyMaterial>()) return DISNEY;
     if (mat->as<Matte>()) return MATTE;
     if (mat->as<Metal>()) return METAL;
+    if (mat->as<Plastic>()) return PLASTIC;
+    if (mat->as<MetallicPaint>()) return METALLICPAINT;
+    if (mat->as<Dielectric>()) return DIELECTRIC;
+    if (mat->as<ThinGlass>()) return THINGLASS;
     
     throw std::runtime_error("un-supported material type "+mat->toString()+" in Scene::save");
   }
@@ -66,7 +74,11 @@ namespace mini {
     switch (tag){
     case DISNEY: return DisneyMaterial::create();
     case METAL: return Metal::create();
+    case PLASTIC: return Plastic::create();
     case MATTE: return Matte::create();
+    case DIELECTRIC: return Dielectric::create();
+    case THINGLASS: return ThinGlass::create();
+    case METALLICPAINT: return MetallicPaint::create();
     }
     throw std::runtime_error("un-supported material tag "+std::to_string((int)tag)+" in Scene::load");
   }
@@ -77,6 +89,25 @@ namespace mini {
     auto it = serialized.find(texture);
     if (it == serialized.end()) return -1;
     return it->second;
+  }
+  
+  // ------------------------------------------------------------------
+  void Plastic::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->Ks);
+    io::writeElement(out,this->eta);
+    io::writeElement(out,this->pigmentColor);
+    io::writeElement(out,this->roughness);
+  }
+
+  void Plastic::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->Ks);
+    io::readElement(in,this->eta);
+    io::readElement(in,this->pigmentColor);
+    io::readElement(in,this->roughness);
   }
   
   // ------------------------------------------------------------------
@@ -115,22 +146,34 @@ namespace mini {
   void ThinGlass::write(std::ofstream &out,
                              const std::map<Texture::SP,int> &textures)
   {
+    io::writeElement(out,this->eta);
+    io::writeElement(out,this->thickness);
+    io::writeElement(out,this->transmission);
   }
 
   void ThinGlass::read(std::ifstream &in,
                             const std::vector<Texture::SP> &textures)
   {
+    io::readElement(in,this->eta);
+    io::readElement(in,this->thickness);
+    io::readElement(in,this->transmission);
   }
   
   // ------------------------------------------------------------------
   void Dielectric::write(std::ofstream &out,
                              const std::map<Texture::SP,int> &textures)
   {
+    io::writeElement(out,this->etaInside);
+    io::writeElement(out,this->etaOutside);
+    io::writeElement(out,this->transmission);
   }
 
   void Dielectric::read(std::ifstream &in,
                             const std::vector<Texture::SP> &textures)
   {
+    io::readElement(in,this->etaInside);
+    io::readElement(in,this->etaOutside);
+    io::readElement(in,this->transmission);
   }
   
   // ------------------------------------------------------------------
