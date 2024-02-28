@@ -21,7 +21,11 @@
 
 namespace mini {
 
-  enum { FORMAT_VERSION = 11 };
+    enum { FORMAT_VERSION = 12 };
+  /* VERSION HISTORY
+     12: embree-style materials, with virtual material read/write
+   */
+  
 
 #define PARALLELILIZE_GETBOUNDS 1
   
@@ -70,8 +74,7 @@ namespace mini {
     throw std::runtime_error("un-supported material type "+mat->toString()+" in Scene::save");
   }
   
-  Material::SP createMaterialFromTag(MaterialTag tag,
-                                     const std::vector<Texture::SP> &textures)
+  Material::SP createMaterialFromTag(MaterialTag tag)
   {
     switch (tag){
     case DISNEY: return DisneyMaterial::create();
@@ -428,9 +431,11 @@ namespace mini {
     for (auto mat : serialized.materials.list) {
       // io::writeElement(out,(MaterialData&)*mat);
 #if 1
+      // version 12
       io::writeElement(out,(int)materialTagOf(mat));
       mat->write(out,serialized.textures.registry);
 #else
+      // old version 11
       io::writeElement(out,mat->emission);
       io::writeElement(out,mat->baseColor);
       io::writeElement(out,mat->metallic);
@@ -498,6 +503,13 @@ namespace mini {
     Scene::SP scene = std::make_shared<Scene>();
 
     size_t magic = io::readElement<size_t>(in);
+    int format_version = 12;
+    if (magic == expected_magic) {
+      // all good, this is our format we'd also write
+    } else if (magic == expected_magic-1) {
+      // version 11 - old mini::Material handling - we should still be able to read this.
+      format_version = 11;
+    }
     if (magic != expected_magic)
       throw std::runtime_error("invalid or incompatible 'mini' scene file (wrong file magic) - cannot load");
       
@@ -549,8 +561,13 @@ namespace mini {
       // io::readElement(in,(MaterialData&)*mat);
 #if 1
       int tag;
-      io::readElement(in,tag);
-      Material::SP mat = createMaterialFromTag((MaterialTag)tag,textures);
+      if (format_version == 11)
+        // "DISNEY" is the direct equivalent to whatever we had before version 11
+        tag = DISNEY;
+      else
+        io::readElement(in,tag);
+      Material::SP mat = createMaterialFromTag((MaterialTag)tag);
+      mat->read(in,textures);
 #else
       Material::SP mat = std::make_shared<Material>();
       io::readElement(in,mat->emission);
