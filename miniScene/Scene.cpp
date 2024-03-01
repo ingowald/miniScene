@@ -509,8 +509,7 @@ namespace mini {
     } else if (magic == expected_magic-1) {
       // version 11 - old mini::Material handling - we should still be able to read this.
       format_version = 11;
-    }
-    if (magic != expected_magic)
+    } else
       throw std::runtime_error("invalid or incompatible 'mini' scene file (wrong file magic) - cannot load");
       
     // ------------------------------------------------------------------
@@ -641,8 +640,11 @@ namespace mini {
     // ------------------------------------------------------------------
 
     size_t magicAtEnd = io::readElement<size_t>(in);
-    if (magicAtEnd != expected_magic)
-      throw std::runtime_error("incomplete or incompatible brx file - cannot load");
+    if (magicAtEnd != expected_magic
+        &&
+        magicAtEnd != (expected_magic-1)
+        )
+      throw std::runtime_error("incomplete or incompatible miniScene/.mini file - cannot load");
       
     return scene;
   }
