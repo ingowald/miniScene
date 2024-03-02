@@ -399,7 +399,6 @@ Material::SP parse_material(xmlNode *root, const std::vector<uint8_t> &binData)
           throw std::runtime_error("unknown material code '"+code+"'");
       } catch (std::exception &e) {
         throw std::runtime_error("error parsing material code '"+code+"' : "+e.what());
-        
       }
     }
   }
@@ -544,7 +543,7 @@ void parse_TriangleMesh(xmlNode *root, const std::vector<uint8_t> &binData)
     } else if (type == "triangles") {
       mesh->indices = parse_triangles(node,binData);
     } else if (type == "material") {
-      parse_material(node->children,binData);
+      mesh->material = parse_material(node->children,binData);
     } else
       throw std::runtime_error("unknown Mesh node type '"+type+"'");
   }
