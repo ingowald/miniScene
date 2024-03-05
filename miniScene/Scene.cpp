@@ -62,7 +62,6 @@ namespace mini {
   
   MaterialTag materialTagOf(Material::SP mat)
   {
-    PRINT(mat->toString());
     if (mat->as<DisneyMaterial>()) return DISNEY;
     if (mat->as<Matte>()) return MATTE;
     if (mat->as<Metal>()) return METAL;
@@ -434,7 +433,6 @@ namespace mini {
 #if 1
       // version 12
       int tag = (int)materialTagOf(mat);
-      PRINT(tag);
       io::writeElement(out,tag);
       mat->write(out,serialized.textures.registry);
 #else
