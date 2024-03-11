@@ -89,7 +89,57 @@ namespace mini {
     Material(const Material &) = default;
   };
     
-  /* a Disney-style material that can represent both metallic,
+  /* blender style principled material - currently filled in with
+     nvisii style material, which _should_ be fairly similar (nvisii
+     source code says its material is based off blender's */
+  struct BlenderMaterial : public Material {
+    typedef std::shared_ptr<BlenderMaterial> SP;
+
+    /*! constructs a new Material - note you _probably_ want to use
+      Material::create() instead */
+    BlenderMaterial() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+      Material::create() instead */
+    BlenderMaterial(const BlenderMaterial &) = default;
+    
+    /*! constructs a new Material and returns a Material::SP to that
+      created material */
+    inline static SP create() { return std::make_shared<BlenderMaterial>(); }
+    
+    /*! constructs a new Material that is a identical clone of the
+      current material */
+    Material::SP clone() const override { return std::make_shared<BlenderMaterial>(*this); }
+    void write(std::ofstream &out,
+               const std::map<Texture::SP,int> &textures) override;
+    void read(std::ifstream &in,
+              const std::vector<Texture::SP> &textures) override;
+    std::string toString() const override { return "BlenderMaterial"; }
+    
+    vec3f baseColor              = { .8f, .8f, .8f };
+    float roughness              = .5f;
+    float metallic               = 0.f;
+    float specular               = .5f;
+    float specularTint           = 0.f;
+    float transmission           = 0.f;
+    float transmissionRoughness  = 0.f;
+    float ior                    = 1.45f;
+    float alpha                  = 1.0f;
+    vec3f subsurfaceRadius       = { 1.f, .2f, .1f };
+    vec3f subsurfaceColor        = { 0.8f, 0.8f, 0.8f };
+    float subsurface             = 0.f;
+    float anisotropic            = 0.f;
+    float anisotropicRotation    = 0.f;
+    float sheen                  = 0.f;
+    float sheenTint              = 0.5f;
+    float clearcoat              = 0.f;
+    float clearcoatRoughness     = .03f;
+
+    Texture::SP baseColorTexture;
+    Texture::SP alphaTexture;
+  };
+
+    /* a Disney-style material that can represent both metallic,
      plastic, and dielectric materials. Not nearly as powerful as some
      of the more advanced material models out there, but can actually
      represent quite a bit of different content reasonably well - and

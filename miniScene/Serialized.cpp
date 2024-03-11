@@ -41,6 +41,11 @@ namespace mini {
             textures.add(disney->colorTexture);
             textures.add(disney->alphaTexture);
           }
+          BlenderMaterial::SP blender = material->as<BlenderMaterial>();
+          if (blender) {
+            textures.add(blender->baseColorTexture);
+            textures.add(blender->alphaTexture);
+          }
         }
       }
     }

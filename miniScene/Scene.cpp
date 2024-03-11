@@ -57,12 +57,14 @@ namespace mini {
     VELVET,
     METALLICPAINT,
     THINGLASS,
-    DIELECTRIC
+    DIELECTRIC,
+    BLENDER
   } MaterialTag;
   
   MaterialTag materialTagOf(Material::SP mat)
   {
     if (mat->as<DisneyMaterial>()) return DISNEY;
+    if (mat->as<BlenderMaterial>()) return BLENDER;
     if (mat->as<Matte>()) return MATTE;
     if (mat->as<Metal>()) return METAL;
     if (mat->as<Velvet>()) return VELVET;
@@ -78,6 +80,7 @@ namespace mini {
   {
     switch (tag){
     case DISNEY: return DisneyMaterial::create();
+    case BLENDER: return BlenderMaterial::create();
     case METAL: return Metal::create();
     case VELVET: return Velvet::create();
     case PLASTIC: return Plastic::create();
@@ -98,8 +101,71 @@ namespace mini {
   }
   
   // ------------------------------------------------------------------
-  void Plastic::write(std::ofstream &out,
+  void BlenderMaterial::write(std::ofstream &out,
                              const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->baseColor);
+    io::writeElement(out,this->roughness);
+    io::writeElement(out,this->metallic);
+    io::writeElement(out,this->specular);
+    io::writeElement(out,this->specularTint);
+    io::writeElement(out,this->transmission);
+    io::writeElement(out,this->transmissionRoughness);
+    io::writeElement(out,this->ior);
+    io::writeElement(out,this->alpha);
+    io::writeElement(out,this->subsurfaceRadius);
+    io::writeElement(out,this->subsurfaceColor);
+    io::writeElement(out,this->subsurface);
+    io::writeElement(out,this->anisotropic);
+    io::writeElement(out,this->anisotropicRotation);
+    io::writeElement(out,this->sheen);
+    io::writeElement(out,this->sheenTint);
+    io::writeElement(out,this->clearcoat);
+    io::writeElement(out,this->clearcoatRoughness);
+    
+    io::writeElement(out,getID(this->baseColorTexture,textures));
+    io::writeElement(out,getID(this->alphaTexture,textures));
+  }
+  
+
+  void BlenderMaterial::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->baseColor);
+    io::readElement(in,this->roughness);
+    io::readElement(in,this->metallic);
+    io::readElement(in,this->specular);
+    io::readElement(in,this->specularTint);
+    io::readElement(in,this->transmission);
+    io::readElement(in,this->transmissionRoughness);
+    io::readElement(in,this->ior);
+    io::readElement(in,this->alpha);
+    io::readElement(in,this->subsurfaceRadius);
+    io::readElement(in,this->subsurfaceColor);
+    io::readElement(in,this->subsurface);
+    io::readElement(in,this->anisotropic);
+    io::readElement(in,this->anisotropicRotation);
+    io::readElement(in,this->sheen);
+    io::readElement(in,this->sheenTint);
+    io::readElement(in,this->clearcoat);
+    io::readElement(in,this->clearcoatRoughness);
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
+      this->baseColorTexture = textures[texID];
+    }
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
+      this->alphaTexture = textures[texID];
+    }
+  }
+  
+  // ------------------------------------------------------------------
+  void Plastic::write(std::ofstream &out,
+                      const std::map<Texture::SP,int> &textures)
   {
     io::writeElement(out,this->Ks);
     io::writeElement(out,this->eta);
@@ -108,7 +174,7 @@ namespace mini {
   }
 
   void Plastic::read(std::ifstream &in,
-                            const std::vector<Texture::SP> &textures)
+                     const std::vector<Texture::SP> &textures)
   {
     io::readElement(in,this->Ks);
     io::readElement(in,this->eta);
