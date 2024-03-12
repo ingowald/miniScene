@@ -26,6 +26,18 @@ target_link_libraries(miniInfo
   )
 
 # -----------------------------------------------------------------------------
+# takes two models, copies the second's env-light into the first, and
+# saves that model with its now-added envlight
+# -----------------------------------------------------------------------------
+add_executable(miniAddEnvLight
+  addEnvLight.cpp
+  )
+target_link_libraries(miniAddEnvLight
+  PUBLIC
+  miniScene
+  )
+
+# -----------------------------------------------------------------------------
 # 'lint' like tool that runs some basic sanity tests such as checking indices
 # -----------------------------------------------------------------------------
 add_executable(miniLint
