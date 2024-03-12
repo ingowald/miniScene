@@ -51,9 +51,15 @@ namespace mini {
       Scene::SP withLight = Scene::load(fileWithLightFileName);
       model->envMapLight = withLight->envMapLight;
 
-      if (zup)
-        std::swap(model->envMapLight->transform.l.vy,
-                  model->envMapLight->transform.l.vz);
+      if (zup) {
+        // std::swap(model->envMapLight->transform.l.vy,
+        //           model->envMapLight->transform.l.vz);
+
+        model->envMapLight->transform = owl::common::frame(vec3f(1,0,0));
+        model->envMapLight->transform.l.vz = vec3f(1,0,0);// = rcp(owl::common::frame(vec3f(0,1,0)));
+        model->envMapLight->transform.l.vx = vec3f(0,1,0);// = rcp(owl::common::frame(vec3f(0,1,0)));
+        model->envMapLight->transform.l.vy = vec3f(0,0,1);// = rcp(owl::common::frame(vec3f(0,1,0)));
+      }
       //srand48(128);
 
       model->save(outFileName);
