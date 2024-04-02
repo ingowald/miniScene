@@ -44,7 +44,10 @@ namespace mini {
           BlenderMaterial::SP blender = material->as<BlenderMaterial>();
           if (blender) {
             textures.add(blender->baseColorTexture);
+            textures.add(blender->metallicTexture);
+            textures.add(blender->roughnessTexture);
             textures.add(blender->alphaTexture);
+            textures.add(blender->normalTexture);
           }
         }
       }

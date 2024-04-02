@@ -89,9 +89,7 @@ namespace mini {
     Material(const Material &) = default;
   };
     
-  /* blender style principled material - currently filled in with
-     nvisii style material, which _should_ be fairly similar (nvisii
-     source code says its material is based off blender's */
+  /*! principled BSDF by Blender 4.0 */
   struct BlenderMaterial : public Material {
     typedef std::shared_ptr<BlenderMaterial> SP;
 
@@ -116,27 +114,47 @@ namespace mini {
               const std::vector<Texture::SP> &textures) override;
     std::string toString() const override { return "BlenderMaterial"; }
     
-    vec3f baseColor              = { .8f, .8f, .8f };
-    float roughness              = .5f;
-    float metallic               = 0.f;
-    float specular               = .5f;
-    float specularTint           = 0.f;
-    float transmission           = 0.f;
-    float transmissionRoughness  = 0.f;
+    vec3f baseColor              { 0.8f,0.8f,0.8f };    
+    float metallic               = 0.0f;
+    float roughness              = 0.5f;
     float ior                    = 1.45f;
     float alpha                  = 1.0f;
-    vec3f subsurfaceRadius       = { 1.f, .2f, .1f };
-    vec3f subsurfaceColor        = { 0.8f, 0.8f, 0.8f };
-    float subsurface             = 0.f;
-    float anisotropic            = 0.f;
-    float anisotropicRotation    = 0.f;
-    float sheen                  = 0.f;
-    float sheenTint              = 0.5f;
-    float clearcoat              = 0.f;
-    float clearcoatRoughness     = .03f;
+    /* vec3f normal; */
+
+    int subsurfaceMethod         = 0;
+    float subsurfaceWeight       = 0.0f;
+    vec3f subsurfaceRadius       { 1.0f,0.2f,0.1f };
+    float subsurfaceScale        = 0.05f;
+    float subsurfaceIor          = 1.4f;
+    float subsurfaceAnisotropy	 = 0.0f;
+
+    int distribution               = 0;
+    float	specularIorLevel       = 0.5f;
+    vec3f	specularTint           { 1.0f,1.0f,1.0f };
+    float	anisotropic            = 0.0f;
+    float	anisotropicRotation    = 0.0f;
+    /* vec3f	tangent; */
+
+    float	transmissionWeight     = 0.0f;
+
+    float	coatWeight             = 0.0f;
+    float	coatRoughness          = 0.03f;
+    float	coatIor                = 1.5f;
+    vec3f	coatTint               { 1.0f,1.0f,1.0f };
+    /* vec3f	coatNormal;	*/
+
+    float	sheenWeight            = 0.0f;
+    float	sheenRoughness         = 0.5f;
+    vec3f	sheenTint	           { 1.0f,1.0f,1.0f };
+    
+    vec3f	emissionColor	       { 1.0f,1.0f,1.0f };
+    float	emissionStrength	   = 0.0f;
 
     Texture::SP baseColorTexture;
+    Texture::SP metallicTexture;
+    Texture::SP roughnessTexture;    
     Texture::SP alphaTexture;
+    Texture::SP normalTexture;    
   };
 
     /* a Disney-style material that can represent both metallic,

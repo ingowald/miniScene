@@ -105,26 +105,46 @@ namespace mini {
                              const std::map<Texture::SP,int> &textures)
   {
     io::writeElement(out,this->baseColor);
-    io::writeElement(out,this->roughness);
     io::writeElement(out,this->metallic);
-    io::writeElement(out,this->specular);
-    io::writeElement(out,this->specularTint);
-    io::writeElement(out,this->transmission);
-    io::writeElement(out,this->transmissionRoughness);
+    io::writeElement(out,this->roughness);
     io::writeElement(out,this->ior);
     io::writeElement(out,this->alpha);
+    /* vec3f normal; */
+
+    io::writeElement(out,this->subsurfaceMethod);
+    io::writeElement(out,this->subsurfaceWeight);
     io::writeElement(out,this->subsurfaceRadius);
-    io::writeElement(out,this->subsurfaceColor);
-    io::writeElement(out,this->subsurface);
+    io::writeElement(out,this->subsurfaceScale);
+    io::writeElement(out,this->subsurfaceIor);
+    io::writeElement(out,this->subsurfaceAnisotropy);
+
+    io::writeElement(out,this->distribution);
+    io::writeElement(out,this->specularIorLevel);
+    io::writeElement(out,this->specularTint);
     io::writeElement(out,this->anisotropic);
     io::writeElement(out,this->anisotropicRotation);
-    io::writeElement(out,this->sheen);
+    /* vec3f	tangent; */
+
+    io::writeElement(out,this->transmissionWeight);
+
+    io::writeElement(out,this->coatWeight);
+    io::writeElement(out,this->coatRoughness);
+    io::writeElement(out,this->coatIor);
+    io::writeElement(out,this->coatTint);
+    /* vec3f	coatNormal;	*/
+
+    io::writeElement(out,this->sheenWeight);
+    io::writeElement(out,this->sheenRoughness);
     io::writeElement(out,this->sheenTint);
-    io::writeElement(out,this->clearcoat);
-    io::writeElement(out,this->clearcoatRoughness);
     
+    io::writeElement(out,this->emissionColor);
+    io::writeElement(out,this->emissionStrength);
+
     io::writeElement(out,getID(this->baseColorTexture,textures));
+    io::writeElement(out,getID(this->metallicTexture,textures));
+    io::writeElement(out,getID(this->roughnessTexture,textures));
     io::writeElement(out,getID(this->alphaTexture,textures));
+    io::writeElement(out,getID(this->normalTexture,textures));
   }
   
 
@@ -132,23 +152,41 @@ namespace mini {
                             const std::vector<Texture::SP> &textures)
   {
     io::readElement(in,this->baseColor);
-    io::readElement(in,this->roughness);
     io::readElement(in,this->metallic);
-    io::readElement(in,this->specular);
-    io::readElement(in,this->specularTint);
-    io::readElement(in,this->transmission);
-    io::readElement(in,this->transmissionRoughness);
+    io::readElement(in,this->roughness);
     io::readElement(in,this->ior);
     io::readElement(in,this->alpha);
+    /* vec3f normal; */
+
+    io::readElement(in,this->subsurfaceMethod);
+    io::readElement(in,this->subsurfaceWeight);
     io::readElement(in,this->subsurfaceRadius);
-    io::readElement(in,this->subsurfaceColor);
-    io::readElement(in,this->subsurface);
+    io::readElement(in,this->subsurfaceScale);
+    io::readElement(in,this->subsurfaceIor);
+    io::readElement(in,this->subsurfaceAnisotropy);
+
+    io::readElement(in,this->distribution);
+    io::readElement(in,this->specularIorLevel);
+    io::readElement(in,this->specularTint);
     io::readElement(in,this->anisotropic);
     io::readElement(in,this->anisotropicRotation);
-    io::readElement(in,this->sheen);
+    /* vec3f	tangent; */
+
+    io::readElement(in,this->transmissionWeight);
+
+    io::readElement(in,this->coatWeight);
+    io::readElement(in,this->coatRoughness);
+    io::readElement(in,this->coatIor);
+    io::readElement(in,this->coatTint);
+    /* vec3f	coatNormal;	*/
+
+    io::readElement(in,this->sheenWeight);
+    io::readElement(in,this->sheenRoughness);
     io::readElement(in,this->sheenTint);
-    io::readElement(in,this->clearcoat);
-    io::readElement(in,this->clearcoatRoughness);
+    
+    io::readElement(in,this->emissionColor);
+    io::readElement(in,this->emissionStrength);
+
     {
       int texID = io::readElement<int>(in);
       assert(texID >= 0);
@@ -159,8 +197,26 @@ namespace mini {
       int texID = io::readElement<int>(in);
       assert(texID >= 0);
       assert(texID < textures.size());
+      this->metallicTexture = textures[texID];
+    }
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
+      this->roughnessTexture = textures[texID];
+    }
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
       this->alphaTexture = textures[texID];
     }
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
+      this->normalTexture = textures[texID];
+    }       
   }
   
   // ------------------------------------------------------------------

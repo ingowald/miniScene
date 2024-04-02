@@ -16,15 +16,23 @@
 
 #include "miniScene/Scene.h"
 
+#ifdef _WIN32
+#   include "owl/common/math/random.h"
+#endif
+
 namespace mini {
   int texRes = 8;
   bool funnies = true;
   int sphereRes = 10;
-  
+
+#ifdef _WIN32
+  DRand48 drand48;
+#endif  
+
   float rng()
   {
     return drand48();
-    
+
   }
   vec3f rng3f() { return vec3f(rng(),rng(),rng()); }
 
@@ -114,6 +122,10 @@ namespace mini {
     float avgRadius  = 200.f*powf(numVisibleSpheres,-1.f/3.f);
 
     Scene::SP scene = Scene::create();
+
+#ifdef _WIN32
+    drand48.init();
+#endif
 
     // ==================================================================
     std::cout << MINI_TERMINAL_BLUE
