@@ -24,7 +24,7 @@
 #define STB_IMAGE_IMPLEMENTATION 1
 #include "stb/stb_image.h"
 
-namespace std {
+namespace tinyobj {
   inline bool operator<(const tinyobj::index_t &a,
                         const tinyobj::index_t &b)
   {
