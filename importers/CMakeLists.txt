@@ -25,7 +25,7 @@ if (MINI_BUILD_SIMPLE_IMPORTERS)
     obj2mini.cpp
     )
   target_link_libraries(obj2mini
-    miniScene
+    miniScene_import_obj
     )
   # ==================================================================
   # imports STL files
@@ -70,11 +70,17 @@ if (MINI_BUILD_SIMPLE_IMPORTERS)
     )
 
   # IMporter from bobj
+  add_library(miniScene_import_obj STATIC
+    importOBJ.cpp
+    )
+  target_link_libraries(miniScene_import_obj PUBLIC miniScene)
+  
   add_executable(bobj2mini
     bobj2mini.cpp
     )
   target_link_libraries(bobj2mini
     miniScene
+    miniScene_import_obj
     )
 
 endif()
