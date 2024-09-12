@@ -32,7 +32,7 @@ namespace mini {
     std::cout << "#mini2obj: writing " << serialized.materials.size() << " materials" << std::endl;
     for (int matID=0;matID<serialized.materials.size();matID++) {
       mtl << "newmaterial mat_" << matID << std::endl;
-      Material::SP mat = serialized.materials[matID];
+      DisneyMaterial::SP mat = serialized.materials[matID]->as<DisneyMaterial>();
       if (mat) {
         mtl << "kd "
             << mat->baseColor.x << " "

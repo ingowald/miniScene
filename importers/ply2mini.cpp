@@ -31,7 +31,7 @@ namespace mini {
     std::vector<std::vector<size_t>>   fInd = plyIn.getFaceIndices<size_t>();
     
 
-    Material::SP dummyMaterial = std::make_shared<Material>();
+    DisneyMaterial::SP dummyMaterial = std::make_shared<DisneyMaterial>();
     dummyMaterial->baseColor = vec3f(.7f);
 
     Mesh::SP mesh = std::make_shared<Mesh>();

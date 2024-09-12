@@ -49,8 +49,10 @@ namespace mini {
     checkFishy(xfm.p,where);
   }
   
-  void checkFishy(Material::SP material, const std::string &where)
+  void checkFishy(Material::SP _material, const std::string &where)
   {
+    DisneyMaterial::SP material = _material->as<DisneyMaterial>();
+    if (!material) return;
     checkFishy(material->emission,where+".emission");
     checkFishy(material->baseColor,where+".baseColor");
     checkFishy(material->metallic,where+".metallic");

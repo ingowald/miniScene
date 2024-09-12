@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2018-2020 Ingo Wald                                            //
+// Copyright 2018-2024 Ingo Wald                                            //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,40 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "miniScene/Serialized.h"
+#include "miniScene/Scene.h"
 
 namespace mini {
-    
-    SerializedScene::SerializedScene(Scene *scene)
-    {
-      textures.add(nullptr);
-
-      for (auto inst : scene->instances) {
-        if (!inst) continue;
-
-        auto obj = inst->object;
-        
-        if (!obj || objects.addWasKnown(obj)) continue;
-
-        for (auto mesh : obj->meshes) {
-          if (!mesh || meshes.addWasKnown(mesh)) continue;
-          
-          auto material = mesh->material;
-          assert(material);
-          if (materials.addWasKnown(material)) continue;
-
-          DisneyMaterial::SP disney = material->as<DisneyMaterial>();
-          if (disney) {
-            textures.add(disney->colorTexture);
-            textures.add(disney->alphaTexture);
-          }
-          BlenderMaterial::SP blender = material->as<BlenderMaterial>();
-          if (blender) {
-            textures.add(blender->baseColorTexture);
-            textures.add(blender->alphaTexture);
-          }
-        }
-      }
-    }
-
-} // ::mini
+  Scene::SP loadOBJ(const std::string &objFile);
+}

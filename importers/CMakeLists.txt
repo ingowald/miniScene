@@ -25,7 +25,7 @@ if (MINI_BUILD_SIMPLE_IMPORTERS)
     obj2mini.cpp
     )
   target_link_libraries(obj2mini
-    miniScene
+    miniScene_import_obj
     )
   # ==================================================================
   # imports STL files
@@ -70,16 +70,36 @@ if (MINI_BUILD_SIMPLE_IMPORTERS)
     )
 
   # IMporter from bobj
+  add_library(miniScene_import_obj STATIC
+    importOBJ.cpp
+    )
+  target_link_libraries(miniScene_import_obj PUBLIC miniScene)
+  
   add_executable(bobj2mini
     bobj2mini.cpp
     )
   target_link_libraries(bobj2mini
     miniScene
+    miniScene_import_obj
     )
 
 endif()
 
 
+
+
+#option(MINI_BUILD_XMLBIN_IMPORTER "Build Embree xml/bin importer" OFF)
+#if (MINI_BUILD_XMLBIN_IMPORTER)
+#find_package(LibXml2 REQUIRED)
+find_package(LibXml2)
+if (LibXml2_FOUND)
+  add_executable(xmlbin2mini
+    xmlbin2mini.cpp
+    )
+  target_link_libraries(xmlbin2mini
+    PUBLIC miniScene LibXml2::LibXml2
+    )
+endif()
 
 
 

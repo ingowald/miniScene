@@ -21,7 +21,11 @@
 
 namespace mini {
 
-  enum { FORMAT_VERSION = 11 };
+    enum { FORMAT_VERSION = 12 };
+  /* VERSION HISTORY
+     12: embree-style materials, with virtual material read/write
+   */
+  
 
 #define PARALLELILIZE_GETBOUNDS 1
   
@@ -43,7 +47,282 @@ namespace mini {
     }
     return bounds;
   }
-                                    
+
+
+  typedef enum { INVALID=0,
+    DISNEY,
+    MATTE,
+    PLASTIC,
+    METAL,
+    VELVET,
+    METALLICPAINT,
+    THINGLASS,
+    DIELECTRIC,
+    BLENDER
+  } MaterialTag;
+  
+  MaterialTag materialTagOf(Material::SP mat)
+  {
+    if (mat->as<DisneyMaterial>()) return DISNEY;
+    if (mat->as<BlenderMaterial>()) return BLENDER;
+    if (mat->as<Matte>()) return MATTE;
+    if (mat->as<Metal>()) return METAL;
+    if (mat->as<Velvet>()) return VELVET;
+    if (mat->as<Plastic>()) return PLASTIC;
+    if (mat->as<MetallicPaint>()) return METALLICPAINT;
+    if (mat->as<Dielectric>()) return DIELECTRIC;
+    if (mat->as<ThinGlass>()) return THINGLASS;
+    
+    throw std::runtime_error("un-supported material type "+mat->toString()+" in Scene::save");
+  }
+  
+  Material::SP createMaterialFromTag(MaterialTag tag)
+  {
+    switch (tag){
+    case DISNEY: return DisneyMaterial::create();
+    case BLENDER: return BlenderMaterial::create();
+    case METAL: return Metal::create();
+    case VELVET: return Velvet::create();
+    case PLASTIC: return Plastic::create();
+    case MATTE: return Matte::create();
+    case DIELECTRIC: return Dielectric::create();
+    case THINGLASS: return ThinGlass::create();
+    case METALLICPAINT: return MetallicPaint::create();
+    }
+    throw std::runtime_error("un-supported material tag "+std::to_string((int)tag)+" in Scene::load");
+  }
+  
+  int getID(Texture::SP texture,
+            const std::map<Texture::SP,int> &serialized)
+  {
+    auto it = serialized.find(texture);
+    if (it == serialized.end()) return -1;
+    return it->second;
+  }
+  
+  // ------------------------------------------------------------------
+  void BlenderMaterial::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->baseColor);
+    io::writeElement(out,this->roughness);
+    io::writeElement(out,this->metallic);
+    io::writeElement(out,this->specular);
+    io::writeElement(out,this->specularTint);
+    io::writeElement(out,this->transmission);
+    io::writeElement(out,this->transmissionRoughness);
+    io::writeElement(out,this->ior);
+    io::writeElement(out,this->alpha);
+    io::writeElement(out,this->subsurfaceRadius);
+    io::writeElement(out,this->subsurfaceColor);
+    io::writeElement(out,this->subsurface);
+    io::writeElement(out,this->anisotropic);
+    io::writeElement(out,this->anisotropicRotation);
+    io::writeElement(out,this->sheen);
+    io::writeElement(out,this->sheenTint);
+    io::writeElement(out,this->clearcoat);
+    io::writeElement(out,this->clearcoatRoughness);
+    
+    io::writeElement(out,getID(this->baseColorTexture,textures));
+    io::writeElement(out,getID(this->alphaTexture,textures));
+  }
+  
+
+  void BlenderMaterial::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->baseColor);
+    io::readElement(in,this->roughness);
+    io::readElement(in,this->metallic);
+    io::readElement(in,this->specular);
+    io::readElement(in,this->specularTint);
+    io::readElement(in,this->transmission);
+    io::readElement(in,this->transmissionRoughness);
+    io::readElement(in,this->ior);
+    io::readElement(in,this->alpha);
+    io::readElement(in,this->subsurfaceRadius);
+    io::readElement(in,this->subsurfaceColor);
+    io::readElement(in,this->subsurface);
+    io::readElement(in,this->anisotropic);
+    io::readElement(in,this->anisotropicRotation);
+    io::readElement(in,this->sheen);
+    io::readElement(in,this->sheenTint);
+    io::readElement(in,this->clearcoat);
+    io::readElement(in,this->clearcoatRoughness);
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
+      this->baseColorTexture = textures[texID];
+    }
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
+      this->alphaTexture = textures[texID];
+    }
+  }
+  
+  // ------------------------------------------------------------------
+  void Plastic::write(std::ofstream &out,
+                      const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->Ks);
+    io::writeElement(out,this->eta);
+    io::writeElement(out,this->pigmentColor);
+    io::writeElement(out,this->roughness);
+  }
+
+  void Plastic::read(std::ifstream &in,
+                     const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->Ks);
+    io::readElement(in,this->eta);
+    io::readElement(in,this->pigmentColor);
+    io::readElement(in,this->roughness);
+  }
+  
+  // ------------------------------------------------------------------
+  void Matte::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->reflectance);
+  }
+
+  void Matte::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->reflectance);
+  }
+  
+  // ------------------------------------------------------------------
+  void MetallicPaint::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->glitterColor);
+    io::writeElement(out,this->glitterSpread);
+    io::writeElement(out,this->shadeColor);
+    io::writeElement(out,this->eta);
+  }
+
+  void MetallicPaint::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->glitterColor);
+    io::readElement(in,this->glitterSpread);
+    io::readElement(in,this->shadeColor);
+    io::readElement(in,this->eta);
+  }
+  
+  // ------------------------------------------------------------------
+  void ThinGlass::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->eta);
+    io::writeElement(out,this->thickness);
+    io::writeElement(out,this->transmission);
+  }
+
+  void ThinGlass::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->eta);
+    io::readElement(in,this->thickness);
+    io::readElement(in,this->transmission);
+  }
+  
+  // ------------------------------------------------------------------
+  void Dielectric::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->etaInside);
+    io::writeElement(out,this->etaOutside);
+    io::writeElement(out,this->transmission);
+  }
+
+  void Dielectric::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->etaInside);
+    io::readElement(in,this->etaOutside);
+    io::readElement(in,this->transmission);
+  }
+  
+  // ------------------------------------------------------------------
+  void Metal::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->eta);
+    io::writeElement(out,this->k);
+    io::writeElement(out,this->roughness);
+  }
+
+  void Metal::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->eta);
+    io::readElement(in,this->k);
+    io::readElement(in,this->roughness);
+  }
+  
+  // ------------------------------------------------------------------
+  void Velvet::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->reflectance);
+    io::writeElement(out,this->horizonScatteringColor);
+    io::writeElement(out,this->horizonScatteringFallOff);
+    io::writeElement(out,this->backScattering);
+  }
+
+  void Velvet::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->reflectance);
+    io::readElement(in,this->horizonScatteringColor);
+    io::readElement(in,this->horizonScatteringFallOff);
+    io::readElement(in,this->backScattering);
+  }
+  
+  // ------------------------------------------------------------------
+  void DisneyMaterial::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->emission);
+    io::writeElement(out,this->baseColor);
+    io::writeElement(out,this->metallic);
+    io::writeElement(out,this->roughness);
+    io::writeElement(out,this->transmission);
+    io::writeElement(out,this->ior);
+
+    io::writeElement(out,getID(this->colorTexture,textures));
+    io::writeElement(out,getID(this->alphaTexture,textures));
+  }
+
+  void DisneyMaterial::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->emission);
+    io::readElement(in,this->baseColor);
+    io::readElement(in,this->metallic);
+    io::readElement(in,this->roughness);
+    io::readElement(in,this->transmission);
+    io::readElement(in,this->ior);
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
+      this->colorTexture = textures[texID];
+    }
+    {
+      int texID = io::readElement<int>(in);
+      assert(texID >= 0);
+      assert(texID < textures.size());
+      this->alphaTexture = textures[texID];
+    }
+  }
+
+  
   std::string DirLight::toString()
   {
     std::stringstream ss;
@@ -217,7 +496,13 @@ namespace mini {
     io::writeElement(out,serialized.materials.list.size());
     for (auto mat : serialized.materials.list) {
       // io::writeElement(out,(MaterialData&)*mat);
-
+#if 1
+      // version 12
+      int tag = (int)materialTagOf(mat);
+      io::writeElement(out,tag);
+      mat->write(out,serialized.textures.registry);
+#else
+      // old version 11
       io::writeElement(out,mat->emission);
       io::writeElement(out,mat->baseColor);
       io::writeElement(out,mat->metallic);
@@ -227,6 +512,7 @@ namespace mini {
 
       io::writeElement(out,serialized.getID(mat->colorTexture));
       io::writeElement(out,serialized.getID(mat->alphaTexture));
+#endif
     }
       
     // ------------------------------------------------------------------
@@ -284,7 +570,13 @@ namespace mini {
     Scene::SP scene = std::make_shared<Scene>();
 
     size_t magic = io::readElement<size_t>(in);
-    if (magic != expected_magic)
+    int format_version = 12;
+    if (magic == expected_magic) {
+      // all good, this is our format we'd also write
+    } else if (magic == expected_magic-1) {
+      // version 11 - old mini::Material handling - we should still be able to read this.
+      format_version = 11;
+    } else
       throw std::runtime_error("invalid or incompatible 'mini' scene file (wrong file magic) - cannot load");
       
     // ------------------------------------------------------------------
@@ -332,8 +624,18 @@ namespace mini {
     std::vector<Material::SP> materials;
     size_t numMaterials = io::readElement<size_t>(in);
     for (int i=0;i<numMaterials;i++) {
-      Material::SP mat = std::make_shared<Material>();
       // io::readElement(in,(MaterialData&)*mat);
+#if 1
+      int tag;
+      if (format_version == 11)
+        // "DISNEY" is the direct equivalent to whatever we had before version 11
+        tag = DISNEY;
+      else
+        io::readElement(in,tag);
+      Material::SP mat = createMaterialFromTag((MaterialTag)tag);
+      mat->read(in,textures);
+#else
+      Material::SP mat = std::make_shared<Material>();
       io::readElement(in,mat->emission);
       io::readElement(in,mat->baseColor);
       io::readElement(in,mat->metallic);
@@ -352,6 +654,7 @@ namespace mini {
         assert(texID < textures.size());
         mat->alphaTexture = textures[texID];
       }
+#endif
       materials.push_back(mat);
     }
 
@@ -404,8 +707,11 @@ namespace mini {
     // ------------------------------------------------------------------
 
     size_t magicAtEnd = io::readElement<size_t>(in);
-    if (magicAtEnd != expected_magic)
-      throw std::runtime_error("incomplete or incompatible brx file - cannot load");
+    if (magicAtEnd != expected_magic
+        &&
+        magicAtEnd != (expected_magic-1)
+        )
+      throw std::runtime_error("incomplete or incompatible miniScene/.mini file - cannot load");
       
     return scene;
   }

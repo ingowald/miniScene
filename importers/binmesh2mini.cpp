@@ -67,7 +67,7 @@ int main(int ac, char **av)
   in.read((char*)&numTriangles,sizeof(numTriangles));
   mesh->indices.resize(numTriangles);
   in.read((char*)mesh->indices.data(),numTriangles*sizeof(vec3i));
-  mesh->material = Material::create();
+  mesh->material = DisneyMaterial::create();
   
   Object::SP object = Object::create({mesh});
   Scene::SP scene = Scene::create({Instance::create(object)});
