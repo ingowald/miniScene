@@ -24,24 +24,24 @@
 #define STB_IMAGE_IMPLEMENTATION 1
 #include "stb/stb_image.h"
 
-namespace std {
-  inline bool operator<(const tinyobj::index_t &a,
-                        const tinyobj::index_t &b)
-  {
-    if (a.vertex_index < b.vertex_index) return true;
-    if (a.vertex_index > b.vertex_index) return false;
-    
-    if (a.normal_index < b.normal_index) return true;
-    if (a.normal_index > b.normal_index) return false;
-    
-    if (a.texcoord_index < b.texcoord_index) return true;
-    if (a.texcoord_index > b.texcoord_index) return false;
-    
-    return false;
-  }
-}
-
 namespace mini {
+
+  struct index_less {
+    inline bool operator()(const tinyobj::index_t &a,
+                           const tinyobj::index_t &b) const
+    {
+      if (a.vertex_index < b.vertex_index) return true;
+      if (a.vertex_index > b.vertex_index) return false;
+    
+      if (a.normal_index < b.normal_index) return true;
+      if (a.normal_index > b.normal_index) return false;
+    
+      if (a.texcoord_index < b.texcoord_index) return true;
+      if (a.texcoord_index > b.texcoord_index) return false;
+    
+      return false;
+    }
+  };
 
   /*! find vertex with given position, normal, texcoord, and return
     its vertex ID, or, if it doesn't exit, add it to the mesh, and
@@ -49,7 +49,7 @@ namespace mini {
   int addVertex(Mesh::SP mesh,
                 tinyobj::attrib_t &attributes,
                 const tinyobj::index_t &idx,
-                std::map<tinyobj::index_t,int> &knownVertices)
+                std::map<tinyobj::index_t,int,index_less> &knownVertices)
   {
     if (knownVertices.find(idx) != knownVertices.end())
       return knownVertices[idx];
@@ -258,7 +258,7 @@ namespace mini {
       
       
       for (int materialID : materialIDs) {
-        std::map<tinyobj::index_t,int> knownVertices;
+        std::map<tinyobj::index_t,int,index_less> knownVertices;
         Mesh::SP mesh = std::make_shared<Mesh>();
         // mesh->material
         //   = (materialID < ourMaterials.size())

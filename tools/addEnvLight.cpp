@@ -20,35 +20,83 @@
 #include <random>
 #include <cmath>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
+
+
 namespace mini {
   namespace scene {
 
+    Scene::SP loadEnvMap(const std::string &fileName)
+    {
+      if (fileName.substr(fileName.size()-5) == ".mini")
+        return Scene::load(fileName);
+
+      Scene::SP scene = Scene::create();
+      vec2i dims = -1;
+      int numChannels = -1;
+      vec3f *texels = (vec3f*)stbi_loadf(fileName.c_str(),
+                                         &dims.x, &dims.y, &numChannels, 0);
+
+      Texture::SP texture = Texture::create();
+      texture->format = Texture::FLOAT4;
+      texture->size   = dims;
+      texture->data.resize(dims.x*dims.y*sizeof(vec4f));
+      for (int i=0;i<dims.x*dims.y;i++) 
+        ((vec4f*)texture->data.data())[i] =
+          vec4f(texels[i].x,
+                texels[i].y,
+                texels[i].z,
+                0.f);
+      EnvMapLight::SP envMapLight = EnvMapLight::create();
+      envMapLight->texture = texture;
+      scene->envMapLight = envMapLight;
+
+      return scene;
+    }
+
+    void usage(const std::string error)
+    {
+      std::cout << "Error: " << error << std::endl;
+      std::cout << "Usage: ./miniAddEnvLight -l lightFile.hdr [-m existing.mini] -o out.mini" << std::endl;
+      exit(1);
+    }
+    
     void addEnvLight(int ac, char **av)
     {
-      std::string outFileName = "a.obj";
-      std::string inFileName = "";
-      std::string fileWithLightFileName = "";
+      std::string outFileName = "a.mini";
+      std::string inMiniFileName = "";
+      std::string inLightFileName = "";
+      // std::string fileWithLightFileName = "";
       bool zup = false;
       for (int i=1;i<ac;i++) {
         std::string arg = av[i];
         if (arg == "-o") {
           outFileName = av[++i]; 
-        } else if (arg == "--file-with-light") {
-          fileWithLightFileName = av[++i]; 
+        // } else if (arg == "--file-with-light") {
+        //   fileWithLightFileName = av[++i]; 
         } else if (arg == "-zup") {
           zup = true;
-        } else if (arg[0] != '-') {
-          inFileName = arg;
+        } else if (arg == "-m") {
+          inMiniFileName = av[++i];
+        } else if (arg == "-l") {
+          inLightFileName = av[++i];
         } else
-          throw std::runtime_error("unknown cmdline argument '"+arg+"'");
+          usage("unknown cmdline argument '"+arg+"'");
       }
-      if (inFileName.empty())
-        throw std::runtime_error("no input file specified");
-      if (fileWithLightFileName.empty())
-        throw std::runtime_error("no file with env-light specified (./miniSetEnvLight inFile.mini --file-with-light fileWithLight.mini -o outFile.mini");
+      // if (fileWithLightFileName.empty())
+      //   throw std::runtime_error("no file with env-light specified (./miniSetEnvLight inFile.mini --file-with-light fileWithLight.mini -o outFile.mini");
 
-      Scene::SP model = Scene::load(inFileName);
-      Scene::SP withLight = Scene::load(fileWithLightFileName);
+      if (inLightFileName.empty())
+        usage("no light specified");
+      
+      Scene::SP model
+        = inMiniFileName.empty()
+        ? mini::Scene::create()
+        : Scene::load(inMiniFileName);
+      Scene::SP withLight
+        = loadEnvMap(inLightFileName);
+        // = Scene::load(fileWithLightFileName);
       model->envMapLight = withLight->envMapLight;
 
       if (zup) {
