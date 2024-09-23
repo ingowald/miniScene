@@ -17,9 +17,9 @@ jobs:
       # explicit include-based build matrix, of known valid options
       matrix:
         include:
-          # 24.04 supports CUDA 12.4+
+          # 24.04 supports CUDA 12.6+
           - os: ubuntu-24.04
-            cuda: "12.4"
+            cuda: "12.6"
             gcc: 13
           # 22.04 supports CUDA 11.7+
           - os: ubuntu-22.04
