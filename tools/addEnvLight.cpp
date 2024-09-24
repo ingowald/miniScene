@@ -58,25 +58,30 @@ namespace mini {
     void usage(const std::string error)
     {
       std::cout << "Error: " << error << std::endl;
-      std::cout << "Usage: ./miniAddEnvLight -l lightFile.hdr [-m existing.mini] -o out.mini" << std::endl;
+      std::cout << "Usage: ./miniAddEnvLight -l lightFile.hdr [-yup] [-m existing.mini] -o out.mini" << std::endl;
       exit(1);
     }
     
     void addEnvLight(int ac, char **av)
     {
+      vec3f up { 0.f, 0.f, 1.f };
+      vec3f direction { 1.f, 0.f, 0.f };
       std::string outFileName = "a.mini";
       std::string inMiniFileName = "";
       std::string inLightFileName = "";
       // std::string fileWithLightFileName = "";
-      bool zup = false;
       for (int i=1;i<ac;i++) {
         std::string arg = av[i];
         if (arg == "-o") {
           outFileName = av[++i]; 
         // } else if (arg == "--file-with-light") {
         //   fileWithLightFileName = av[++i]; 
-        } else if (arg == "-zup") {
-          zup = true;
+        } else if (arg == "-y" || arg == "-yup") {
+          direction = {-1.f, 0.f, 0.f };
+          up        = { 0.f, 1.f, 0.f };
+        } else if (arg == "-Y" || arg == "-Yup") {
+          direction = { 1.f, 0.f, 0.f };
+          up        = { 0.f, 1.f, 0.f };
         } else if (arg == "-m") {
           inMiniFileName = av[++i];
         } else if (arg == "-l") {
@@ -98,17 +103,10 @@ namespace mini {
         = loadEnvMap(inLightFileName);
         // = Scene::load(fileWithLightFileName);
       model->envMapLight = withLight->envMapLight;
-
-      if (zup) {
-        // std::swap(model->envMapLight->transform.l.vy,
-        //           model->envMapLight->transform.l.vz);
-
-        model->envMapLight->transform = common::frame(vec3f(1,0,0));
-        model->envMapLight->transform.l.vz = vec3f(1,0,0);// = rcp(owl::common::frame(vec3f(0,1,0)));
-        model->envMapLight->transform.l.vx = vec3f(0,1,0);// = rcp(owl::common::frame(vec3f(0,1,0)));
-        model->envMapLight->transform.l.vy = vec3f(0,0,1);// = rcp(owl::common::frame(vec3f(0,1,0)));
-      }
-      //srand48(128);
+      auto &toWorld = model->envMapLight->transform.l;
+      toWorld.vz = normalize(up);
+      toWorld.vy = normalize(cross(toWorld.vz,direction));
+      toWorld.vx = normalize(cross(toWorld.vy,toWorld.vz));
 
       model->save(outFileName);
     }
