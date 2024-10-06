@@ -46,6 +46,8 @@ namespace mini {
        FILTER_NEAREST
       } FilterMode;
     
+    std::string toString() const;
+
     /* for embedded ptex, size is always {0,0}, since data vector
        containst the raw ptex fiel content; for all others it is the
        number of pixels in x and y */

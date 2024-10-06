@@ -716,5 +716,29 @@ namespace mini {
     return scene;
   }
 
+  std::string toString(Texture::Format format)
+  {
+    switch(format) {
+    case Texture::UNDEFINED:
+      return "UNDEFINED";
+    case Texture::EMBEDDED_PTEX:
+      return "EMBEDDED_PTEX";
+    case Texture::FLOAT4:
+      return "FLOAT4";
+    case Texture::FLOAT1:
+      return "FLOAT1";
+    case Texture::RGBA_UINT8:
+      return "RGBA_UINT8";
+    default:throw std::runtime_error("texture format not recognized");
+    }
+  }
+  
+  std::string Texture::toString() const
+  {
+    std::stringstream ss;
+    ss << "mini::Texture{size="<<size<<",format="<<mini::toString(format)<< "}";
+    return ss.str();
+  }
+  
 } // ::brix
 
