@@ -126,6 +126,11 @@ endif()
 add_subdirectory(miniScene)
 
 # ------------------------------------------------------------------
+# the miniScene python binding
+# ------------------------------------------------------------------
+add_subdirectory(pyminiScene)
+
+# ------------------------------------------------------------------
 # various importers from other file formats
 # ------------------------------------------------------------------
 add_subdirectory(importers)

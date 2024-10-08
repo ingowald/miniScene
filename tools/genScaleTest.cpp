@@ -16,10 +16,18 @@
 
 #include "miniScene/Scene.h"
 
+#ifdef _WIN32
+#   include "owl/common/math/random.h"
+#endif
+
 namespace mini {
   int texRes = 8;
   bool funnies = true;
   int sphereRes = 10;
+
+#ifdef _WIN32
+  DRand48 drand48;
+#endif  
   
   float rng()
   {
