@@ -44,81 +44,19 @@ SET(MINI_BUILD_SIMPLE_IMPORTERS ON) # can still disable by EXCLUDE_FROM_ALL
 # general cmake project configs
 # ------------------------------------------------------------------
 include(cmake/configure_build_type.cmake)
-if (MINI_BUILD_ADVANCED_IMPORTERS)
-  include(cmake/FindOpenEXR.cmake)
-endif()
 
-if(MINI_BUILD_ADVANCED_IMPORTERS AND (NOT EXISTS "${PROJECT_SOURCE_DIR}/submodules/owl/CMakeLists.txt"))
-  message(FATAL_ERROR "miniScene - Cannot build advanced importers if cloned without submodules. Make sure to clone with '--recursive', or do 'git submodule init; git submodule update' to fetch submodules")
-endif()
+add_library(mini_common
+  INTERFACE
+  )
+target_include_directories(mini_common INTERFACE
+  ${PROJECT_SOURCE_DIR}/miniScene)
 
-# ------------------------------------------------------------------
-# owl: there are two ways of using OWL: either as a submodule (if
-# building miniScene stand-alone), or, if miniScene itself is a
-# submodule, simply include owl _before_ including miniScene, then it
-# will pick up the target
-# ------------------------------------------------------------------
-if(MINI_IS_SUBMODULE AND (TARGET owl::owl))
-  message(STATUS "miniScene: owl target exists from another sibling submodule; using it")
-  set(MINI_HAVE_OWL ON)
-  set(MINI_HAVE_STB ON)
-elseif(EXISTS "${PROJECT_SOURCE_DIR}/submodules/owl/CMakeLists.txt")
-  message(STATUS "miniScene: found owl as submodule - using it")
-  enable_language(CUDA)
-  add_subdirectory(submodules/owl EXCLUDE_FROM_ALL)
-  set(MINI_HAVE_OWL ON)
-  set(MINI_HAVE_STB ON)
-else ()
-  message(STATUS "miniScene: owl not available; building host-only version")
-  set(MINI_HAVE_OWL OFF)
-  set(MINI_HAVE_STB OFF)
-endif()
-
-if (MINI_HAVE_OWL)
-  add_library(mini_owl_common
-    INTERFACE
-    )
-#  target_link_libraries(mini_owl_common INTERFACE owl::owl stb_image)
-  target_link_libraries(mini_owl_common INTERFACE owl::owl)
-  target_compile_definitions(mini_owl_common INTERFACE -DMINI_HAVE_OWL_COMMON=1)
-
-#  add_subdirectory(submodules/owl/3rdParty/stb_image EXCLUDE_FROM_ALL)
-else()
-#  add_subdirectory(miniScene/common/stb_image EXCLUDE_FROM_ALL)
-  add_library(mini_owl_common
-    INTERFACE
-    )
-#  target_link_libraries(mini_owl_common INTERFACE owl::owl)
-  target_include_directories(mini_owl_common INTERFACE ${PROJECT_SOURCE_DIR}/miniScene)
-#  target_compile_definitions(mini_owl_common INTERFACE -DMINI_HAVE_OWL_COMMON=1)
-endif()
-
-if (MINI_HAVE_STB)
-  # already have STB from owl
-else()
-  add_subdirectory(miniScene/common/stb_image EXCLUDE_FROM_ALL)
-endif()
+add_subdirectory(miniScene/common/stb_image EXCLUDE_FROM_ALL)
 target_link_libraries(
-  mini_owl_common
+  mini_common
   INTERFACE
   stb_image
   )
-
-# ------------------------------------------------------------------
-# pbrtParser
-# ------------------------------------------------------------------
-if (MINI_BUILD_ADVANCED_IMPORTERS)
-  add_subdirectory(submodules/pbrt-parser EXCLUDE_FROM_ALL)
-  message(STATUS "pbrtParser configured")
-endif()
-
-# ------------------------------------------------------------------
-# disney ptex for importer
-# ------------------------------------------------------------------
-if (MINI_BUILD_ADVANCED_IMPORTERS)
-  add_subdirectory(submodules/ptex EXCLUDE_FROM_ALL)
-  message(STATUS "PTex configured")
-endif()
 
 # ------------------------------------------------------------------
 # the miniScene library itself

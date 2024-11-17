@@ -31,7 +31,7 @@ add_library(miniScene STATIC
   )
 target_link_libraries(miniScene
   PUBLIC
-  mini_owl_common
+  mini_common
 #  stb_image
   )
 target_include_directories(miniScene

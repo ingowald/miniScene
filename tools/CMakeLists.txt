@@ -150,13 +150,5 @@ target_link_libraries(miniGenScaleTest
   miniScene
   )
 
-# -----------------------------------------------------------------------------
-# a trivially simple owl-based viewer, to sanity test ... don't expct
-# much, this only shows flat triangles
-# -----------------------------------------------------------------------------
-if (TARGET owl::owl)
-  add_subdirectory(viewer)
-endif()
-
 
 
