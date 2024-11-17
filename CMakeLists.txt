@@ -51,7 +51,9 @@ add_library(mini_common
 target_include_directories(mini_common INTERFACE
   ${PROJECT_SOURCE_DIR}/miniScene)
 
-add_subdirectory(miniScene/common/stb_image EXCLUDE_FROM_ALL)
+if (NOT (TARGET stb_image))
+  add_subdirectory(miniScene/common/stb_image EXCLUDE_FROM_ALL)
+endif()
 target_link_libraries(
   mini_common
   INTERFACE
