@@ -232,10 +232,12 @@ namespace mini {
     inline __both__ float rcp(float f)      { return 1.f/f; }
     inline __both__ double rcp(double d)    { return 1./d; }
   
-    inline __both__ int32_t divRoundUp(int32_t a, int32_t b) { return (a+b-1)/b; }
-    inline __both__ uint32_t divRoundUp(uint32_t a, uint32_t b) { return (a+b-1)/b; }
-    inline __both__ int64_t divRoundUp(int64_t a, int64_t b) { return (a+b-1)/b; }
-    inline __both__ uint64_t divRoundUp(uint64_t a, uint64_t b) { return (a+b-1)/b; }
+    inline __both__ int divRoundUp(int a, int b) { return (a+b-1)/b; }
+    inline __both__ unsigned int divRoundUp(unsigned int a, unsigned int b) { return (a+b-1)/b; }
+    inline __both__ long divRoundUp(long a, long b) { return (a+b-1)/b; }
+    inline __both__ unsigned long divRoundUp(unsigned long a, unsigned long b) { return (a+b-1)/b; }
+    inline __both__ long long divRoundUp(long long a, long long b) { return (a+b-1)/b; }
+    inline __both__ unsigned long long divRoundUp(unsigned long long a, unsigned long long b) { return (a+b-1)/b; }
   
 // #ifdef __CUDA_ARCH__
 //     using ::sin; // this is the double version
