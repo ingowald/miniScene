@@ -235,7 +235,8 @@ namespace mini {
     inline __both__ int32_t divRoundUp(int32_t a, int32_t b) { return (a+b-1)/b; }
     inline __both__ uint32_t divRoundUp(uint32_t a, uint32_t b) { return (a+b-1)/b; }
     inline __both__ int64_t divRoundUp(int64_t a, int64_t b) { return (a+b-1)/b; }
-    inline __both__ uint64_t divRoundUp(uint64_t a, uint64_t b) { return (a+b-1)/b; }
+    //    inline __both__ uint64_t divRoundUp(uint64_t a, uint64_t b) { return (a+b-1)/b; }
+    inline __both__ uint64_t divRoundUp(size_t a, size_t b) { return (a+b-1)/b; }
   
 // #ifdef __CUDA_ARCH__
 //     using ::sin; // this is the double version
