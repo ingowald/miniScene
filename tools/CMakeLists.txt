@@ -152,3 +152,16 @@ target_link_libraries(miniGenScaleTest
 
 
 
+# -----------------------------------------------------------------------------
+# tool that reads a scene, and dumps out each instance as its own scene
+# -----------------------------------------------------------------------------
+add_executable(miniExportIndividualInstances
+  exportIndividualInstances.cpp
+  )
+target_link_libraries(miniExportIndividualInstances
+  PUBLIC
+  miniScene
+  )
+
+
+
