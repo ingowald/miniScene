@@ -34,7 +34,7 @@ namespace mini {
     }
     if (inFileName.empty())
       throw std::runtime_error("no input file specified");
-    if (outFileName.empty())
+    if (outFileBase.empty())
       throw std::runtime_error("no output prefix specified (-o)");
 
     std::cout << MINI_TERMINAL_LIGHT_BLUE
@@ -46,11 +46,13 @@ namespace mini {
               << MINI_TERMINAL_DEFAULT << std::endl;
 
     auto orgInstances = scene->instances;
-    for (int i=0;i<instID;i++) {
+    for (int i=0;i<(int)orgInstances.size();i++) {
       char suffix[1000];
       sprintf(suffix,"_%03i.mini",i);
+      std::string partFileName = outFileBase+suffix;
       scene->instances = { orgInstances[i] };
-      separated->save(outFileBase+suffix);
+      std::cout << "saving part " << partFileName << std::endl;
+      scene->save(partFileName);
     }
     std::cout << MINI_TERMINAL_LIGHT_GREEN
               << "#exportIndividualInstances: scene saved."
