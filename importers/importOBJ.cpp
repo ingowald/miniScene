@@ -145,37 +145,6 @@ namespace mini {
                 << MINI_TERMINAL_DEFAULT << std::endl;
     }
       
-    // Texture::SP texture;
-    // vec2i res;
-    // int   comp;
-    // unsigned char* image = stbi_load(fileName.c_str(),
-    //                                  &res.x, &res.y, &comp, STBI_rgb_alpha);
-    // // int textureID = -1;
-    // if (image) {
-    //   for (int y=0;y<res.y/2;y++) {
-    //     uint32_t *line_y = ((uint32_t*)image) + y * res.x;
-    //     uint32_t *mirrored_y = ((uint32_t*)image) + (res.y-1-y) * res.x;
-    //     for (int x=0;x<res.x;x++) {
-    //       std::swap(line_y[x],mirrored_y[x]);
-    //     }
-    //   }
-
-    //   texture = std::make_shared<Texture>();
-    //   texture->size = res;
-    //   texture->data.resize(res.x*res.y*sizeof(int));
-    //   texture->format = Texture::RGBA_UINT8;
-    //   memcpy(texture->data.data(),image,texture->data.size());
-
-    //   /* iw - actually, it seems that stbi loads the pictures
-    //      mirrored along the y axis - mirror them here */
-      
-    //   STBI_FREE(image);
-    // } else {
-    //   std::cout << MINI_TERMINAL_RED
-    //             << "Could not load texture from " << fileName << "!"
-    //             << MINI_TERMINAL_DEFAULT << std::endl;
-    // }
-    
     knownTextures[inFileName] = texture;
     return texture;
   }
@@ -185,6 +154,49 @@ namespace mini {
     Scene::SP scene = std::make_shared<Scene>();
     Object::SP model = std::make_shared<Object>();
     scene->instances.push_back(std::make_shared<Instance>(model));
+#if 0
+    // hard-coded v-and-f-only obj files - no materials, no textures,
+    // no nothing, but properly handling general polygons.
+    std::string line;
+    std::ifstream in(objFile.c_str());
+    Mesh::SP mesh;
+    std::map<int,int> knownVertices;
+    std::vector<vec3f> vertices;
+    while (in) {
+      std::getline(in,line);
+      if (!in.good()) break;
+      if (line[0] == 'v' && line[1] == ' ') {
+        vec3f v;
+        sscanf((char*)line.c_str(),"v %f %f %f",&v.x,&v.y,&v.z);
+        vertices.push_back(v);
+      } else if (line[0] == '#' && line[1] == ' ') {
+        continue;
+      } else if (line[0] == 'g' && line[1] == ' ') {
+        mesh = Mesh::create();
+        model->meshes.push_back(mesh);
+        knownVertices.clear();
+      } else if (line[0] == 'f' && line[1] == ' ') {
+        char *s = strtok((char*)line.c_str()," \n\t");
+        std::vector<int> face;
+        while (true) {
+          s = strtok(nullptr," \n\t");
+          if (!s) break;
+          face.push_back(std::stoi(s));
+        }
+        for (auto &i : face) {
+          if (knownVertices.find(i) == knownVertices.end()) {
+            knownVertices[i] = mesh->vertices.size();
+            mesh->vertices.push_back(vertices[i-1]);
+          } 
+          i = knownVertices[i];
+        }
+        for (int i=2;i<face.size();i++)
+          mesh->indices.push_back({face[0],face[i-1],face[i]});
+      } else
+        throw std::runtime_error("not simple obj input format: "+line);
+    }
+    return scene;
+#endif
     const std::string modelDir
       = objFile.substr(0,objFile.rfind('/')+1);
     
@@ -260,10 +272,6 @@ namespace mini {
       for (int materialID : materialIDs) {
         std::map<tinyobj::index_t,int,index_less> knownVertices;
         Mesh::SP mesh = std::make_shared<Mesh>();
-        // mesh->material
-        //   = (materialID < ourMaterials.size())
-        //   ? ourMaterials[materialID]
-        //   : dummyMaterial;
           
         for (size_t faceID=0;faceID<shape.mesh.material_ids.size();faceID++) {
           if (shape.mesh.material_ids[faceID] != materialID) continue;
