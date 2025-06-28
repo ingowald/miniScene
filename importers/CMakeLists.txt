@@ -61,14 +61,6 @@ if (MINI_BUILD_SIMPLE_IMPORTERS)
     miniScene
     )
 
-  # EXporter to binmesh
-  add_executable(mini2binmesh
-    mini2binmesh.cpp
-    )
-  target_link_libraries(mini2binmesh
-    miniScene
-    )
-
   # IMporter from bobj
   add_library(miniScene_import_obj STATIC
     importOBJ.cpp

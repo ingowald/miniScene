@@ -152,3 +152,13 @@ target_link_libraries(miniGenScaleTest
 
 
 
+# -----------------------------------------------------------------------------
+# EXporter to binmesh
+# -----------------------------------------------------------------------------
+add_executable(mini2binmesh
+  mini2binmesh.cpp
+)
+target_link_libraries(mini2binmesh
+  miniScene
+)
+

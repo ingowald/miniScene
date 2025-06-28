@@ -37,11 +37,14 @@ int main(int ac, char **av)
 {
   std::string inFileName = "";
   std::string outFileName = "";
+  bool firstInstOnly = false;
     
   for (int i=1;i<ac;i++) {
     const std::string arg = av[i];
     if (arg == "-o") {
       outFileName = av[++i];
+    } else if (arg == "--first-inst-only") {
+      firstInstOnly = true;
     } else if (arg[0] != '-')
       inFileName = arg;
     else
@@ -61,7 +64,13 @@ int main(int ac, char **av)
             << std::endl;
   std::vector<vec3f> vertices;
   std::vector<vec3i> indices;
-  for (auto inst : scene->instances)
+  std::set<Object::SP> alreadyEmittedInstances;
+  for (auto inst : scene->instances) {
+    if (firstInstOnly) {
+      if (alreadyEmittedInstances.find(inst->object) !=
+          alreadyEmittedInstances.end()) continue;
+      alreadyEmittedInstances.insert(inst->object);
+    }
     for (auto mesh : inst->object->meshes) {
       int idxOfs = (int)vertices.size();
       for (auto vtx : mesh->vertices)
@@ -69,6 +78,7 @@ int main(int ac, char **av)
       for (auto idx : mesh->indices)
         indices.push_back(idxOfs+idx);
     }
+  }
   
   std::cout << MINI_TERMINAL_BLUE
             << "done flattening into a single mesh; saving to " << outFileName
