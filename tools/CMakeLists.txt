@@ -92,6 +92,19 @@ target_link_libraries(mini2obj
   )
 
 # -----------------------------------------------------------------------------
+# tool primarily for debugging: given a mini scene, write out *flat*
+# scene in HSMESH file format - can not do textures or materials, will
+# simply dump all triangles in ONE mesh.
+# -----------------------------------------------------------------------------
+add_executable(mini2hsmesh
+  mini2hsmesh.cpp
+  )
+target_link_libraries(mini2hsmesh
+  PUBLIC
+  miniScene
+  )
+
+# -----------------------------------------------------------------------------
 # tool that takes some mini files, and merges them into one scene by
 # simply appending the different scenes' instances (i.e., without
 # flattening anything or merging instances)
@@ -161,4 +174,15 @@ add_executable(mini2binmesh
 target_link_libraries(mini2binmesh
   miniScene
 )
+# tool that reads a scene, and dumps out each instance as its own scene
+# -----------------------------------------------------------------------------
+add_executable(miniExportIndividualInstances
+  exportIndividualInstances.cpp
+  )
+target_link_libraries(miniExportIndividualInstances
+  PUBLIC
+  miniScene
+  )
+
+
 
