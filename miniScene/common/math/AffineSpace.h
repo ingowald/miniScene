@@ -167,6 +167,8 @@ namespace mini {
     // Type Aliases
     ////////////////////////////////////////////////////////////////////////////////
 
+    using AffineSpace2d      = AffineSpaceT<LinearSpace2d>;
+    using AffineSpace3d      = AffineSpaceT<LinearSpace3d>;
     using AffineSpace2f      = AffineSpaceT<LinearSpace2f>;
     using AffineSpace3f      = AffineSpaceT<LinearSpace3f>;
     using AffineSpace3fa     = AffineSpaceT<LinearSpace3fa>;
@@ -174,6 +176,8 @@ namespace mini {
 
     using affine2f = AffineSpace2f;
     using affine3f = AffineSpace3f;
+    using affine2d = AffineSpace2d;
+    using affine3d = AffineSpace3d;
 
     ////////////////////////////////////////////////////////////////////////////////
     /*! Template Specialization for 2D: return matrix for rotation around point (rotation around arbitrarty vector is not meaningful in 2D) */

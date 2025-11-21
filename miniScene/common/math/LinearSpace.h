@@ -393,6 +393,8 @@ namespace mini {
     /*! Shortcuts for common linear spaces. */
     using LinearSpace2f  = LinearSpace2<vec2f> ;
     using LinearSpace3f  = LinearSpace3<vec3f> ;
+    using LinearSpace2d  = LinearSpace2<vec2d> ;
+    using LinearSpace3d  = LinearSpace3<vec3d> ;
     using LinearSpace3fa = LinearSpace3<vec3fa>;
 
     using linear2f = LinearSpace2f;
