@@ -610,10 +610,14 @@ namespace mini {
     /*! array of vertices */
     std::vector<vec3f> vertices;
 
-    /*! one vertex normal per vertex; or empty */
+    /*! if this is the same size as number of vertices, then it's one
+        vertex normal per vertex; otherwise if it is 3 times the
+        number of indices then it's ANARI "faceVarying" normals */
     std::vector<vec3f> normals;
     
-    /*! one texture coordinate per vertex; or empty */
+    /*! if this is the same size as number of vertices, then it's one
+        texture coordinate per vertex; otherwise if it is 3 times the
+        number of indices then it's ANARI "faceVarying" texcoords */
     std::vector<vec2f> texcoords;
     
     /*! the vector containing the triangles' vertex indices */
