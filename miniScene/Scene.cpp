@@ -21,10 +21,10 @@
 
 namespace mini {
 
-    enum { FORMAT_VERSION = 12 };
+  enum { FORMAT_VERSION = 12 };
   /* VERSION HISTORY
      12: embree-style materials, with virtual material read/write
-   */
+  */
   
 
 #define PARALLELILIZE_GETBOUNDS 1
@@ -58,7 +58,8 @@ namespace mini {
     METALLICPAINT,
     THINGLASS,
     DIELECTRIC,
-    BLENDER
+    BLENDER,
+    ANARI_MATERIAL
   } MaterialTag;
   
   MaterialTag materialTagOf(Material::SP mat)
@@ -72,6 +73,7 @@ namespace mini {
     if (mat->as<MetallicPaint>()) return METALLICPAINT;
     if (mat->as<Dielectric>()) return DIELECTRIC;
     if (mat->as<ThinGlass>()) return THINGLASS;
+    if (mat->as<ANARIMaterial>()) return ANARI_MATERIAL;
     
     throw std::runtime_error("un-supported material type "+mat->toString()+" in Scene::save");
   }
@@ -88,6 +90,7 @@ namespace mini {
     case DIELECTRIC: return Dielectric::create();
     case THINGLASS: return ThinGlass::create();
     case METALLICPAINT: return MetallicPaint::create();
+    case ANARI_MATERIAL: return ANARIMaterial::create();
     }
     throw std::runtime_error("un-supported material tag "+std::to_string((int)tag)+" in Scene::load");
   }
@@ -162,7 +165,121 @@ namespace mini {
       this->alphaTexture = textures[texID];
     }
   }
+
+  void writeTexture(const std::map<Texture::SP,int> &textures,
+                    std::ofstream &out,
+                    Texture::SP tex)
+  {
+    int ID = getID(tex,textures);
+    io::writeElement(out,ID);
+  }
   
+  // ------------------------------------------------------------------
+  void ANARIMaterial::write(std::ofstream &out,
+                             const std::map<Texture::SP,int> &textures)
+  {
+    io::writeElement(out,this->baseColor);
+    writeTexture(textures,out,baseColor_texture);
+    io::writeElement(out,this->opacity);
+    writeTexture(textures,out,opacity_texture);
+    io::writeElement(out,this->metallic);
+    writeTexture(textures,out,metallic_texture);
+    io::writeElement(out,this->roughness);
+    writeTexture(textures,out,roughness_texture);
+    writeTexture(textures,out,normal_texture);
+    io::writeElement(out,this->emissive);
+    writeTexture(textures,out,emissive_texture);
+    writeTexture(textures,out,occlusion_texture);
+    io::writeElement(out,this->alphaMode);
+    io::writeElement(out,this->alphaCutoff);
+    io::writeElement(out,this->specular);
+    writeTexture(textures,out,specular_texture);
+    io::writeElement(out,this->specularColor);
+    writeTexture(textures,out,specularColor_texture);
+    io::writeElement(out,this->clearcoat);
+    writeTexture(textures,out,clearcoat_texture);
+    io::writeElement(out,this->clearcoatRoughness);
+    writeTexture(textures,out,clearcoatRoughness_texture);
+    writeTexture(textures,out,clearcoatNormal_texture);
+    io::writeElement(out,this->transmission);
+    writeTexture(textures,out,transmission_texture);
+    io::writeElement(out,this->ior);
+    writeTexture(textures,out,ior_texture);
+    io::writeElement(out,this->thickness);
+    writeTexture(textures,out,thickness_texture);
+    io::writeElement(out,this->attenuationDistance);
+    io::writeElement(out,this->attenuationColor);
+    writeTexture(textures,out,attenuationColor_texture);
+    io::writeElement(out,this->sheenColor);
+    writeTexture(textures,out,sheenColor_texture);
+    io::writeElement(out,this->sheenRoughness);
+    writeTexture(textures,out,sheenRoughness_texture);
+    io::writeElement(out,this->iridescence);
+    writeTexture(textures,out,iridescence_texture);
+    io::writeElement(out,this->iridescenceIor);
+    writeTexture(textures,out,iridescenceIor_texture);
+    io::writeElement(out,this->iridescenceThickness);
+    writeTexture(textures,out,iridescenceThickness_texture);
+  }
+
+
+  void readTexture(const std::vector<Texture::SP> &textures,
+                   std::ifstream &in,
+                   Texture::SP &tex)
+  {
+    int texID = io::readElement<int>(in);
+    assert(texID >= 0);
+    tex = textures[texID];
+  }
+  
+  void ANARIMaterial::read(std::ifstream &in,
+                            const std::vector<Texture::SP> &textures)
+  {
+    io::readElement(in,this->baseColor);
+    io::readElement(in,this->baseColor);
+    readTexture(textures,in,baseColor_texture);
+    io::readElement(in,this->opacity);
+    readTexture(textures,in,opacity_texture);
+    io::readElement(in,this->metallic);
+    readTexture(textures,in,metallic_texture);
+    io::readElement(in,this->roughness);
+    readTexture(textures,in,roughness_texture);
+    readTexture(textures,in,normal_texture);
+    io::readElement(in,this->emissive);
+    readTexture(textures,in,emissive_texture);
+    readTexture(textures,in,occlusion_texture);
+    io::readElement(in,this->alphaMode);
+    io::readElement(in,this->alphaCutoff);
+    io::readElement(in,this->specular);
+    readTexture(textures,in,specular_texture);
+    io::readElement(in,this->specularColor);
+    readTexture(textures,in,specularColor_texture);
+    io::readElement(in,this->clearcoat);
+    readTexture(textures,in,clearcoat_texture);
+    io::readElement(in,this->clearcoatRoughness);
+    readTexture(textures,in,clearcoatRoughness_texture);
+    readTexture(textures,in,clearcoatNormal_texture);
+    io::readElement(in,this->transmission);
+    readTexture(textures,in,transmission_texture);
+    io::readElement(in,this->ior);
+    readTexture(textures,in,ior_texture);
+    io::readElement(in,this->thickness);
+    readTexture(textures,in,thickness_texture);
+    io::readElement(in,this->attenuationDistance);
+    io::readElement(in,this->attenuationColor);
+    readTexture(textures,in,attenuationColor_texture);
+    io::readElement(in,this->sheenColor);
+    readTexture(textures,in,sheenColor_texture);
+    io::readElement(in,this->sheenRoughness);
+    readTexture(textures,in,sheenRoughness_texture);
+    io::readElement(in,this->iridescence);
+    readTexture(textures,in,iridescence_texture);
+    io::readElement(in,this->iridescenceIor);
+    readTexture(textures,in,iridescenceIor_texture);
+    io::readElement(in,this->iridescenceThickness);
+    readTexture(textures,in,iridescenceThickness_texture);
+  };
+
   // ------------------------------------------------------------------
   void Plastic::write(std::ofstream &out,
                       const std::map<Texture::SP,int> &textures)
