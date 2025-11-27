@@ -21,10 +21,10 @@
 namespace mini {
     
   /*! a object for storing texture data; allowing to store both image
-      textures and raw data for 'embedded' ptex texture (where
-      'embedded' means that this stores the same data as the .ptex
-      file, but without any claim to being able to do something with
-      it) */
+    textures and raw data for 'embedded' ptex texture (where
+    'embedded' means that this stores the same data as the .ptex
+    file, but without any claim to being able to do something with
+    it) */
   struct Texture {
     typedef std::shared_ptr<Texture> SP;
 
@@ -32,18 +32,18 @@ namespace mini {
       
     typedef enum : uint16_t
       {
-       UNDEFINED=0,
-       EMBEDDED_PTEX,
-       FLOAT4,
-       FLOAT1,
-       RGBA_UINT8, BYTE4=RGBA_UINT8, 
+        UNDEFINED=0,
+        EMBEDDED_PTEX,
+        FLOAT4,
+        FLOAT1,
+        RGBA_UINT8, BYTE4=RGBA_UINT8, 
       } Format;
     typedef enum : uint16_t
       {
-       /*! default filter mode - bilinear */
-       FILTER_BILINEAR=0,
-       /*! explicitly request nearest-filtering */
-       FILTER_NEAREST
+        /*! default filter mode - bilinear */
+        FILTER_BILINEAR=0,
+        /*! explicitly request nearest-filtering */
+        FILTER_NEAREST
       } FilterMode;
     
     /* for embedded ptex, size is always {0,0}, since data vector
@@ -69,7 +69,7 @@ namespace mini {
     typedef std::shared_ptr<Material> SP;
 
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Material() = default;
 
     virtual std::string toString() const = 0;
@@ -85,7 +85,7 @@ namespace mini {
     { return std::dynamic_pointer_cast<ActualMaterial>(shared_from_this()); }
     
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Material(const Material &) = default;
   };
     
@@ -139,7 +139,194 @@ namespace mini {
     Texture::SP alphaTexture;
   };
 
-    /* a Disney-style material that can represent both metallic,
+  struct ANARIMaterial : public Material {
+    typedef std::shared_ptr<ANARIMaterial> SP;
+
+    /*! constructs a new Material - note you _probably_ want to use
+      Material::create() instead */
+    ANARIMaterial() = default;
+    
+    /*! constructs a new Material - note you _probably_ want to use
+      Material::create() instead */
+    ANARIMaterial(const ANARIMaterial &) = default;
+
+    /*! constructs a new Material and returns a Material::SP to that
+      created material */
+    inline static SP create() { return std::make_shared<ANARIMaterial>(); }
+    
+    /*! constructs a new Material that is a identical clone of the
+      current material */
+    Material::SP clone() const override
+    { return std::make_shared<ANARIMaterial>(*this); }
+    
+    void write(std::ofstream &out,
+               const std::map<Texture::SP,int> &textures) override;
+    void read(std::ifstream &in,
+              const std::vector<Texture::SP> &textures) override;
+    std::string toString() const override { return "ANARIMaterial"; }
+
+    // baseColor
+    // FLOAT32_VEC3 / SAMPLER / STRING
+    // (1.0, 1.0, 1.0)
+    // base color
+    vec3f       baseColor { 1.f, 1.f, 1.f };
+    Texture::SP baseColor_texture;
+        
+    // opacity 
+    // FLOAT32 / SAMPLER / STRING
+    // 1.0
+    // opacity
+    float       opacity = 1.f;
+    Texture::SP opacity_texture;
+    
+    // metallic
+    // FLOAT32 / SAMPLER / STRING
+    // 1.0
+    // metalness
+    float       metallic = 1.f;
+    Texture::SP metallic_texture;
+    
+    // roughness
+    // FLOAT32 / SAMPLER / STRING
+    // 1.0
+    // roughness
+    float       roughness = 1.f;
+    Texture::SP roughness_texture;
+
+    // normal
+    // SAMPLER
+    // normal map for the base layer
+    Texture::SP normal_texture;
+    
+    // emissive
+    // FLOAT32_VEC3 / SAMPLER / STRING
+    // (0.0, 0.0, 0.0)
+    // emissive
+    vec3f       emissive { 0.f, 0.f, 0.f };
+    Texture::SP emissive_texture;
+
+    // occlusion
+    // SAMPLER
+    // occlusion map
+    Texture::SP occlusion_texture;
+
+    // alphaMode
+    // STRING
+    // opaque
+    // control cut-out transparency, possible values: opaque, blend, mask
+    typedef enum { BLEND, MASK, OPAQUE } AlphaMode;
+    int         alphaMode = BLEND;
+
+    // alphaCutoff
+    // FLOAT32
+    // 0.5
+    // threshold when alphaMode is mask
+    float       alphaCutoff = 0.5f;
+
+    // specular
+    // FLOAT32 / SAMPLER / STRING
+    // 0.0
+    // strength of the specular reflection
+    float       specular = 0.f;
+    Texture::SP specular_texture;
+
+    // specularColor
+    // FLOAT32_VEC3 / SAMPLER / STRING
+    // (1.0, 1.0, 1.0)
+    // color of the specular reflection at normal incidence
+    vec3f       specularColor { 0.f, 0.f, 0.f };
+    Texture::SP specularColor_texture;
+
+    // clearcoat
+    // FLOAT32 / SAMPLER / STRING
+    // 0.0
+    // strength of the clearcoat layer
+    float       clearcoat = 0.f;
+    Texture::SP clearcoat_texture;
+
+    // clearcoatRoughness
+    // FLOAT32 / SAMPLER / STRING
+    // 0.0
+    // roughness of the clearcoat layer
+    float       clearcoatRoughness = 0.f;
+    Texture::SP clearcoatRoughness_texture;
+
+    // clearcoatNormal
+    // SAMPLER
+    // normal map for the clearcoat layer
+    Texture::SP clearcoatNormal_texture;
+
+    // transmission
+    // FLOAT32 / SAMPLER / STRING
+    // 0.0
+    // strength of the transmission
+    float       transmission = 0.f;
+    Texture::SP transmission_texture;
+
+    // ior
+    // FLOAT32
+    // 1.5
+    // index of refraction
+    float       ior = 1.5f;
+    Texture::SP ior_texture;
+
+    // thickness
+    // FLOAT32 / SAMPLER / STRING
+    // 0.0
+    // thickness of the volume beneath the surface (with 0 the material is thin-walled)
+    float       thickness = 0.f;
+    Texture::SP thickness_texture;
+
+    // attenuationDistance
+    // FLOAT32
+    // ∞
+    // average distance that light travels in the medium before interacting with a particle
+    float       attenuationDistance = std::numeric_limits<float>::infinity();
+
+    // attenuationColor
+    // FLOAT32_VEC3
+    // (1.0, 1.0, 1.0)
+    // color that white light turns into due to absorption when reaching the attenuation distance
+    vec3f       attenuationColor { 0.f, 0.f, 0.f };
+    Texture::SP attenuationColor_texture;
+
+    // sheenColor
+    //: FLOAT32_VEC3 / SAMPLER / STRING
+    //(0.0, 0.0, 0.0)
+    // sheen color
+    vec3f       sheenColor { 0.f, 0.f, 0.f };
+    Texture::SP sheenColor_texture;
+
+    // sheenRoughness
+    // FLOAT32 / SAMPLER / STRING
+    // 0.0
+    // sheen roughness
+    float       sheenRoughness = 0.f;
+    Texture::SP sheenRoughness_texture;
+
+    // iridescence
+    //FLOAT32 / SAMPLER / STRING
+    // 0.0
+    // strength of the thin-film layer
+    float       iridescence = 0.f;
+    Texture::SP iridescence_texture;
+
+    // iridescenceIor
+    //FLOAT32
+    // 1.3
+    //index of refraction of the thin-film layer
+    float       iridescenceIor = 0.f;
+    Texture::SP iridescenceIor_texture;
+
+    // iridescenceThickness:
+    // FLOAT32 / SAMPLER / STRING
+    // 0.0
+    //thickness of the thin-film layer
+    float       iridescenceThickness = 0.f;
+    Texture::SP iridescenceThickness_texture;
+  };
+  
+  /* a Disney-style material that can represent both metallic,
      plastic, and dielectric materials. Not nearly as powerful as some
      of the more advanced material models out there, but can actually
      represent quite a bit of different content reasonably well - and
@@ -149,19 +336,19 @@ namespace mini {
     typedef std::shared_ptr<DisneyMaterial> SP;
 
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     DisneyMaterial() = default;
     
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     DisneyMaterial(const DisneyMaterial &) = default;
 
     /*! constructs a new Material and returns a Material::SP to that
-        created material */
+      created material */
     inline static SP create() { return std::make_shared<DisneyMaterial>(); }
     
     /*! constructs a new Material that is a identical clone of the
-        current material */
+      current material */
     Material::SP clone() const override { return std::make_shared<DisneyMaterial>(*this); }
     void write(std::ofstream &out,
                const std::map<Texture::SP,int> &textures) override;
@@ -182,19 +369,19 @@ namespace mini {
     float ior          { 1.45f };
 
     /*! color texture to be applied to the surface(s) that this
-        material is being applied to; may be empty. If specified, this
-        is supposed to replace the `baseColor` value */
+      material is being applied to; may be empty. If specified, this
+      is supposed to replace the `baseColor` value */
     std::shared_ptr<Texture> colorTexture;
     
     /*! alpha texture to be applied to the surface(s) that this
-        material is being applied to; may be empty. If specified, the
-        'w' coordinate of the tex2D<float4> sample from this texture
-        is supposed to replace the `transmission` value. Note that for
-        some models this texture _can_ absoltely be the same texture
-        as the colorTexture, in which case this will be a float4
-        texturew with the xyz value going in as color value, and the
-        'w' value as alpha value; other models may use a float3
-        texture for color, and a separate float1 texture for alpha. */
+      material is being applied to; may be empty. If specified, the
+      'w' coordinate of the tex2D<float4> sample from this texture
+      is supposed to replace the `transmission` value. Note that for
+      some models this texture _can_ absoltely be the same texture
+      as the colorTexture, in which case this will be a float4
+      texturew with the xyz value going in as color value, and the
+      'w' value as alpha value; other models may use a float3
+      texture for color, and a separate float1 texture for alpha. */
     std::shared_ptr<Texture> alphaTexture;
   };
 
@@ -202,19 +389,19 @@ namespace mini {
     typedef std::shared_ptr<Plastic> SP;
 
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Plastic() = default;
     
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Plastic(const Plastic &) = default;
 
     /*! constructs a new Material and returns a Material::SP to that
-        created material */
+      created material */
     inline static SP create() { return std::make_shared<Plastic>(); }
     
     /*! constructs a new Material that is a identical clone of the
-        current material */
+      current material */
     Material::SP clone() const override { return std::make_shared<Plastic>(*this); }
     void write(std::ofstream &out,
                const std::map<Texture::SP,int> &textures) override;
@@ -233,19 +420,19 @@ namespace mini {
     typedef std::shared_ptr<Metal> SP;
 
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Metal() = default;
     
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Metal(const Metal &) = default;
 
     /*! constructs a new Material and returns a Material::SP to that
-        created material */
+      created material */
     inline static SP create() { return std::make_shared<Metal>(); }
     
     /*! constructs a new Material that is a identical clone of the
-        current material */
+      current material */
     Material::SP clone() const override { return std::make_shared<Metal>(*this); }
     void write(std::ofstream &out,
                const std::map<Texture::SP,int> &textures) override;
@@ -262,19 +449,19 @@ namespace mini {
     typedef std::shared_ptr<Velvet> SP;
 
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Velvet() = default;
     
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Velvet(const Velvet &) = default;
 
     /*! constructs a new Material and returns a Material::SP to that
-        created material */
+      created material */
     inline static SP create() { return std::make_shared<Velvet>(); }
     
     /*! constructs a new Material that is a identical clone of the
-        current material */
+      current material */
     Material::SP clone() const override { return std::make_shared<Velvet>(*this); }
     void write(std::ofstream &out,
                const std::map<Texture::SP,int> &textures) override;
@@ -292,19 +479,19 @@ namespace mini {
     typedef std::shared_ptr<Dielectric> SP;
 
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Dielectric() = default;
     
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Dielectric(const Dielectric &) = default;
 
     /*! constructs a new Material and returns a Material::SP to that
-        created material */
+      created material */
     inline static SP create() { return std::make_shared<Dielectric>(); }
     
     /*! constructs a new Material that is a identical clone of the
-        current material */
+      current material */
     Material::SP clone() const override { return std::make_shared<Dielectric>(*this); }
     void write(std::ofstream &out,
                const std::map<Texture::SP,int> &textures) override;
@@ -320,19 +507,19 @@ namespace mini {
     typedef std::shared_ptr<ThinGlass> SP;
 
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     ThinGlass() = default;
     
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     ThinGlass(const ThinGlass &) = default;
 
     /*! constructs a new Material and returns a Material::SP to that
-        created material */
+      created material */
     inline static SP create() { return std::make_shared<ThinGlass>(); }
     
     /*! constructs a new Material that is a identical clone of the
-        current material */
+      current material */
     Material::SP clone() const override { return std::make_shared<ThinGlass>(*this); }
     void write(std::ofstream &out,
                const std::map<Texture::SP,int> &textures) override;
@@ -344,23 +531,24 @@ namespace mini {
     float thickness = 1.f;
     vec3f transmission = .95;
   };
+  
   struct MetallicPaint : public Material {
     typedef std::shared_ptr<MetallicPaint> SP;
 
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     MetallicPaint() = default;
     
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     MetallicPaint(const MetallicPaint &) = default;
 
     /*! constructs a new Material and returns a Material::SP to that
-        created material */
+      created material */
     inline static SP create() { return std::make_shared<MetallicPaint>(); }
     
     /*! constructs a new Material that is a identical clone of the
-        current material */
+      current material */
     Material::SP clone() const override { return std::make_shared<MetallicPaint>(*this); }
     void write(std::ofstream &out,
                const std::map<Texture::SP,int> &textures) override;
@@ -378,19 +566,19 @@ namespace mini {
     typedef std::shared_ptr<Matte> SP;
 
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Matte() = default;
     
     /*! constructs a new Material - note you _probably_ want to use
-        Material::create() instead */
+      Material::create() instead */
     Matte(const Matte &) = default;
 
     /*! constructs a new Material and returns a Material::SP to that
-        created material */
+      created material */
     inline static SP create() { return std::make_shared<Matte>(); }
     
     /*! constructs a new Material that is a identical clone of the
-        current material */
+      current material */
     Material::SP clone() const override { return std::make_shared<Matte>(*this); }
     void write(std::ofstream &out,
                const std::map<Texture::SP,int> &textures) override;
@@ -449,19 +637,19 @@ namespace mini {
     typedef std::shared_ptr<Object> SP;
 
     /*! creates a new Object for given set of meshes, and returns a
-        Object::SP for that object */
+      Object::SP for that object */
     inline static SP create(const std::vector<Mesh::SP> &meshes={})
     { return std::make_shared<Object>(meshes); }
 
     /*! constructs a new Object for given set of meshes - note you
-        _probably_ want to use Object::create() instead */
+      _probably_ want to use Object::create() instead */
     Object(const std::vector<Mesh::SP> &meshes={})
       : meshes(meshes)
     {}
     
     /*! computes and returns the bounding box of this object, which is
-        the bounding box over all the mshes that this object
-        contains */
+      the bounding box over all the mshes that this object
+      contains */
     box3f getBounds() const;
     
     /*! list of all geometries in this object. if this object is in
@@ -491,24 +679,24 @@ namespace mini {
   };
 
   /*! a quadrilateral area light that emits light into the direction
-      pointed to by the normal. The light shape is given by an
-      "anchor" point describing one of the corners of the light
-      soruces, and two edges spanning the quadrilateral from that
-      point */
+    pointed to by the normal. The light shape is given by an
+    "anchor" point describing one of the corners of the light
+    soruces, and two edges spanning the quadrilateral from that
+    point */
   struct QuadLight {
     vec3f corner, edge0, edge1, emission;
     /*! normal of this lights source; this could obviously be derived
-        from cross(edge0,edge1), but is handle to have in a
-        renderer */
+      from cross(edge0,edge1), but is handle to have in a
+      renderer */
     vec3f normal;
     /*! area of this lights source; this could obviously be derived
-        from cross(edge0,edge1), but is handle to have in a
-        renderer */
+      from cross(edge0,edge1), but is handle to have in a
+      renderer */
     float area;
   };
 
   /*! a directional light at infinity, shining *into* given direction,
-      with a given radiance */
+    with a given radiance */
   struct DirLight {
     std::string toString();
     vec3f direction;
@@ -539,9 +727,9 @@ namespace mini {
 #endif
 
   /*! A "environment light" texture that in many models represents
-      some kind of scanned sky dome. Is often of HDR float4 type, and
-      _may_ contain a transform to properly align the scanned texture
-      to the model */
+    some kind of scanned sky dome. Is often of HDR float4 type, and
+    _may_ contain a transform to properly align the scanned texture
+    to the model */
   struct EnvMapLight {
     typedef std::shared_ptr<EnvMapLight> SP;
 
@@ -552,14 +740,14 @@ namespace mini {
   };
 
   /*! a complete scene, consisting of a list of instances (may be a
-      single one if the scene doesn't use instantiation), and some
-      light sources */
+    single one if the scene doesn't use instantiation), and some
+    light sources */
   struct Scene {
     typedef std::shared_ptr<Scene> SP;
 
     /*! constructor that creates a new scene object from the given
-        vector of instances - note you _probably_ want to use Scene::create()
-        instead */
+      vector of instances - note you _probably_ want to use Scene::create()
+      instead */
     Scene(const std::vector<Instance::SP> &instances={})
       : instances(instances)
     {}
@@ -569,15 +757,15 @@ namespace mini {
     { return std::make_shared<Scene>(instances); }
   
     /*! computes and returns the world space bounding box of this
-        scene. Note that for scene with many instances that can take a
-        while */
+      scene. Note that for scene with many instances that can take a
+      while */
     box3f getBounds() const;
 
     /*! loads a ".mini" file from the given file */
     static Scene::SP load(const std::string &fileName);
 
     /*! saves the model in file with given name, using a binary file
-        format that can be loaded with Scene::load() */
+      format that can be loaded with Scene::load() */
     void save(const std::string &fileName);
       
     std::vector<QuadLight>  quadLights;
@@ -588,10 +776,10 @@ namespace mini {
   };
 
   /*! helper function for computing the bounding box of an affinely
-      transformed box3f; usually used to compute the world-space
-      bounding box of an instance (given that instance's affine
-      transform matrix and the object-space bounding box of the object
-      being instantiated) */
+    transformed box3f; usually used to compute the world-space
+    bounding box of an instance (given that instance's affine
+    transform matrix and the object-space bounding box of the object
+    being instantiated) */
   inline box3f xfmBox(const affine3f &xfm, const box3f &box)
   {
     box3f result;
