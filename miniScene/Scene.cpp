@@ -88,6 +88,8 @@ namespace mini {
     case DIELECTRIC: return Dielectric::create();
     case THINGLASS: return ThinGlass::create();
     case METALLICPAINT: return MetallicPaint::create();
+    case INVALID:
+      throw std::runtime_error("should never have a 'invalid' material");
     }
     throw std::runtime_error("un-supported material tag "+std::to_string((int)tag)+" in Scene::load");
   }

@@ -99,7 +99,9 @@ namespace mini {
       enum { dims = 2 };
       typedef T scalar_t;
     
-      inline __both__ vec_t() {}
+      inline __both__ vec_t() = default;
+      inline vec_t(const vec_t &) = default;
+      inline ~vec_t() = default;
       inline __both__ vec_t(const T &t) : x(t), y(t) {}
       inline __both__ vec_t(const T &x, const T &y) : x(x), y(y) {}
 #ifdef __CUDACC__
@@ -118,11 +120,12 @@ namespace mini {
 #endif
 
       /*! assignment operator */
-      inline __both__ vec_t<T,2> &operator=(const vec_t<T,2> &other) {
-        this->x = other.x;
-        this->y = other.y;
-        return *this;
-      }
+      inline __both__ vec_t<T,2> &operator=(const vec_t<T,2> &other) = default;
+      // {
+      //   this->x = other.x;
+      //   this->y = other.y;
+      //   return *this;
+      // }
     
       /*! construct 2-vector from 2-vector of another type */
       template<typename OT>
@@ -146,9 +149,9 @@ namespace mini {
       enum { dims = 3 };
       typedef T scalar_t;
     
-      inline // __both__
-        vec_t(const vec_t &) = default;
-      inline __both__ vec_t() {}
+      inline vec_t(const vec_t &) = default;
+      inline __both__ vec_t() = default;//{}
+      inline __both__ ~vec_t() = default;
       inline __both__ vec_t(const T &t) : x(t), y(t), z(t) {}
       inline __both__ vec_t(const T &_x, const T &_y, const T &_z) : x(_x), y(_y), z(_z) {}
 #ifdef __CUDACC__
@@ -180,12 +183,7 @@ namespace mini {
       inline __both__ vec_t<T,3> yzx() const { return vec_t<T,3>(y,z,x); }
     
       /*! assignment operator */
-      inline __both__ vec_t<T,3> &operator=(const vec_t<T,3> &other) {
-        this->x = other.x;
-        this->y = other.y;
-        this->z = other.z;
-        return *this;
-      }
+      inline __both__ vec_t<T,3> &operator=(const vec_t<T,3> &other) = default;
     
       inline __both__ T &operator[](size_t dim) { return (&x)[dim]; }
       inline __both__ const T &operator[](size_t dim) const { return (&x)[dim]; }

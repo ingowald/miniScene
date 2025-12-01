@@ -75,6 +75,14 @@ if (MINI_BUILD_SIMPLE_IMPORTERS)
     miniScene_import_obj
     )
 
+  add_executable(lavai32f32toMini
+    lavai32f32toMini.cpp
+    )
+  target_link_libraries(lavai32f32toMini
+    miniScene
+    miniScene_import_obj
+    )
+    
 endif()
 
 

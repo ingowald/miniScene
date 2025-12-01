@@ -98,12 +98,14 @@
 #endif
 #endif
 
+#ifndef __owl_host
 #if defined(__CUDA_ARCH__)
 # define __owl_device   __device__
 # define __owl_host     __host__
 #else
 # define __owl_device   /* ignore */
 # define __owl_host     /* ignore */
+#endif
 #endif
 
 # define __both__   __owl_host __owl_device
@@ -218,7 +220,7 @@ namespace mini {
     // inline __both__ float cos(float f) { return ::cosf(f); }
     // inline __both__ double cos(double f) { return ::cos(f); }
 
-    using ::saturate;
+    // using ::saturate;
 #else
     using std::min;
     using std::max;
