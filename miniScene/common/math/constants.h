@@ -23,6 +23,7 @@
 #ifdef __CUDACC__
 #include <math_constants.h>
 #endif
+#include <cstdint>
 
 #ifndef M_PI
 #define M_PI 3.141593f
