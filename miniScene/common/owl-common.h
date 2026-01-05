@@ -218,13 +218,12 @@ namespace mini {
     // inline __both__ float cos(float f) { return ::cosf(f); }
     // inline __both__ double cos(double f) { return ::cos(f); }
 
-    using ::saturate;
 #else
     using std::min;
     using std::max;
     using std::abs;
     // inline __both__ double sin(double f) { return ::sin(f); }
-    inline __both__ float saturate(const float &f) { return min(1.f,max(0.f,f)); }
+    // inline __both__ float saturate(const float &f) { return min(1.f,max(0.f,f)); }
 #endif
 
     // inline __both__ float abs(float f)      { return fabsf(f); }
