@@ -101,7 +101,7 @@
 #if defined(__CUDA_ARCH__)
 # define __owl_device   __device__
 # define __owl_host     __host__
-#else
+#elif !defined(__owl_device)
 # define __owl_device   /* ignore */
 # define __owl_host     /* ignore */
 #endif
