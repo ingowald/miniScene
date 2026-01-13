@@ -244,6 +244,7 @@ namespace mini {
       typedef T scalar_t;
     
       inline __both__ vec_t() {}
+      inline __both__ vec_t(const vec_t &) = default;
 
       inline __both__ vec_t(const T &t)
         : x(t), y(t), z(t), w(t)
@@ -274,7 +275,7 @@ namespace mini {
         inline __both__ explicit vec_t(const vec_t<OT,4> &o)
         : x((T)o.x), y((T)o.y), z((T)o.z), w((T)o.w)
         {}
-      inline __both__ vec_t(const vec_t<T,4> &o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
+      // inline __both__ vec_t(const vec_t<T,4> &o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
 
       /*! assignment operator */
       inline __both__ vec_t<T,4> &operator=(const vec_t<T,4> &other) = default;
