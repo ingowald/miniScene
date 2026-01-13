@@ -277,13 +277,13 @@ namespace mini {
       inline __both__ vec_t(const vec_t<T,4> &o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
 
       /*! assignment operator */
-      inline __both__ vec_t<T,4> &operator=(const vec_t<T,4> &other) {
-        this->x = other.x;
-        this->y = other.y;
-        this->z = other.z;
-        this->w = other.w;
-        return *this;
-      }
+      inline __both__ vec_t<T,4> &operator=(const vec_t<T,4> &other) = default;
+      //   this->x = other.x;
+      //   this->y = other.y;
+      //   this->z = other.z;
+      //   this->w = other.w;
+      //   return *this;
+      // }
     
       inline __both__ T &operator[](size_t dim) { return (&x)[dim]; }
       inline __both__ const T &operator[](size_t dim) const { return (&x)[dim]; }
