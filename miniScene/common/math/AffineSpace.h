@@ -56,52 +56,77 @@ namespace mini {
        L l;           /*< linear part of affine space */
        VectorT p;     /*< affine part of affine space */
 
-       ////////////////////////////////////////////////////////////////////////////////
+       ///////////////////////////////////////////////////////////////////////////
        // Constructors, Assignment, Cast, Copy Operations
-       ////////////////////////////////////////////////////////////////////////////////
+       ///////////////////////////////////////////////////////////////////////////
 
-       // inline AffineSpaceT           ( ) = default;
-// #ifdef __CUDA_ARCH__
        inline __both__
        AffineSpaceT           ( )
        : l(OneTy()),
        p(ZeroTy())
        {}
-// #else
-//        inline __both__ AffineSpaceT           ( ) : l(one), p(zero) {}
-// #endif
 
-       inline// __both__
+       inline __both__
        AffineSpaceT           ( const AffineSpaceT& other ) = default;
-       inline __both__ AffineSpaceT           ( const L           & other ) { l = other  ; p = VectorT(ZeroTy()); }
-       inline __both__ AffineSpaceT& operator=( const AffineSpaceT& other ) { l = other.l; p = other.p; return *this; }
+       inline __both__
+       AffineSpaceT           ( const L           & other )
+       {
+         l = other;
+         p = VectorT(ZeroTy());
+       }
+       inline __both__
+       AffineSpaceT& operator=( const AffineSpaceT& other ) { l = other.l; p = other.p; return *this; }
 
-       inline __both__ AffineSpaceT( const VectorT& vx, const VectorT& vy, const VectorT& vz, const VectorT& p ) : l(vx,vy,vz), p(p) {}
-       inline __both__ AffineSpaceT( const L& l, const VectorT& p ) : l(l), p(p) {}
+       inline __both__
+       AffineSpaceT(const VectorT& vx,
+                    const VectorT& vy,
+                    const VectorT& vz,
+                    const VectorT& p )
+       : l(vx,vy,vz), p(p)
+       {}
+       
+       inline __both__
+       AffineSpaceT(const L &l, const VectorT &p)
+       : l(l), p(p)
+       {}
 
-       template<typename L1> inline __both__ AffineSpaceT( const AffineSpaceT<L1>& s ) : l(s.l), p(s.p) {}
+       template<typename L1> inline __both__
+       AffineSpaceT( const AffineSpaceT<L1>& s ) : l(s.l), p(s.p) {}
 
-       ////////////////////////////////////////////////////////////////////////////////
+       ///////////////////////////////////////////////////////////////////////////
        // Constants
-       ////////////////////////////////////////////////////////////////////////////////
+       ///////////////////////////////////////////////////////////////////////////
 
        inline AffineSpaceT( ZeroTy ) : l(ZeroTy()), p(ZeroTy()) {}
        inline AffineSpaceT( OneTy )  : l(OneTy()),  p(ZeroTy()) {}
 
        /*! return matrix for scaling */
-       static inline AffineSpaceT scale(const VectorT& s) { return L::scale(s); }
+       static inline __both__
+       AffineSpaceT scale(const VectorT& s)
+       { return L::scale(s); }
 
        /*! return matrix for translation */
-       static inline AffineSpaceT translate(const VectorT& p) { return AffineSpaceT(OneTy(),p); }
+       static inline __both__
+       AffineSpaceT translate(const VectorT& p)
+       { return AffineSpaceT(OneTy(),p); }
 
        /*! return matrix for rotation, only in 2D */
-       static inline AffineSpaceT rotate(const ScalarT& r) { return L::rotate(r); }
+       static inline __both__
+       AffineSpaceT rotate(const ScalarT& r)
+       { return L::rotate(r); }
 
        /*! return matrix for rotation around arbitrary point (2D) or axis (3D) */
-       static inline AffineSpaceT rotate(const VectorT& u, const ScalarT& r) { return L::rotate(u,r); }
+       static inline __both__
+       AffineSpaceT rotate(const VectorT& u,
+                           const ScalarT& r)
+       { return L::rotate(u,r); }
 
        /*! return matrix for rotation around arbitrary axis and point, only in 3D */
-       static inline AffineSpaceT rotate(const VectorT& p, const VectorT& u, const ScalarT& r) { return translate(+p) * rotate(u,r) * translate(-p);  }
+       static inline __both__
+       AffineSpaceT rotate(const VectorT& p,
+                           const VectorT& u,
+                           const ScalarT& r)
+       { return translate(+p) * rotate(u,r) * translate(-p);  }
 
        /*! return matrix for looking at given point, only in 3D; right-handed coordinate system */
        static inline AffineSpaceT lookat(const VectorT& eye, const VectorT& point, const VectorT& up) {
@@ -130,18 +155,56 @@ namespace mini {
     // Binary Operators
     ////////////////////////////////////////////////////////////////////////////////
 
-    template<typename L> inline AffineSpaceT<L> operator +( const AffineSpaceT<L>& a, const AffineSpaceT<L>& b ) { return AffineSpaceT<L>(a.l+b.l,a.p+b.p); }
-    template<typename L> inline AffineSpaceT<L> operator -( const AffineSpaceT<L>& a, const AffineSpaceT<L>& b ) { return AffineSpaceT<L>(a.l-b.l,a.p-b.p); }
+    template<typename L> inline __both__
+    AffineSpaceT<L> operator +( const AffineSpaceT<L>& a,
+                                const AffineSpaceT<L>& b )
+    { return AffineSpaceT<L>(a.l+b.l,a.p+b.p); }
+    
+    template<typename L> inline __both__
+    AffineSpaceT<L> operator -( const AffineSpaceT<L>& a,
+                                const AffineSpaceT<L>& b )
+    { return AffineSpaceT<L>(a.l-b.l,a.p-b.p); }
 
-    template<typename L> inline AffineSpaceT<L> operator *( const ScalarT        & a, const AffineSpaceT<L>& b ) { return AffineSpaceT<L>(a*b.l,a*b.p); }
-    template<typename L> inline AffineSpaceT<L> operator *( const AffineSpaceT<L>& a, const AffineSpaceT<L>& b ) { return AffineSpaceT<L>(a.l*b.l,a.l*b.p+a.p); }
-    template<typename L> inline AffineSpaceT<L> operator /( const AffineSpaceT<L>& a, const AffineSpaceT<L>& b ) { return a * rcp(b); }
-    template<typename L> inline AffineSpaceT<L> operator /( const AffineSpaceT<L>& a, const ScalarT        & b ) { return a * rcp(b); }
+    template<typename L> inline __both__
+    AffineSpaceT<L> operator *( const ScalarT        & a,
+                                const AffineSpaceT<L>& b )
+    { return AffineSpaceT<L>(a*b.l,a*b.p); }
+    
+    template<typename L> inline __both__
+    AffineSpaceT<L> operator *( const AffineSpaceT<L>& a,
+                                const AffineSpaceT<L>& b )
+    { return AffineSpaceT<L>(a.l*b.l,a.l*b.p+a.p); }
+    
+    template<typename L> inline __both__
+    AffineSpaceT<L> operator /( const AffineSpaceT<L>& a,
+                                const AffineSpaceT<L>& b )
+    { return a * rcp(b); }
+    
+    template<typename L> inline __both__
+    AffineSpaceT<L> operator /( const AffineSpaceT<L>& a,
+                                const ScalarT        & b )
+    { return a * rcp(b); }
 
-    template<typename L> inline AffineSpaceT<L>& operator *=( AffineSpaceT<L>& a, const AffineSpaceT<L>& b ) { return a = a * b; }
-    template<typename L> inline AffineSpaceT<L>& operator *=( AffineSpaceT<L>& a, const ScalarT        & b ) { return a = a * b; }
-    template<typename L> inline AffineSpaceT<L>& operator /=( AffineSpaceT<L>& a, const AffineSpaceT<L>& b ) { return a = a / b; }
-    template<typename L> inline AffineSpaceT<L>& operator /=( AffineSpaceT<L>& a, const ScalarT        & b ) { return a = a / b; }
+    template<typename L> inline __both__
+    AffineSpaceT<L>& operator *=( AffineSpaceT<L>& a,
+                                  const AffineSpaceT<L>& b )
+    { return a = a * b; }
+    
+    template<typename L> inline __both__
+    AffineSpaceT<L>& operator *=( AffineSpaceT<L>& a,
+                                  const ScalarT        & b )
+    { return a = a * b; }
+    
+    template<typename L> inline __both__
+    AffineSpaceT<L>& operator /=( AffineSpaceT<L>& a,
+                                  const AffineSpaceT<L>& b )
+    { return a = a / b; }
+    
+    template<typename L> inline __both__
+    AffineSpaceT<L>& operator /=( AffineSpaceT<L>& a,
+                                  const ScalarT        & b )
+    { return a = a / b; }
+    
 
     template<typename L> inline __both__ const VectorT xfmPoint (const AffineSpaceT<L>& m, const VectorT& p) { return madd(VectorT(p.x),m.l.vx,madd(VectorT(p.y),m.l.vy,madd(VectorT(p.z),m.l.vz,m.p))); }
     template<typename L> inline __both__ const VectorT xfmVector(const AffineSpaceT<L>& m, const VectorT& v) { return xfmVector(m.l,v); }
@@ -181,8 +244,14 @@ namespace mini {
 
     ////////////////////////////////////////////////////////////////////////////////
     /*! Template Specialization for 2D: return matrix for rotation around point (rotation around arbitrarty vector is not meaningful in 2D) */
-    template<> inline AffineSpace2f AffineSpace2f::rotate(const vec2f& p, const float& r)
-    { return translate(+p) * AffineSpace2f(LinearSpace2f::rotate(r)) * translate(-p); }
+    // template<> inline __both__
+    // AffineSpace2f AffineSpace2f::rotate(const vec2f& p, const float& r)
+    // {
+    //   return
+    //     translate(+p)
+    //     * AffineSpace2f(LinearSpace2f::rotate(r))
+    //     * translate(-p);
+    // }
 
 #undef VectorT
 #undef ScalarT

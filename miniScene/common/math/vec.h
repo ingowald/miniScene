@@ -99,7 +99,7 @@ namespace mini {
       enum { dims = 2 };
       typedef T scalar_t;
     
-      inline __both__ vec_t() {}
+      inline vec_t() {}
       inline __both__ vec_t(const vec_t &) = default;
       inline __both__ vec_t(const T &t) : x(t), y(t) {}
       inline __both__ vec_t(const T &x, const T &y) : x(x), y(y) {}
