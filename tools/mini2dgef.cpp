@@ -60,7 +60,7 @@ int main(int ac, char **av)
 
   Scene::SP scene = Scene::load(inFileName);
   std::cout << MINI_TERMINAL_GREEN
-            << "scene loaded; now flattening into a single mesh... "
+            << "scene loaded... "
             << std::endl;
 
   std::set<Object::SP> uniqueObjects;
