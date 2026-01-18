@@ -98,7 +98,8 @@
 #endif
 #endif
 
-#if defined(__CUDA_ARCH__)
+#if defined(__CUDA_ARCH__) || defined(__HIP__)
+// #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
 # define __owl_device   __device__
 # define __owl_host     __host__
 #elif !defined(__owl_device)

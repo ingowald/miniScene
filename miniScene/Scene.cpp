@@ -91,6 +91,8 @@ namespace mini {
     case THINGLASS: return ThinGlass::create();
     case METALLICPAINT: return MetallicPaint::create();
     case ANARI_MATERIAL: return ANARIMaterial::create();
+    case INVALID:
+      ;
     }
     throw std::runtime_error("un-supported material tag "+std::to_string((int)tag)+" in Scene::load");
   }
