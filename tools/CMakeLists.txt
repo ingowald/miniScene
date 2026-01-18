@@ -92,6 +92,17 @@ target_link_libraries(mini2obj
   )
 
 # -----------------------------------------------------------------------------
+# exporter for fouble precision format
+# -----------------------------------------------------------------------------
+add_executable(mini2dgef
+  mini2dgef.cpp
+  )
+target_link_libraries(mini2dgef
+  PUBLIC
+  miniScene
+  )
+
+# -----------------------------------------------------------------------------
 # tool primarily for debugging: given a mini scene, write out *flat*
 # scene in HSMESH file format - can not do textures or materials, will
 # simply dump all triangles in ONE mesh.
