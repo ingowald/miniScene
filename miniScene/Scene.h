@@ -214,8 +214,8 @@ namespace mini {
     // STRING
     // opaque
     // control cut-out transparency, possible values: opaque, blend, mask
-    typedef enum { BLEND, MASK, OPAQUE } AlphaMode;
-    int         alphaMode = BLEND;
+    typedef enum { AM_BLEND, AM_MASK, AM_OPAQUE } AlphaMode;
+    int         alphaMode = AM_BLEND;
 
     // alphaCutoff
     // FLOAT32
