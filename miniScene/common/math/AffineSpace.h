@@ -66,7 +66,7 @@ namespace mini {
        p(ZeroTy())
        {}
 
-       inline __both__
+       inline
        AffineSpaceT           ( const AffineSpaceT& other ) = default;
        inline __both__
        AffineSpaceT           ( const L           & other )

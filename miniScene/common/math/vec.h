@@ -100,7 +100,7 @@ namespace mini {
       typedef T scalar_t;
     
       inline vec_t() {}
-      inline __both__ vec_t(const vec_t &) = default;
+      inline vec_t(const vec_t &) = default;
       inline __both__ vec_t(const T &t) : x(t), y(t) {}
       inline __both__ vec_t(const T &x, const T &y) : x(x), y(y) {}
 #ifdef __CUDACC__
@@ -119,7 +119,7 @@ namespace mini {
 #endif
 
       /*! assignment operator */
-      inline __both__ vec_t<T,2> &operator=(const vec_t<T,2> &other) = default;
+      inline vec_t<T,2> &operator=(const vec_t<T,2> &other) = default;
 #if 0
       template<typename OT>
       inline __both__ vec_t<T,2> &operator=(const vec_t<OT,2> &other) {
@@ -152,8 +152,8 @@ namespace mini {
       typedef T scalar_t;
     
       inline vec_t(const vec_t &) = default;
-      inline __both__ vec_t() = default;
-      inline __both__ ~vec_t() = default;
+      inline vec_t() = default;
+      inline ~vec_t() = default;
       
       inline __both__ vec_t(const T &t) : x(t), y(t), z(t) {}
       inline __both__ vec_t(const T &_x, const T &_y, const T &_z) : x(_x), y(_y), z(_z) {}
@@ -186,7 +186,7 @@ namespace mini {
       inline __both__ vec_t<T,3> yzx() const { return vec_t<T,3>(y,z,x); }
     
       /*! assignment operator */
-      inline __both__ vec_t<T,3> &operator=(const vec_t<T,3> &other) = default;
+      inline vec_t<T,3> &operator=(const vec_t<T,3> &other) = default;
 #if 0
       template<typename OT>
       inline __both__ vec_t<T,3> &operator=(const vec_t<OT,3> &other) {
@@ -243,8 +243,8 @@ namespace mini {
       enum { dims = 4 };
       typedef T scalar_t;
     
-      inline __both__ vec_t() = default;
-      inline __both__ vec_t(const vec_t &) = default;
+      inline vec_t() = default;
+      inline vec_t(const vec_t &) = default;
 
       inline __both__ vec_t(const T &t)
         : x(t), y(t), z(t), w(t)
@@ -275,16 +275,9 @@ namespace mini {
         inline __both__ explicit vec_t(const vec_t<OT,4> &o)
         : x((T)o.x), y((T)o.y), z((T)o.z), w((T)o.w)
         {}
-      // inline __both__ vec_t(const vec_t<T,4> &o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
 
       /*! assignment operator */
-      inline __both__ vec_t<T,4> &operator=(const vec_t<T,4> &other) = default;
-      //   this->x = other.x;
-      //   this->y = other.y;
-      //   this->z = other.z;
-      //   this->w = other.w;
-      //   return *this;
-      // }
+      inline vec_t<T,4> &operator=(const vec_t<T,4> &other) = default;
     
       inline __both__ T &operator[](size_t dim) { return (&x)[dim]; }
       inline __both__ const T &operator[](size_t dim) const { return (&x)[dim]; }

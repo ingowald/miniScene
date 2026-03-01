@@ -50,13 +50,11 @@ namespace mini {
     template<typename T> struct MINI_INTERFACE LinearSpace2
       {
         using vector_t = T;
-        // using Scalar = typename T::scalar_t;
-        // using vector_t = T;
         using scalar_t = typename T::scalar_t;
     
         /*! default matrix constructor */
-        inline __both__ LinearSpace2() = default;
-        inline __both__ LinearSpace2(const LinearSpace2 &other ) = default;
+        inline LinearSpace2() = default;
+        inline LinearSpace2(const LinearSpace2 &other ) = default;
         inline __both__
         LinearSpace2 &operator=( const LinearSpace2& other )
         { vx = other.vx; vy = other.vy; return *this; }
@@ -247,7 +245,7 @@ namespace mini {
         vz(ZeroTy(),ZeroTy(),OneTy())
         {}
       
-        inline  __both__
+        inline
         LinearSpace3           ( const LinearSpace3& other ) = default;
         
         inline __both__
