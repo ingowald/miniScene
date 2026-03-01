@@ -576,6 +576,7 @@ namespace mini {
     SerializedScene serialized(this);
       
     io::writeElement(out,expected_magic_dp);
+    PRINT(expected_magic_dp);
 
     // ------------------------------------------------------------------
     // textures
@@ -863,7 +864,7 @@ namespace mini {
     auto expected_magic
       = USE_SP_VERSION
       ? expected_magic_sp
-      : expected_magic_sp;
+      : expected_magic_dp;
     if (magic == expected_magic) {
       // all good, this is our format we'd also write
     } else if (magic == expected_magic-1) {
@@ -967,14 +968,15 @@ namespace mini {
         }
         Mesh::SP mesh = std::make_shared<Mesh>();
         io::readVector(in,mesh->indices);
-        if (USE_SP_VERSION)
-          io::readVector(in,mesh->vertices);
-        else {
+        if (USE_SP_VERSION) {
           std::vector<vec3f> spVertices;
           io::readVector(in,spVertices);
           for (auto v : spVertices)
             mesh->vertices.push_back(vec3d(v));
+        } else {
+          io::readVector(in,mesh->vertices);
         }
+
         io::readVector(in,mesh->normals);
         io::readVector(in,mesh->texcoords);
         int matID = io::readElement<int>(in);
@@ -997,15 +999,15 @@ namespace mini {
         continue;
       }
       Instance::SP inst = std::make_shared<Instance>();
-      if (USE_SP_VERSION)
-        io::readElement(in,inst->xfm);
-      else {
+      if (USE_SP_VERSION) {
         affine3f spXfm;
         io::readElement(in,spXfm);
         inst->xfm.p = vec3d(spXfm.p);
         inst->xfm.l.vx = vec3d(spXfm.l.vx);
         inst->xfm.l.vy = vec3d(spXfm.l.vy);
         inst->xfm.l.vz = vec3d(spXfm.l.vz);
+      } else {
+        io::readElement(in,inst->xfm);
       }
       inst->object = objects[io::readElement<int>(in)];
       scene->instances.push_back(inst);

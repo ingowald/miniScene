@@ -13,19 +13,27 @@
 # See the License for the specific language governing permissions and      #
 # limitations under the License.                                           #
 # ======================================================================== #
-
-if (OFF)
 # -----------------------------------------------------------------------------
 # tool that reads a scene, and then prints some basic information
 # -----------------------------------------------------------------------------
-add_executable(miniInfo
+add_executable(dpmInfo
   info.cpp
   )
-target_link_libraries(miniInfo
+target_link_libraries(dpmInfo
   PUBLIC
-  miniScene
+  miniSceneDP
   )
 
+
+add_executable(dpmImportMini
+  importMini.cpp
+  )
+target_link_libraries(dpmImportMini
+  PUBLIC
+  miniSceneDP
+  )
+  
+if (OFF)
 # -----------------------------------------------------------------------------
 # takes two models, copies the second's env-light into the first, and
 # saves that model with its now-added envlight
