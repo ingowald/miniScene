@@ -14,6 +14,7 @@
 # limitations under the License.                                           #
 # ======================================================================== #
 
+if (OFF)
 # -----------------------------------------------------------------------------
 # tool that reads a scene, and then prints some basic information
 # -----------------------------------------------------------------------------
@@ -33,17 +34,6 @@ add_executable(miniAddEnvLight
   addEnvLight.cpp
   )
 target_link_libraries(miniAddEnvLight
-  PUBLIC
-  miniScene
-  )
-
-# -----------------------------------------------------------------------------
-# 'lint' like tool that runs some basic sanity tests such as checking indices
-# -----------------------------------------------------------------------------
-add_executable(miniLint
-  lint.cpp
-  )
-target_link_libraries(miniLint
   PUBLIC
   miniScene
   )
@@ -197,3 +187,4 @@ target_link_libraries(miniExportIndividualInstances
 
 
 
+endif()

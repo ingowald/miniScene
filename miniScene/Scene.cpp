@@ -29,18 +29,19 @@ namespace mini {
 
 #define PARALLELILIZE_GETBOUNDS 1
   
-  const size_t expected_magic = 4321000000ULL+FORMAT_VERSION;
+  const size_t expected_magic_sp = 4321000000ULL+FORMAT_VERSION;
+  const size_t expected_magic_dp = 5321000000ULL+FORMAT_VERSION;
 
   /*! computes the bounding box of a input box undergoing an affine
       transform; e.g., if we have the (object-space) bounds of an
       object we can use that to compute "a" world-space box (not
       necessarily tight, but definitively a boundning box) */
-  inline box3f transformedBoxBounds(const affine3f &xfm,
-                                    const box3f &box)
+  inline box3d transformedBoxBounds(const affine3d &xfm,
+                                    const box3d &box)
   {
-    box3f bounds;
+    box3d bounds;
     for (int i=0;i<8;i++) {
-      vec3f corner((i&1?box.lower:box.upper).x,
+      vec3d corner((i&1?box.lower:box.upper).x,
                    (i&2?box.lower:box.upper).y,
                    (i&4?box.lower:box.upper).z);
       bounds.extend(xfmPoint(xfm,corner));
@@ -449,16 +450,16 @@ namespace mini {
     return ss.str();
   }
   
-  box3f Mesh::getBounds() const
+  box3d Mesh::getBounds() const
   {
-    box3f bounds;
+    box3d bounds;
 #if PARALLELILIZE_GETBOUNDS
     if (vertices.size() > 16*1024) {
       std::mutex boundsMutex;
       parallel_for_blocked
         ((size_t)0,vertices.size(),16*1024,
          [&](size_t begin, size_t end) {
-           box3f blockBox;
+           box3d blockBox;
            for (size_t i=begin;i<end;i++)
              blockBox.extend(vertices[i]);
            std::lock_guard<std::mutex> lock(boundsMutex);
@@ -471,16 +472,16 @@ namespace mini {
     return bounds;
   }
     
-  box3f Object::getBounds() const
+  box3d Object::getBounds() const
   {
-    box3f bounds;
+    box3d bounds;
 #if PARALLELILIZE_GETBOUNDS
     if (meshes.size() > 16*1024) {
       std::mutex boundsMutex;
       parallel_for_blocked
         ((size_t)0,meshes.size(),16*1024,
          [&](size_t begin, size_t end) {
-           box3f blockBox;
+           box3d blockBox;
            for (size_t i=begin;i<end;i++)
              blockBox.extend(meshes[i]->getBounds());
            std::lock_guard<std::mutex> lock(boundsMutex);
@@ -494,17 +495,17 @@ namespace mini {
   }
 
     
-  box3f Instance::getBounds() const
+  box3d Instance::getBounds() const
   {
-    const box3f box = object->getBounds();
+    const box3d box = object->getBounds();
     return transformedBoxBounds(xfm,box);
   }
   
-  box3f Scene::getBounds() const
+  box3d Scene::getBounds() const
   {
-    box3f bounds;
+    box3d bounds;
 #if PARALLELILIZE_GETBOUNDS
-    std::map<Object::SP,box3f> objectBounds;
+    std::map<Object::SP,box3d> objectBounds;
     
     // ------------------------------------------------------------------
     // first, make a list of all the objects being used in the scene
@@ -514,12 +515,12 @@ namespace mini {
       ((size_t)0,instances.size(),1024,
        [&](size_t begin, size_t end) {
          std::set<Object::SP> blockObjects;
-         box3f blockBox;
+         box3d blockBox;
          for (size_t i=begin;i<end;i++)
            blockObjects.insert(instances[i]->object);
          std::lock_guard<std::mutex> lock(mutex);
          for (auto obj : blockObjects)
-           objectBounds[obj] = box3f();
+           objectBounds[obj] = box3d();
        });
     
     // ------------------------------------------------------------------
@@ -550,10 +551,10 @@ namespace mini {
     parallel_for_blocked
       ((size_t)0,instances.size(),1024,
        [&](size_t begin, size_t end) {
-         box3f blockBox;
+         box3d blockBox;
          for (size_t i=begin;i<end;i++) {
            auto inst = instances[i];
-           box3f objBounds = objectBounds[inst->object];
+           box3d objBounds = objectBounds[inst->object];
            blockBox.extend(transformedBoxBounds(inst->xfm,objBounds));
          }
          std::lock_guard<std::mutex> lock(mutex);
@@ -574,7 +575,7 @@ namespace mini {
       throw std::runtime_error("could not open file '"+baseName+"'");
     SerializedScene serialized(this);
       
-    io::writeElement(out,expected_magic);
+    io::writeElement(out,expected_magic_dp);
 
     // ------------------------------------------------------------------
     // textures
@@ -676,12 +677,181 @@ namespace mini {
     // ------------------------------------------------------------------
     // wrap-up: write end-of file marker
     // ------------------------------------------------------------------
-    io::writeElement(out,expected_magic);
+    io::writeElement(out,expected_magic_dp);
     if (!out.good())
       throw std::runtime_error("some error happened while writing '"+baseName+"'");
   }
-    
+
   Scene::SP Scene::load(const std::string &baseName)
+  {
+    return Scene::loadT<false>(baseName);
+  }
+
+  Scene::SP Scene::loadSP(const std::string &baseName)
+  {
+    return Scene::loadT<true>(baseName);
+  }
+
+//   Scene::SP Scene::load(const std::string &baseName)
+//   {
+//     std::ifstream in(baseName,std::ios::binary);
+//     if (!in.good())
+//       throw std::runtime_error("could not open Scene{"+baseName+"}");
+//     Scene::SP scene = std::make_shared<Scene>();
+
+//     size_t magic = io::readElement<size_t>(in);
+//     int format_version = 12;
+//     if (magic == expected_magic) {
+//       // all good, this is our format we'd also write
+//     } else if (magic == expected_magic-1) {
+//       // version 11 - old mini::Material handling - we should still be able to read this.
+//       format_version = 11;
+//     } else
+//       throw std::runtime_error("invalid or incompatible 'mini' scene file (wrong file magic) - cannot load");
+      
+//     // ------------------------------------------------------------------
+//     // textures
+//     // ------------------------------------------------------------------
+//     std::vector<Texture::SP> textures;
+//     size_t numTextures = io::readElement<size_t>(in);
+//     for (int i=0;i<numTextures;i++) {
+//       // if (i==0)
+//       //   textures.push_back(0); // first one is always 0
+//       // else {
+//       int valid;
+//       io::readElement(in,valid);
+//       if (!valid) {
+//         textures.push_back({});
+//       } else {
+//         Texture::SP tex = std::make_shared<Texture>();
+//         io::readElement(in,tex->size);
+//         io::readElement(in,tex->format);
+//         io::readElement(in,tex->filterMode);
+//         io::readVector(in,tex->data);
+//         textures.push_back(tex);
+//       }
+//     }
+
+//     // ------------------------------------------------------------------
+//     // lights
+//     // ------------------------------------------------------------------
+//     io::readVector(in,scene->quadLights);
+//     io::readVector(in,scene->dirLights);
+//     const int hasEnvMap = io::readElement<int>(in);
+//     if (hasEnvMap) {
+//       scene->envMapLight = std::make_shared<EnvMapLight>();
+//       io::readElement(in,scene->envMapLight->transform);
+//       Texture::SP tex = scene->envMapLight->texture = std::make_shared<Texture>();
+//       io::readElement(in,tex->size);
+//       io::readElement(in,tex->format);
+//       io::readElement(in,tex->filterMode);
+//       io::readVector(in,tex->data);
+//     }
+    
+//     // ------------------------------------------------------------------
+//     // materials
+//     // ------------------------------------------------------------------
+//     std::vector<Material::SP> materials;
+//     size_t numMaterials = io::readElement<size_t>(in);
+//     for (int i=0;i<numMaterials;i++) {
+//       // io::readElement(in,(MaterialData&)*mat);
+// #if 1
+//       int tag;
+//       if (format_version == 11)
+//         // "DISNEY" is the direct equivalent to whatever we had before version 11
+//         tag = DISNEY;
+//       else
+//         io::readElement(in,tag);
+//       Material::SP mat = createMaterialFromTag((MaterialTag)tag);
+//       mat->read(in,textures);
+// #else
+//       Material::SP mat = std::make_shared<Material>();
+//       io::readElement(in,mat->emission);
+//       io::readElement(in,mat->baseColor);
+//       io::readElement(in,mat->metallic);
+//       io::readElement(in,mat->roughness);
+//       io::readElement(in,mat->transmission);
+//       io::readElement(in,mat->ior);
+//       {
+//         int texID = io::readElement<int>(in);
+//         assert(texID >= 0);
+//         assert(texID < textures.size());
+//         mat->colorTexture = textures[texID];
+//       }
+//       {
+//         int texID = io::readElement<int>(in);
+//         assert(texID >= 0);
+//         assert(texID < textures.size());
+//         mat->alphaTexture = textures[texID];
+//       }
+// #endif
+//       materials.push_back(mat);
+//     }
+
+//     // ------------------------------------------------------------------
+//     // objects and meshes
+//     // ------------------------------------------------------------------
+//     size_t numObjects = io::readElement<size_t>(in);
+//     std::vector<Object::SP> objects;
+//     for (int objID=0;objID<numObjects;objID++) {
+//       size_t numMeshes = io::readElement<size_t>(in);
+//       Object::SP object = std::make_shared<Object>();
+
+//       for (int meshID=0;meshID<(int)numMeshes;meshID++) {
+//         int isValid = io::readElement<int>(in);
+//         if (!isValid) {
+//           continue;
+//         }
+//         Mesh::SP mesh = std::make_shared<Mesh>();
+//         io::readVector(in,mesh->indices);
+//         io::readVector(in,mesh->vertices);
+//         io::readVector(in,mesh->normals);
+//         io::readVector(in,mesh->texcoords);
+//         int matID = io::readElement<int>(in);
+//         assert(matID >= 0);
+//         assert(matID < materials.size());
+//         mesh->material = materials[matID];
+//         object->meshes.push_back(mesh);
+//       }
+//       objects.push_back(object);
+//     }
+
+//     // ------------------------------------------------------------------
+//     // instances
+//     // ------------------------------------------------------------------
+//     size_t numInstances = io::readElement<size_t>(in);
+//     for (int instID=0;instID<numInstances;instID++) {
+//       int isValid = io::readElement<int>(in);
+//       if (!isValid) {
+//         scene->instances.push_back(0);
+//         continue;
+//       }
+//       Instance::SP inst = std::make_shared<Instance>();
+//       io::readElement(in,inst->xfm);
+//       inst->object = objects[io::readElement<int>(in)];
+//       scene->instances.push_back(inst);
+//     }
+
+//     // ------------------------------------------------------------------
+//     // wrap-up
+//     // ------------------------------------------------------------------
+
+//     size_t magicAtEnd = io::readElement<size_t>(in);
+//     if (magicAtEnd != expected_magic
+//         &&
+//         magicAtEnd != (expected_magic-1)
+//         )
+//       throw std::runtime_error("incomplete or incompatible miniScene/.mini file - cannot load");
+      
+//     return scene;
+//   }
+
+
+
+
+
+  template<bool USE_SP_VERSION>
+  Scene::SP Scene::loadT(const std::string &baseName)
   {
     std::ifstream in(baseName,std::ios::binary);
     if (!in.good())
@@ -690,6 +860,10 @@ namespace mini {
 
     size_t magic = io::readElement<size_t>(in);
     int format_version = 12;
+    auto expected_magic
+      = USE_SP_VERSION
+      ? expected_magic_sp
+      : expected_magic_sp;
     if (magic == expected_magic) {
       // all good, this is our format we'd also write
     } else if (magic == expected_magic-1) {
@@ -793,7 +967,14 @@ namespace mini {
         }
         Mesh::SP mesh = std::make_shared<Mesh>();
         io::readVector(in,mesh->indices);
-        io::readVector(in,mesh->vertices);
+        if (USE_SP_VERSION)
+          io::readVector(in,mesh->vertices);
+        else {
+          std::vector<vec3f> spVertices;
+          io::readVector(in,spVertices);
+          for (auto v : spVertices)
+            mesh->vertices.push_back(vec3d(v));
+        }
         io::readVector(in,mesh->normals);
         io::readVector(in,mesh->texcoords);
         int matID = io::readElement<int>(in);
@@ -816,7 +997,16 @@ namespace mini {
         continue;
       }
       Instance::SP inst = std::make_shared<Instance>();
-      io::readElement(in,inst->xfm);
+      if (USE_SP_VERSION)
+        io::readElement(in,inst->xfm);
+      else {
+        affine3f spXfm;
+        io::readElement(in,spXfm);
+        inst->xfm.p = vec3d(spXfm.p);
+        inst->xfm.l.vx = vec3d(spXfm.l.vx);
+        inst->xfm.l.vy = vec3d(spXfm.l.vy);
+        inst->xfm.l.vz = vec3d(spXfm.l.vz);
+      }
       inst->object = objects[io::readElement<int>(in)];
       scene->instances.push_back(inst);
     }

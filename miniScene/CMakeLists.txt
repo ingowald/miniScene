@@ -20,7 +20,7 @@
 # the different variations of lights, materials, film, etc, that pbrt
 # has.
 # ------------------------------------------------------------------
-add_library(miniScene STATIC
+add_library(miniSceneDP STATIC
   common.h
   IO.h
   Scene.h
@@ -29,16 +29,16 @@ add_library(miniScene STATIC
   Serialized.cpp
   CMakeLists.txt
   )
-target_link_libraries(miniScene
+target_link_libraries(miniSceneDP
   PUBLIC
   mini_common
 #  stb_image
   )
-target_include_directories(miniScene
+target_include_directories(miniSceneDP
   PUBLIC
   ${PROJECT_SOURCE_DIR}
   )
 
-set_target_properties(miniScene PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(miniSceneDP PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 

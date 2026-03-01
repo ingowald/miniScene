@@ -605,10 +605,10 @@ namespace mini {
     size_t getNumPrims() const { return indices.size(); }
 
     /*! computes a bounding box over all the triangles in this mesh */
-    box3f getBounds() const;
+    box3d getBounds() const;
 
     /*! array of vertices */
-    std::vector<vec3f> vertices;
+    std::vector<vec3d> vertices;
 
     /*! if this is the same size as number of vertices, then it's one
         vertex normal per vertex; otherwise if it is 3 times the
@@ -654,7 +654,7 @@ namespace mini {
     /*! computes and returns the bounding box of this object, which is
       the bounding box over all the mshes that this object
       contains */
-    box3f getBounds() const;
+    box3d getBounds() const;
     
     /*! list of all geometries in this object. if this object is in
       a partial scene / extracted sub-scene this array will
@@ -668,17 +668,17 @@ namespace mini {
   struct Instance {
     typedef std::shared_ptr<Instance> SP;
 
-    inline Instance(Object::SP object = 0, const affine3f &xfm = affine3f())
+    inline Instance(Object::SP object = 0, const affine3d &xfm = affine3d())
       : object(object), xfm(xfm)
     {}
 
-    inline static SP create(Object::SP object = 0, const affine3f &xfm = affine3f())
+    inline static SP create(Object::SP object = 0, const affine3d &xfm = affine3d())
     { return std::make_shared<Instance>(object,xfm); }
 
     /*! computes and returns the world-space bounding box of this instance */
-    box3f getBounds() const;
+    box3d getBounds() const;
     
-    affine3f   xfm;
+    affine3d   xfm;
     Object::SP object;
   };
 
@@ -763,10 +763,11 @@ namespace mini {
     /*! computes and returns the world space bounding box of this
       scene. Note that for scene with many instances that can take a
       while */
-    box3f getBounds() const;
+    box3d getBounds() const;
 
     /*! loads a ".mini" file from the given file */
     static Scene::SP load(const std::string &fileName);
+    static Scene::SP loadSP(const std::string &fileName);
 
     /*! saves the model in file with given name, using a binary file
       format that can be loaded with Scene::load() */
@@ -777,6 +778,9 @@ namespace mini {
     EnvMapLight::SP         envMapLight;
     
     std::vector<Instance::SP> instances;
+  private:
+    template<bool USE_SP_VERSION>
+    static Scene::SP loadT(const std::string &fileName);
   };
 
   /*! helper function for computing the bounding box of an affinely
