@@ -14,7 +14,13 @@
 # limitations under the License.                                           #
 # ======================================================================== #
 
-
+add_executable(dgef2dpmini
+  DGEF.cpp
+)
+target_link_libraries(dgef2dpmini
+  miniSceneDP
+)
+  
 
 
 

@@ -772,6 +772,8 @@ namespace mini {
     /*! saves the model in file with given name, using a binary file
       format that can be loaded with Scene::load() */
     void save(const std::string &fileName);
+    // save single-precision (regular mini format)
+    void saveSP(const std::string &fileName);
       
     std::vector<QuadLight>  quadLights;
     std::vector<DirLight>   dirLights;

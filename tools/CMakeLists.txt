@@ -32,6 +32,22 @@ target_link_libraries(dpmImportMini
   PUBLIC
   miniSceneDP
   )
+
+add_executable(dpmMakeBox
+  makeBox.cpp
+  )
+target_link_libraries(dpmMakeBox
+  PUBLIC
+  miniSceneDP
+  )
+
+add_executable(dpmExportMini
+  exportMini.cpp
+  )
+target_link_libraries(dpmExportMini
+  PUBLIC
+  miniSceneDP
+  )
   
 if (OFF)
 # -----------------------------------------------------------------------------

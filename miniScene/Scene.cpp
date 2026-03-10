@@ -683,6 +683,128 @@ namespace mini {
       throw std::runtime_error("some error happened while writing '"+baseName+"'");
   }
 
+
+  void Scene::saveSP(const std::string &baseName)
+  {
+    std::ofstream out(baseName,std::ios::binary);
+    if (!out.good())
+      throw std::runtime_error("could not open file '"+baseName+"'");
+    SerializedScene serialized(this);
+      
+    io::writeElement(out,expected_magic_sp);
+    PRINT(expected_magic_sp);
+
+    // ------------------------------------------------------------------
+    // textures
+    // ------------------------------------------------------------------
+    io::writeElement(out,serialized.textures.list.size());
+    for (auto tex : serialized.textures.list) {
+      if (/* only first one may/will be null */!tex) {
+        io::writeElement(out,int(0));
+      } else {
+        io::writeElement(out,int(1));
+        io::writeElement(out,tex->size);
+        io::writeElement(out,tex->format);
+        io::writeElement(out,tex->filterMode);
+        io::writeVector(out,tex->data);
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // lights
+    // ------------------------------------------------------------------
+    io::writeVector(out,quadLights);
+    io::writeVector(out,dirLights);
+    if (envMapLight) {
+      io::writeElement(out,int(1));
+      io::writeElement(out,envMapLight->transform);
+      Texture::SP tex = envMapLight->texture;
+      assert(tex);
+      io::writeElement(out,tex->size);
+      io::writeElement(out,tex->format);
+      io::writeElement(out,tex->filterMode);
+      io::writeVector(out,tex->data);
+    } else
+      io::writeElement(out,int(0));
+        
+    // ------------------------------------------------------------------
+    // materials
+    // ------------------------------------------------------------------
+    io::writeElement(out,serialized.materials.list.size());
+    for (auto mat : serialized.materials.list) {
+      // io::writeElement(out,(MaterialData&)*mat);
+#if 1
+      // version 12
+      int tag = (int)materialTagOf(mat);
+      io::writeElement(out,tag);
+      mat->write(out,serialized.textures.registry);
+#else
+      // old version 11
+      io::writeElement(out,mat->emission);
+      io::writeElement(out,mat->baseColor);
+      io::writeElement(out,mat->metallic);
+      io::writeElement(out,mat->roughness);
+      io::writeElement(out,mat->transmission);
+      io::writeElement(out,mat->ior);
+
+      io::writeElement(out,serialized.getID(mat->colorTexture));
+      io::writeElement(out,serialized.getID(mat->alphaTexture));
+#endif
+    }
+      
+    // ------------------------------------------------------------------
+    // objects and meshes
+    // ------------------------------------------------------------------
+    io::writeElement(out,serialized.objects.size());
+    for (auto &obj : serialized.objects.list) {
+
+      io::writeElement(out,obj->meshes.size());
+      for (auto mesh : obj->meshes) {
+        if (!mesh) { io::writeElement(out,int(0)); continue; }
+
+        io::writeElement(out,int(1));
+        io::writeVector(out,mesh->indices);
+        std::vector<vec3f> _vertices;
+        for (auto v : mesh->vertices)
+          _vertices.push_back(vec3f(v));
+        io::writeVector(out,_vertices);
+        // io::writeVector(out,mesh->vertices);
+        io::writeVector(out,mesh->normals);
+        io::writeVector(out,mesh->texcoords);
+        int matID = serialized.getID(mesh->material);
+        assert(matID >= 0);
+        io::writeElement(out,matID);
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // instances
+    // ------------------------------------------------------------------
+    io::writeElement(out,instances.size());
+    for (auto &inst : instances) {
+      if (!inst) { io::writeElement(out,int(0)); continue; }
+
+      io::writeElement(out,int(1));
+      // io::writeElement(out,inst->xfm);
+      affine3f _xfm = affine3f(inst->xfm);
+      io::writeElement(out,_xfm);
+      io::writeElement(out,int(serialized.getID(inst->object)));
+    }
+      
+    // ------------------------------------------------------------------
+    // proxies and owner masks
+    // ------------------------------------------------------------------
+    // io::writeVector(out,proxies);
+    // io::writeVector(out,ownedOn);
+
+    // ------------------------------------------------------------------
+    // wrap-up: write end-of file marker
+    // ------------------------------------------------------------------
+    io::writeElement(out,expected_magic_sp);
+    if (!out.good())
+      throw std::runtime_error("some error happened while writing '"+baseName+"'");
+  }
+
   Scene::SP Scene::load(const std::string &baseName)
   {
     return Scene::loadT<false>(baseName);
