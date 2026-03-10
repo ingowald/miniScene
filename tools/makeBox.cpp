@@ -21,40 +21,37 @@ namespace mini {
 
   void makeBox(int ac, char **av)
   {
-    box3d pos { 0., 0., 0. };
-    box3d size { 1., 1., 1. };
+    vec3d pos { 0., 0., 0. };
+    vec3d size { 1., 1., 1. };
     
     std::string inFileName = "";
-    std::string outFileName = "imported.dpmini";
+    std::string outFileName = "makeBox.dpmini";
     for (int i=1;i<ac;i++) {
       std::string arg = av[i];
-      if (arg == "-o")
+      if (arg == "-o") {
         outFileName = av[++i];
-      else if (arg == "-s" || arg == "--size") {
+      } else if (arg == "-s" || arg == "--size") {
         size.x = std::stod(av[++i]);
         size.y = std::stod(av[++i]);
         size.z = std::stod(av[++i]);
-      else if (arg == "-p" || arg == "--pos") {
+      } else if (arg == "-p" || arg == "--pos") {
         pos.x = std::stod(av[++i]);
         pos.y = std::stod(av[++i]);
         pos.z = std::stod(av[++i]);
       } else
         throw std::runtime_error("unknown cmdline argument '"+arg+"'");
     }
-    if (inFileName.empty())
-      throw std::runtime_error("no input file specified");
-
     std::cout << MINI_TERMINAL_LIGHT_BLUE
               << "loading mini file from " << inFileName 
               << MINI_TERMINAL_DEFAULT << std::endl;
     Mesh::SP mesh = Mesh::create();
     for (int i=0;i<8;i++)
-      mesh->vertices.push_back(vec3d(i&1 ? pos.x : (pos+size).x,
-                                     i&2 ? pos.y : (pos+size).y,
-                                     i&4 ? pos.z : (pos+size).z));
+      mesh->vertices.push_back(vec3d((i&1) ? pos.x : (pos+size).x,
+                                     (i&2) ? pos.y : (pos+size).y,
+                                     (i&4) ? pos.z : (pos+size).z));
 
     const int NUM_INDICES = 12;
-    static const vec3i unitBoxIndices[NUM_INDICES] =
+    std::vector<vec3i> unitBoxIndices =
       {
         {0, 2, 1}, //face front
         {0, 3, 2},
