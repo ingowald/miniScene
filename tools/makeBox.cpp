@@ -21,11 +21,13 @@ namespace mini {
 
   void makeBox(int ac, char **av)
   {
-    vec3d pos { 0., 0., 0. };
+    vec3d pos { 1e8, .001, -10000. };
+    // vec3d pos { 0., 0., 0. };
     vec3d size { 1., 1., 1. };
     
     std::string inFileName = "";
     std::string outFileName = "makeBox.dpmini";
+    bool instancePerFace = false;
     for (int i=1;i<ac;i++) {
       std::string arg = av[i];
       if (arg == "-o") {
@@ -38,6 +40,8 @@ namespace mini {
         pos.x = std::stod(av[++i]);
         pos.y = std::stod(av[++i]);
         pos.z = std::stod(av[++i]);
+      } else if (arg == "--instancePerFace") {
+        instancePerFace = true;
       } else
         throw std::runtime_error("unknown cmdline argument '"+arg+"'");
     }
@@ -88,8 +92,20 @@ namespace mini {
         {0, 1, 6}
       };
     mesh->indices = unitBoxIndices;
-    
-    Scene::SP scene = Scene::create({Instance::create(Object::create({mesh}))});
+
+    Scene::SP scene;
+    if (instancePerFace) {
+      scene = Scene::create();
+      for (int i=0;i<6;i++) {
+        Mesh::SP mm = Mesh::create();
+        mm->vertices = mesh->vertices;
+        mm->indices.push_back(unitBoxIndices[2*i+0]);
+        mm->indices.push_back(unitBoxIndices[2*i+1]);
+        scene->instances.push_back(Instance::create(Object::create({mm})));
+      }
+    } else {
+      scene = Scene::create({Instance::create(Object::create({mesh}))});
+    }
     std::cout << MINI_TERMINAL_LIGHT_GREEN
               << "saving to " << outFileName
               << MINI_TERMINAL_DEFAULT << std::endl;
