@@ -45,10 +45,31 @@ namespace mini {
               << "loading mini file from " << inFileName 
               << MINI_TERMINAL_DEFAULT << std::endl;
     Mesh::SP mesh = Mesh::create();
-    for (int i=0;i<8;i++)
-      mesh->vertices.push_back(vec3d((i&1) ? pos.x : (pos+size).x,
-                                     (i&2) ? pos.y : (pos+size).y,
-                                     (i&4) ? pos.z : (pos+size).z));
+
+    const int NUM_VERTICES = 8;
+    static const vec3f unitBoxVertices[NUM_VERTICES] =
+      {
+        {-1.f, -1.f, -1.f},
+        {+1.f, -1.f, -1.f},
+        {+1.f, +1.f, -1.f},
+        {-1.f, +1.f, -1.f},
+        {-1.f, +1.f, +1.f},
+        {+1.f, +1.f, +1.f},
+        {+1.f, -1.f, +1.f},
+        {-1.f, -1.f, +1.f},
+      };
+
+    vec3d lo = pos;
+    vec3d hi = pos+size;
+    PRINT(lo);
+    PRINT(hi);
+    for (int i=0;i<8;i++) {
+      vec3f u = unitBoxVertices[i];
+      vec3d v(u.x < 0. ? lo.x : hi.x,
+              u.y < 0. ? lo.y : hi.y,
+              u.z < 0. ? lo.z : hi.z);
+      mesh->vertices.push_back(v);
+    }
 
     const int NUM_INDICES = 12;
     std::vector<vec3i> unitBoxIndices =
