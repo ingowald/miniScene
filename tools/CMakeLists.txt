@@ -79,6 +79,19 @@ target_link_libraries(miniBreakLargeMeshes
   )
 
 # -----------------------------------------------------------------------------
+# exports a miniscene mesh (or at least, the trianlges within) into a
+# '.tstri' file
+# -----------------------------------------------------------------------------
+add_executable(mini2tstri
+  mini2tstri.cpp
+  )
+target_link_libraries(mini2tstri
+  PUBLIC
+  miniScene
+  )
+
+
+# -----------------------------------------------------------------------------
 # tool primarily for debugging: given a mini scene, write out *flat*
 # scene in OBJ file format (no materials or textures). Warning: files
 # tend to get *very* large if mini scene contained instances.
