@@ -65,19 +65,15 @@ int main(int ac, char **av)
 
   for (auto inst : scene->instances) {
     for (auto mesh : inst->object->meshes) {
-      static int meshID = 0;
       const auto &push = [&](vec3f v) {
         v = xfmPoint(inst->xfm,v);
         out.write((char *)&v,sizeof(v));
-        float f = meshID;
-        out.write((char *)&f,sizeof(f));
       };
       for (auto tri : mesh->indices) {
         push(mesh->vertices[tri.x]);
         push(mesh->vertices[tri.y]);
         push(mesh->vertices[tri.z]);
       }
-      ++meshID;
     }
   }
   
