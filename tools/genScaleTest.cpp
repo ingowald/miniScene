@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "miniScene/Scene.h"
+#include <random>
 
 namespace mini {
   int texRes = 8;
@@ -23,7 +24,11 @@ namespace mini {
   
   float rng()
   {
-    return drand48();
+    static std::random_device dev;
+    static std::mt19937 rng(dev());
+    static std::uniform_real_distribution<float> dist(0.f,1.f);
+    
+    return dist(rng);//drand48();
     
   }
   vec3f rng3f() { return vec3f(rng(),rng(),rng()); }

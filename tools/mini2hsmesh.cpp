@@ -33,7 +33,7 @@ namespace mini {
     std::cout << "flattening scene into one simple vertices/indices only mesh ..." << std::endl;
     for (auto inst : scene->instances)
       for (auto mesh : inst->object->meshes) {
-        int ofs = vertices.size();
+        int ofs = (int)vertices.size();
         for (auto v : mesh->vertices)
           vertices.push_back(xfmPoint(inst->xfm,v));
         for (auto idx : mesh->indices)

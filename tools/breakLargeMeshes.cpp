@@ -52,7 +52,7 @@ namespace mini {
     if (it != alreadyExtracted.end())
       return it->second;
 
-    size_t newID = outMesh->vertices.size();
+    uint32_t newID = (uint32_t)outMesh->vertices.size();
     outMesh->vertices.push_back(inMesh->vertices[vtxID]);
     if (!inMesh->normals.empty())
       outMesh->normals.push_back(inMesh->normals[vtxID]);

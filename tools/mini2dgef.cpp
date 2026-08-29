@@ -70,8 +70,8 @@ int main(int ac, char **av)
   std::vector<int> numMeshesInObject;
   std::vector<Mesh::SP> meshes;
   for (auto obj : uniqueObjects) {
-    objectIDof[obj] = objectIDof.size();
-    numMeshesInObject.push_back(obj->meshes.size());
+    objectIDof[obj] = (int)objectIDof.size();
+    numMeshesInObject.push_back((int)obj->meshes.size());
     for (auto mesh : obj->meshes)
       meshes.push_back(mesh);
   }

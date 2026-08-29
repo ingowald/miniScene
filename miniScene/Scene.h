@@ -501,7 +501,7 @@ namespace mini {
 
     float etaInside = 1.45f;
     float etaOutside = 1.f;
-    vec3f transmission = .95;
+    vec3f transmission = .95f;
   };
   struct ThinGlass : public Material {
     typedef std::shared_ptr<ThinGlass> SP;
@@ -529,7 +529,7 @@ namespace mini {
     
     float eta = 1.45f;
     float thickness = 1.f;
-    vec3f transmission = .95;
+    vec3f transmission = .95f;
   };
   
   struct MetallicPaint : public Material {
