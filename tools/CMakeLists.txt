@@ -198,6 +198,8 @@ add_executable(mini2binmesh
 target_link_libraries(mini2binmesh
   miniScene
 )
+
+# -----------------------------------------------------------------------------
 # tool that reads a scene, and dumps out each instance as its own scene
 # -----------------------------------------------------------------------------
 add_executable(miniExportIndividualInstances
@@ -209,4 +211,13 @@ target_link_libraries(miniExportIndividualInstances
   )
 
 
+# -----------------------------------------------------------------------------
+# tool that reads a scene, and dumps out each instance as its own scene
+# -----------------------------------------------------------------------------
+add_subdirectory(../../hayStack/3rdParty/tsd_tinyexr build_tinyexr)
+find_package(OpenGL)
+find_package(X11)
+find_package(pxr REQUIRED usd usdGeom tf gf usdShade usdLux)
+add_executable(usd2mini usd2mini.cpp)
 
+target_link_libraries(usd2mini PUBLIC ${PXR_LIBRARIES} ext_tinyexr_impl miniScene)
