@@ -59,6 +59,9 @@
 
 namespace hs {
   namespace loader{
+
+    bool verbose = false;
+    mini::Scene::SP protoScene = {};
     
     struct HDRImage
     {
@@ -273,8 +276,19 @@ namespace hs {
       affine3f currentXF;
 
       std::vector<mini::Mesh::SP> meshes;
-
-      void push(mini::Mesh::SP mesh) { meshes.push_back(mesh); }
+      size_t trisInMeshes =0;
+      
+      void push(mini::Mesh::SP mesh) {
+        /* meshes.push_back(mesh); */
+        if (protoScene) {
+          protoScene->instances[0]->object->meshes.push_back(mesh);
+        } else {
+          
+          meshes.push_back(mesh);
+          trisInMeshes += mesh->indices.size();
+          PRINT(trisInMeshes);
+        }
+      }
     
       void pushTransform(const affine3f &xf)
       {
@@ -432,7 +446,8 @@ namespace hs {
         for (auto &color : rgb) {
           color *= vec3f(tempColor.x, tempColor.y, tempColor.z);
         }
-        printf("[import_USD] Applied dome light color temperature: %f K (%f %f %f)\n",
+        if (verbose)
+          printf("[import_USD] Applied dome light color temperature: %f K (%f %f %f)\n",
                colorTemp,
                tempColor.x,
                tempColor.y,
@@ -655,6 +670,7 @@ namespace hs {
       if (primName.empty())
         primName = "<unnamed_mesh>";
 
+        if (verbose)
       printf("[import_USD] Mesh '%s': %zu points, %zu faces, %zu normals (interpolation: %s), %zu UVs (interpolation: %s)\n",
              prim.GetName().GetString().c_str(),
              points.size(),
@@ -675,6 +691,7 @@ namespace hs {
       std::vector<uint32_t> indices =
         generate_triangle_indices(faceVertexIndices, faceVertexCounts);
 
+      if (verbose)
       printf("[import_USD] Mesh '%s': Generated %zu triangle indices (%zu triangles)\n",
              prim.GetName().GetString().c_str(),
              indices.size(),
@@ -698,6 +715,7 @@ namespace hs {
           }
           meshObj->normals = normalData;
 
+      if (verbose)
           printf("[import_USD] Mesh '%s': Set %zu normals on vertex.normal\n",
                  prim.GetName().GetString().c_str(),
                  normalData.size());
@@ -715,6 +733,7 @@ namespace hs {
           }
 
           meshObj->normals = normalData;
+      if (verbose)
           printf("[import_USD] Mesh '%s': Set %zu normals on faceVarying.normal\n",
                  prim.GetName().GetString().c_str(),
                  normalData.size());
@@ -732,6 +751,7 @@ namespace hs {
           }
         
           meshObj->normals = normalData;
+      if (verbose)
           printf("[import_USD] Mesh '%s': Set %zu normals on primitive.normal\n",
                  prim.GetName().GetString().c_str(),
                  normalData.size());
@@ -775,7 +795,10 @@ namespace hs {
     {
       std::cout << __PRETTY_FUNCTION__ << " not implemented" << std::endl;
     }
-  
+
+    Scene::SP rootInstances = std::make_shared<Scene>();
+    std::map<std::string,Scene::SP> protoScenes;
+    
     static
     void import_usd_prim_recursive(USDScene &scene,
                                    const pxr::UsdPrim &prim,
@@ -786,16 +809,6 @@ namespace hs {
         pxr::UsdPrim prototype = prim.GetPrototype();
         if (prototype) {
 
-#if 1
-          std::string name = ":";
-          pxr::UsdPrim pp = prim;
-          while (pp) {
-            name = pp.GetName().GetString() + "::" + name;
-            pp = pp.GetParent();
-          }
-          PRINT(name);
-#endif
-          
           bool resetsXformStack = false;
           pxr::GfMatrix4d usdLocalXform =
             xformCache.GetLocalTransformation(prim, &resetsXformStack);
@@ -803,19 +816,67 @@ namespace hs {
             resetsXformStack ? usdLocalXform : parentWorldXform * usdLocalXform;
           // tsd::math::mat4 tsdXform = to_tsd_mat4(usdLocalXform);
           affine3f miniXform = to_mini(usdLocalXform);
+
+
+
+#if 1
+          std::string protoName = prototype.GetName().GetString();
+          if (protoScene)
+            std::cout << "PROTO SCENE ALREADY EXISTS!!!!" << std::endl;
+
+          Scene::SP found = protoScenes[protoName];
+          if (found) {
+            std::cout << "FOUND instance for " << protoName << std::endl;
+            PRINT(found->toString());
+            PRINT(miniXform);
+
+            Instance::SP inst = Instance::create(found->instances[0]->object,miniXform);
+            scene.miniScene->instances.push_back(inst);
+            return;
+          }
+
+          Object::SP protoObj = std::make_shared<Object>();
+          Instance::SP instance = std::make_shared<Instance>(protoObj);
+          protoScene = Scene::create({instance});
+          protoScenes[protoName] = protoScene;
+
+          Instance::SP inst = Instance::create(protoObj,miniXform);
+          scene.miniScene->instances.push_back(inst);
+
+          std::string name = ":";
+          name = name + protoName;
+          pxr::UsdPrim pp = prim;
+          while (pp) {
+            name = pp.GetName().GetString() + "::" + name;
+            auto parent = pp.GetParent();
+            if (pp == parent) { PING; break; }
+            pp = parent;
+          }
+          PRINT(name);
+#endif
+          
+
+
+          
           std::string primName = prim.GetName().GetString();
           if (primName.empty())
             primName = "<unnamed_instance>";
           // auto xformNode =
           //   scene.insertChildTransformNode(parent, tsdXform, primName.c_str());
           // Recursively import the prototype under this transform node
+#if 1
+          scene.pushTransform(affine3f());
+#else
           scene.pushTransform(miniXform);
+#endif
           import_usd_prim_recursive(scene,
                                     prototype,
                        // xformNode,
                                     xformCache,
                                     thisWorldXform);
           scene.popTransform();
+
+          protoScene = {};
         } else {
           printf("[import_USD] Instance has no prototype: %s\n",
                  prim.GetName().GetString().c_str());
@@ -1302,7 +1363,8 @@ namespace hs {
       }
 
       mini::Object::SP miniObj = mini::Object::create(scene.meshes);
-      scene.miniScene->instances = {mini::Instance::create(miniObj)};
+      // scene.miniScene->instances = {mini::Instance::create(miniObj)};
+      scene.miniScene->instances.push_back(mini::Instance::create(miniObj));
       return scene.miniScene;
     }
 
@@ -1311,5 +1373,7 @@ namespace hs {
 
 int main(int ac, char **av)
 {
+  assert(ac == 4);
   mini::Scene::SP scene = hs::loader::loadUSD(av[1]);
+  scene->save(av[3]);
 }

@@ -835,5 +835,22 @@ namespace mini {
     return scene;
   }
 
+  std::string Scene::toString() const
+  {
+    std::stringstream ss;
+    std::set<Mesh::SP> meshes;
+    std::set<Object::SP> objects;
+    std::set<Material::SP> materials;
+    for (auto inst : instances) {
+      if (objects.find(inst->object) == objects.end()) {
+        for (auto mesh : inst->object->meshes)
+          meshes.insert(mesh);
+      }
+      objects.insert(inst->object);
+    }
+    ss << "mini::Scene{#inst=" << instances.size() << ",#obj=" << objects.size() << ",#mesh="<< meshes.size() << "}";
+    return ss.str();
+  }
+  
 } // ::brix
 

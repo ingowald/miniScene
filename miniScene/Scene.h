@@ -765,6 +765,8 @@ namespace mini {
       while */
     box3f getBounds() const;
 
+    std::string toString() const;
+      
     /*! loads a ".mini" file from the given file */
     static Scene::SP load(const std::string &fileName);
 
