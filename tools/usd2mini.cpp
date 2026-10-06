@@ -57,6 +57,9 @@
 #include "tinyexr.h"
 #endif
 
+#define NO_INSTANCES 1
+
+
 namespace hs {
   namespace loader{
 
@@ -272,8 +275,8 @@ namespace hs {
         return materials[name];
       }
     
-      std::stack<affine3f> savedXFs;
-      affine3f currentXF;
+      // std::stack<affine3f> savedXFs;
+      // affine3f currentXF;
 
       std::vector<mini::Mesh::SP> meshes;
       size_t trisInMeshes =0;
@@ -290,17 +293,17 @@ namespace hs {
         }
       }
     
-      void pushTransform(const affine3f &xf)
-      {
-        savedXFs.push(currentXF);
-        currentXF = xf;
-      }
+      // void pushTransform(const affine3f &xf)
+      // {
+      //   savedXFs.push(currentXF);
+      //   currentXF = xf;
+      // }
     
-      void popTransform()
-      {
-        currentXF = savedXFs.top();
-        savedXFs.pop();
-      }
+      // void popTransform()
+      // {
+      //   currentXF = savedXFs.top();
+      //   savedXFs.pop();
+      // }
     };
 
     // Helper to get the bound material for a prim (USD or default)
@@ -616,7 +619,8 @@ namespace hs {
                          const pxr::UsdPrim &prim,
                          const pxr::GfMatrix4d &usdXform)
     {
-
+      affine3f miniXform = to_mini(usdXform);
+          
 #if 0
       static int primID = 0;
       if (primID++ % 20) {
@@ -683,8 +687,13 @@ namespace hs {
       // Convert vertex positions to float3
       std::vector<vec3f> positions;
       positions.reserve(points.size());
-      for (const auto &p : points) {
-        positions.push_back(vec3f(p[0], p[1], p[2]));
+      for (auto p : points) {
+        vec3f mp(p[0], p[1], p[2]);
+        positions.push_back(xfmPoint(miniXform,mp));
+        // pxr::GfVec3d xfm_p = xfm.TransformPoint(p);
+        // pxr::GfVec3d dirVec = xfm.TransformDir(pxr::GfVec3d(0, 0, -1));
+        // pxr::GfVec3d upVec = xfm.TransformDir(pxr::GfVec3d(0, 1, 0));
+        // positions.push_back(vec3f(xfm_p[0], xfm_p[1], xfm_p[2]));
       }
     
       // Generate triangle indices from polygon faces
@@ -711,7 +720,8 @@ namespace hs {
           std::vector<vec3f> normalData;
           normalData.reserve(normals.size());
           for (const auto &n : normals) {
-            normalData.push_back(vec3f(n[0], n[1], n[2]));
+            vec3f nn(n[0], n[1], n[2]);
+            normalData.push_back(xfmNormal(miniXform,nn));
           }
           meshObj->normals = normalData;
 
@@ -819,12 +829,22 @@ namespace hs {
 
 
 
+#if NO_INSTANCES
+          auto xf = thisWorldXform;
+          import_usd_prim_recursive(scene,
+                                    prototype,
+                       // xformNode,
+                                    xformCache,
+                                    xf);
+#else
+          
+
 #if 1
           std::string protoName = prototype.GetName().GetString();
           if (protoScene)
             std::cout << "PROTO SCENE ALREADY EXISTS!!!!" << std::endl;
-
           Scene::SP found = protoScenes[protoName];
+
           if (found) {
             std::cout << "FOUND instance for " << protoName << std::endl;
             PRINT(found->toString());
@@ -864,19 +884,21 @@ namespace hs {
           // auto xformNode =
           //   scene.insertChildTransformNode(parent, tsdXform, primName.c_str());
           // Recursively import the prototype under this transform node
-#if 1
-          scene.pushTransform(affine3f());
-#else
-          scene.pushTransform(miniXform);
-#endif
+// #if 1
+//           scene.pushTransform(affine3f());
+// #else
+//           scene.pushTransform(miniXform);
+// #endif
+          auto xf = thisWorldXform;
           import_usd_prim_recursive(scene,
                                     prototype,
                        // xformNode,
                                     xformCache,
-                                    thisWorldXform);
-          scene.popTransform();
+                                    xf);
+          // scene.popTransform();
 
           protoScene = {};
+#endif
         } else {
           printf("[import_USD] Instance has no prototype: %s\n",
                  prim.GetName().GetString().c_str());
