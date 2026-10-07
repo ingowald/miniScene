@@ -46,6 +46,30 @@ namespace mini {
             textures.add(blender->baseColorTexture);
             textures.add(blender->alphaTexture);
           }
+          ANARIMaterial::SP anari = material->as<ANARIMaterial>();
+          if (anari) {
+            textures.add(anari->baseColor_texture);
+            textures.add(anari->opacity_texture);
+            textures.add(anari->metallic_texture);
+            textures.add(anari->roughness_texture);
+            textures.add(anari->normal_texture);
+            textures.add(anari->emissive_texture);
+            textures.add(anari->occlusion_texture);
+            textures.add(anari->specular_texture);
+            textures.add(anari->specularColor_texture);
+            textures.add(anari->clearcoat_texture);
+            textures.add(anari->clearcoatRoughness_texture);
+            textures.add(anari->clearcoatNormal_texture);
+            textures.add(anari->transmission_texture);
+            textures.add(anari->ior_texture);
+            textures.add(anari->thickness_texture);
+            textures.add(anari->attenuationColor_texture);
+            textures.add(anari->sheenColor_texture);
+            textures.add(anari->sheenRoughness_texture);
+            textures.add(anari->iridescence_texture);
+            textures.add(anari->iridescenceIor_texture);
+            textures.add(anari->iridescenceThickness_texture);
+          }
         }
       }
     }
