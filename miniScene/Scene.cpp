@@ -238,7 +238,6 @@ namespace mini {
                             const std::vector<Texture::SP> &textures)
   {
     io::readElement(in,this->baseColor);
-    io::readElement(in,this->baseColor);
     readTexture(textures,in,baseColor_texture);
     io::readElement(in,this->opacity);
     readTexture(textures,in,opacity_texture);
