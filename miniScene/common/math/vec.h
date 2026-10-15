@@ -204,11 +204,7 @@ namespace mini {
         static inline __both__ vec_t<T,3> make_from(const vec_t<OT,3> &v, const Lambda &lambda)
       { return vec_t<T,3>(lambda(v.x),lambda(v.y),lambda(v.z)); }
     
-      union {
-        struct { T x, y, z; };
-        struct { T r, s, t; };
-        struct { T u, v, w; };
-      };
+      T x, y, z; 
     };
 
     // ------------------------------------------------------------------
